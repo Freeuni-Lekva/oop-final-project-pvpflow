@@ -1,6 +1,8 @@
 name: test
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -13,6 +15,7 @@ jobs:
         run: |
           cd Seminars/Adikashvili/11
           mvn clean install -DskipTests
+
   unit-tests:
     needs: build
     runs-on: ubuntu-latest
