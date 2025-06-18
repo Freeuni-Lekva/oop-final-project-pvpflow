@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(256) NOT NULL
 );
 
--- Insert a test user (password: test123, SHA-256 hash)
-INSERT INTO users (username, email, password_hash) VALUES (
-    'testuser',
-    'test@example.com',
-    'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae'
+DROP TABLE IF EXISTS userQuizes;
+CREATE TABLE userQuizes
+(username TEXT,
+ id BIGINT(64),
+ create_time TIMESTAMP
 );
 
-UPDATE users SET password_hash='ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae' WHERE username='testuser'; 
+
