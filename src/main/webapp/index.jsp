@@ -5,13 +5,30 @@
   Time: 11:08 AM
   To change this template use File | Settings | File Templates.
 --%>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    String user = (String) session.getAttribute("user");
+    if (user == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+%>
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Title</title>
+    <title>QuizApp - Home</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f6f7fb; margin: 0; }
+        .container { max-width: 600px; margin: 100px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2rem; text-align: center; }
+        h1 { color: #3b82f6; }
+        .logout { margin-top: 2rem; display: inline-block; color: #fff; background: #e11d48; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        .logout:hover { background: #be123c; }
+    </style>
 </head>
 <body>
-<p> "helooo worlddd"</p>
-
+    <div class="container">
+        <h1>Welcome, <%= user %>!</h1>
+        <p>You have successfully logged in to QuizApp.</p>
+        <a class="logout" href="login.jsp">Log out</a>
+    </div>
 </body>
 </html>
