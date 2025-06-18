@@ -1,4 +1,6 @@
+/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/servlets/LogoutServlet.java
 /Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/servlets/SignupServlet.java
-/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/utils/PasswordUtil.java
-/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/utils/DBUtil.java
+/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/DATABASE_DAO/DBUtil.java
+/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/DATABASE_DAO/databases/UserQuiz.java
 /Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/servlets/LoginServlet.java
+/Users/MacBook/Desktop/oop-final-project-pvpflow/src/main/java/DATABASE_DAO/PasswordUtil.java

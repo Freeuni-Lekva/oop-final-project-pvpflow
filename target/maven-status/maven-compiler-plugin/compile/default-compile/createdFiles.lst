@@ -1,4 +1,6 @@
 servlets/LoginServlet.class
 servlets/SignupServlet.class
-utils/PasswordUtil.class
-utils/DBUtil.class
+DATABASE_DAO/databases/UserQuiz.class
+servlets/LogoutServlet.class
+DATABASE_DAO/PasswordUtil.class
+DATABASE_DAO/DBUtil.class

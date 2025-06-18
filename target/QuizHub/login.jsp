@@ -141,12 +141,8 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required />
             </div>
-            <div class="forgot">
-                <a href="#">Forgot password</a>
-            </div>
             <button class="login-btn" type="submit">Log in</button>
             <a class="signup-link" href="signup.jsp">New to QuizApp? Create an account</a>
-            <a class="magic-link" href="#">Log in with magic link</a>
         </form>
     </div>
 </div>
