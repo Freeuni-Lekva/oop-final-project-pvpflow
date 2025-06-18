@@ -1,41 +1,32 @@
 name: test
-
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ master ]
-
+    branches: [ master, main ]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           java-version: '8'
           distribution: 'temurin'
-          
       - name: Build Java
         run: |
-          cd Seminars/Adikashvili/11
           mvn clean install -DskipTests
-
   unit-tests:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           java-version: '8'
           distribution: 'temurin'
-          
       - name: Run unit tests
         run: |
-          cd Seminars/Adikashvili/11
           mvn test
