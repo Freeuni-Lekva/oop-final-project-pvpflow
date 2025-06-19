@@ -6,6 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.sql.*, java.util.*" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -15,6 +16,26 @@
     if (username == null) {
         response.sendRedirect("login.jsp");
         return;
+    }
+
+    List<Map<String, Object>> quizzes = new ArrayList<>();
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/quizapp", "quizapp", "");
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT id, title, description FROM quizzes ORDER BY created_at DESC");
+        while (rs.next()) {
+            Map<String, Object> quiz = new HashMap<>();
+            quiz.put("id", rs.getInt("id"));
+            quiz.put("title", rs.getString("title"));
+            quiz.put("description", rs.getString("description"));
+            quizzes.add(quiz);
+        }
+        rs.close();
+        stmt.close();
+        conn.close();
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 %>
 <!DOCTYPE html>
@@ -193,12 +214,82 @@
                 grid-template-columns: 1fr;
             }
         }
+        body.light-mode {
+            background: #f6f7fb;
+            color: #22223b;
+        }
+        body.light-mode::before {
+            background: linear-gradient(rgba(246,247,251,0.85), rgba(246,247,251,0.85)), url('img1.png') center center/cover no-repeat;
+            opacity: 0.85;
+        }
+        body.light-mode .header {
+            background: rgba(255,255,255,0.92);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        body.light-mode .logo {
+            color: #3b82f6;
+            text-shadow: none;
+        }
+        body.light-mode .icon-label {
+            color: #2563eb;
+            text-shadow: none;
+        }
+        body.light-mode .icon-btn svg {
+            color: #3b82f6;
+            text-shadow: none;
+        }
+        body.light-mode .icon-btn:hover svg {
+            color: #e11d48;
+            text-shadow: none;
+        }
+        body.light-mode .popup {
+            background: rgba(255,255,255,0.98);
+            color: #22223b;
+            box-shadow: 0 4px 24px #3b82f644;
+        }
+        body.light-mode .popup h3 {
+            color: #3b82f6;
+            text-shadow: none;
+        }
+        body.light-mode .popup .close-btn {
+            color: #e11d48;
+            text-shadow: none;
+        }
+        body.light-mode .announcement {
+            background: linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%);
+            color: #22223b;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        body.light-mode .topic-row h2 {
+            color: #e11d48;
+            text-shadow: none;
+        }
+        body.light-mode .card {
+            background: #fff;
+            color: #2563eb;
+            box-shadow: 0 2px 24px 0 #e0c3fc44, 0 0 0 2px #8ec5fc44;
+            text-shadow: none;
+            border: 2px solid #8ec5fc;
+        }
+        body.light-mode .card:hover {
+            box-shadow: 0 6px 32px #e11d4899, 0 0 0 2px #3b82f699;
+            color: #e11d48;
+            text-shadow: none;
+            border-color: #e11d48;
+            background: #fdf2f8;
+        }
     </style>
 </head>
 <body>
 <div class="header">
     <div class="logo">QuizApp</div>
     <div class="header-actions">
+        <div class="icon-group">
+            <a class="icon-btn" id="createQuizBtn" href="create_quiz.jsp" title="Create Quiz" style="display: flex; align-items: center; justify-content: center;">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </a>
+            <div class="icon-label">Create</div>
+        </div>
         <div class="icon-group">
             <button class="icon-btn" id="achievementsBtn" onclick="togglePopup('achievementsPopup')" title="Achievements">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 17.75L18.2 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.44 4.73L5.8 21z"/></svg>
@@ -264,6 +355,20 @@
             <div class="card">Created "Math Genius" quiz (placeholder)</div>
             <div class="card">Created "Tech Trends" quiz (placeholder)</div>
         </div>
+    </div>
+    <h2 style="color:#3b82f6;">Available Quizzes</h2>
+    <div class="card-row">
+        <% for (Map<String, Object> quiz : quizzes) { %>
+            <div class="card" style="min-width:300px; margin:1rem; padding:1.5rem; background:#23243a; border-radius:12px; box-shadow:0 2px 8px #0002;">
+                <a href="TakeQuizServlet?quizId=<%= quiz.get("id") %>" style="font-size:1.2rem; font-weight:600; color:#00eaff; text-decoration:none;">
+                    <%= quiz.get("title") %>
+                </a>
+                <div style="color:#a5b4fc; margin-top:0.5rem; font-size:0.95rem;"><%= quiz.get("description") %></div>
+            </div>
+        <% } %>
+        <% if (quizzes.isEmpty()) { %>
+            <div style="color:#e11d48; font-size:1.1rem;">No quizzes available yet. Create one!</div>
+        <% } %>
     </div>
 </div>
 
@@ -391,10 +496,11 @@
                 <div style="font-size: 0.9rem; color: #6b7280;">Quizzes Created</div>
             </div>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
             <button style="flex: 1; padding: 0.8rem; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Edit Profile</button>
             <button style="flex: 1; padding: 0.8rem; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;" onclick="window.location.href='LogoutServlet'">Logout</button>
         </div>
+        <button id="toggleModeBtn" style="width: 100%; padding: 0.8rem; background: #e0e7ff; color: #22223b; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Switch to Light Mode</button>
     </div>
 </div>
 
@@ -422,6 +528,30 @@
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.icon-btn') && !e.target.closest('.popup')) {
             document.querySelectorAll('.popup').forEach(p => p.classList.remove('active'));
+        }
+    });
+    document.getElementById('toggleModeBtn').onclick = function() {
+        var body = document.body;
+        var btn = this;
+        body.classList.toggle('light-mode');
+        if (body.classList.contains('light-mode')) {
+            btn.textContent = 'Switch to Dark Mode';
+            btn.style.background = '#22223b';
+            btn.style.color = '#e0e7ff';
+        } else {
+            btn.textContent = 'Switch to Light Mode';
+            btn.style.background = '#e0e7ff';
+            btn.style.color = '#22223b';
+        }
+    };
+    // Make light mode default on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('light-mode');
+        var btn = document.getElementById('toggleModeBtn');
+        if (btn) {
+            btn.textContent = 'Switch to Dark Mode';
+            btn.style.background = '#22223b';
+            btn.style.color = '#e0e7ff';
         }
     });
 </script>

@@ -1,6 +1,9 @@
-servlets/LoginServlet.class
+servlets/TakeQuizServlet.class
 servlets/SignupServlet.class
 DATABASE_DAO/databases/UserQuiz.class
+servlets/CreateQuizServlet.class
+servlets/LoginServlet.class
+servlets/GradeQuizServlet.class
 servlets/LogoutServlet.class
 DATABASE_DAO/PasswordUtil.class
 DATABASE_DAO/DBUtil.class
