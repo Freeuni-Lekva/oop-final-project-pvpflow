@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DBUtil {
     private static final String URL = "jdbc:mysql://localhost:3306/quizapp";
     private static final String USER = "root";
-    private static final String PASSWORD = "sofo";
+    private static final String PASSWORD = "lukalodia";
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
