@@ -6,36 +6,59 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, java.util.*" %>
+<%@ page import="java.sql.*, java.util.*, DATABASE_DAO.DBUtil" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
     String email = (String) session.getAttribute("email");
-    
+    Integer userId = (Integer) session.getAttribute("userId"); // Assuming userId is stored in session
+
     // Redirect to login if not logged in
-    if (username == null) {
+    if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    List<Map<String, Object>> quizzes = new ArrayList<>();
+    // --- Data Fetching ---
+    List<Map<String, Object>> allQuizzes = new ArrayList<>();
+    List<Map<String, Object>> userQuizzes = new ArrayList<>();
+    Connection conn = null;
     try {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/quizapp", "quizapp", "");
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT id, title, description FROM quizzes ORDER BY created_at DESC");
-        while (rs.next()) {
-            Map<String, Object> quiz = new HashMap<>();
-            quiz.put("id", rs.getInt("id"));
-            quiz.put("title", rs.getString("title"));
-            quiz.put("description", rs.getString("description"));
-            quizzes.add(quiz);
+        conn = DBUtil.getConnection();
+
+        // Fetch all recent quizzes
+        String allQuizzesSql = "SELECT id, title, description FROM quizzes ORDER BY created_at DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(allQuizzesSql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> quiz = new HashMap<>();
+                quiz.put("id", rs.getInt("id"));
+                quiz.put("title", rs.getString("title"));
+                quiz.put("description", rs.getString("description"));
+                allQuizzes.add(quiz);
+            }
         }
-        rs.close();
-        stmt.close();
-        conn.close();
+
+        // Fetch quizzes created by the current user
+        String userQuizzesSql = "SELECT id, title, description FROM quizzes WHERE creator_id = ? ORDER BY created_at DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(userQuizzesSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> quiz = new HashMap<>();
+                    quiz.put("id", rs.getInt("id"));
+                    quiz.put("title", rs.getString("title"));
+                    quiz.put("description", rs.getString("description"));
+                    userQuizzes.add(quiz);
+                }
+            }
+        }
     } catch (Exception e) {
-        e.printStackTrace();
+        e.printStackTrace(); // Log error to server console
+    } finally {
+        if (conn != null) {
+            try { conn.close(); } catch (SQLException ignore) {}
+        }
     }
 %>
 <!DOCTYPE html>
@@ -317,48 +340,44 @@
     </div>
 </div>
 <div class="main-content">
-    <div class="announcement" style="margin-bottom:2.5rem;">🚨 <b>Announcements:</b> New quiz competition starts next week! (placeholder)</div>
+    <div class="announcement">
+        Welcome to the new and improved QuizHub! Check out the new features.
+    </div>
+
     <div class="topic-row">
-        <h2>Popular Quizzes</h2>
+        <h2>Recently Created By You</h2>
         <div class="card-row">
-            <div class="card">General Knowledge (placeholder)</div>
-            <div class="card">World Capitals (placeholder)</div>
-            <div class="card">Science Facts (placeholder)</div>
-            <div class="card">Movie Trivia (placeholder)</div>
-            <div class="card">Sports Stars (placeholder)</div>
-            <div class="card">Music Hits (placeholder)</div>
+            <% for (Map<String, Object> quiz : userQuizzes) { %>
+            <div class="card">
+                <a href="take_quiz.jsp?id=<%= quiz.get("id") %>" class="card-link">
+                    <div class="card-title"><%= quiz.get("title") %></div>
+                    <div class="card-desc"><%= quiz.get("description") %></div>
+                </a>
+            </div>
+            <% } %>
         </div>
     </div>
+
     <div class="topic-row">
-        <h2>Recently Created Quizzes</h2>
+        <h2>All Recent Quizzes</h2>
         <div class="card-row">
-            <div class="card">Math Genius (placeholder)</div>
-            <div class="card">History Buff (placeholder)</div>
-            <div class="card">Pop Culture (placeholder)</div>
-            <div class="card">Geography Pro (placeholder)</div>
-            <div class="card">Literature Lover (placeholder)</div>
-            <div class="card">Tech Trends (placeholder)</div>
+            <% for (Map<String, Object> quiz : allQuizzes) { %>
+            <div class="card">
+                <a href="take_quiz.jsp?id=<%= quiz.get("id") %>" class="card-link">
+                    <div class="card-title"><%= quiz.get("title") %></div>
+                    <div class="card-desc"><%= quiz.get("description") %></div>
+                </a>
+            </div>
+            <% } %>
+            <% if (allQuizzes.isEmpty()) { %>
+                <p>No quizzes available yet. Why not create one?</p>
+            <% } %>
         </div>
     </div>
-    <div class="topic-row">
-        <h2>Your Recent Quiz Taking Activities</h2>
-        <div class="card-row">
-            <div class="card">Took "General Knowledge" quiz (placeholder)</div>
-            <div class="card">Took "Science Facts" quiz (placeholder)</div>
-            <div class="card">Took "Movie Trivia" quiz (placeholder)</div>
-            <div class="card">Took "Sports Stars" quiz (placeholder)</div>
-        </div>
-    </div>
-    <div class="topic-row">
-        <h2>Your Recent Quiz Creating Activities</h2>
-        <div class="card-row">
-            <div class="card">Created "Math Genius" quiz (placeholder)</div>
-            <div class="card">Created "Tech Trends" quiz (placeholder)</div>
-        </div>
-    </div>
+
     <h2 style="color:#3b82f6;">Available Quizzes</h2>
     <div class="card-row">
-        <% for (Map<String, Object> quiz : quizzes) { %>
+        <% for (Map<String, Object> quiz : allQuizzes) { %>
             <div class="card" style="min-width:300px; margin:1rem; padding:1.5rem; background:#23243a; border-radius:12px; box-shadow:0 2px 8px #0002;">
                 <a href="TakeQuizServlet?quizId=<%= quiz.get("id") %>" style="font-size:1.2rem; font-weight:600; color:#00eaff; text-decoration:none;">
                     <%= quiz.get("title") %>
@@ -366,7 +385,7 @@
                 <div style="color:#a5b4fc; margin-top:0.5rem; font-size:0.95rem;"><%= quiz.get("description") %></div>
             </div>
         <% } %>
-        <% if (quizzes.isEmpty()) { %>
+        <% if (allQuizzes.isEmpty()) { %>
             <div style="color:#e11d48; font-size:1.1rem;">No quizzes available yet. Create one!</div>
         <% } %>
     </div>
@@ -492,7 +511,7 @@
                 <div style="font-size: 0.9rem; color: #6b7280;">Quizzes Taken</div>
             </div>
             <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">8</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;"><%= userQuizzes.size() %></div>
                 <div style="font-size: 0.9rem; color: #6b7280;">Quizzes Created</div>
             </div>
         </div>
