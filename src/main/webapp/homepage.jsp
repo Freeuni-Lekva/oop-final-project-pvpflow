@@ -20,36 +20,112 @@
     }
 
     // --- Data Fetching ---
-    List<Map<String, Object>> allQuizzes = new ArrayList<>();
-    List<Map<String, Object>> userQuizzes = new ArrayList<>();
+    List<Map<String, Object>> announcements = new ArrayList<>();
+    List<Map<String, Object>> popularQuizzes = new ArrayList<>();
+    List<Map<String, Object>> recentlyCreatedQuizzes = new ArrayList<>();
+    List<Map<String, Object>> userRecentQuizActivities = new ArrayList<>();
+    List<Map<String, Object>> userRecentCreatingActivities = new ArrayList<>();
+    int quizzesTakenCount = 0;
+    
     Connection conn = null;
     try {
         conn = DBUtil.getConnection();
 
-        // Fetch all recent quizzes
-        String allQuizzesSql = "SELECT id, title, description FROM quizzes ORDER BY created_at DESC LIMIT 10";
-        try (PreparedStatement ps = conn.prepareStatement(allQuizzesSql);
+        // Fetch active announcements
+        String announcementsSql = "SELECT title, content FROM announcements WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 5";
+        try (PreparedStatement ps = conn.prepareStatement(announcementsSql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> announcement = new HashMap<>();
+                announcement.put("title", rs.getString("title"));
+                announcement.put("content", rs.getString("content"));
+                announcements.add(announcement);
+            }
+        }
+
+        // Fetch user's quizzes taken count
+        String quizzesTakenSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(quizzesTakenSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    quizzesTakenCount = rs.getInt(1);
+                }
+            }
+        }
+
+        // Fetch popular quizzes (most taken)
+        String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
+                                  "FROM quizzes q " +
+                                  "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
+                                  "GROUP BY q.id, q.title, q.description " +
+                                  "ORDER BY attempt_count DESC, q.created_at DESC " +
+                                  "LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(popularQuizzesSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Map<String, Object> quiz = new HashMap<>();
                 quiz.put("id", rs.getInt("id"));
                 quiz.put("title", rs.getString("title"));
                 quiz.put("description", rs.getString("description"));
-                allQuizzes.add(quiz);
+                quiz.put("attempt_count", rs.getInt("attempt_count"));
+                popularQuizzes.add(quiz);
             }
         }
 
-        // Fetch quizzes created by the current user
-        String userQuizzesSql = "SELECT id, title, description FROM quizzes WHERE creator_id = ? ORDER BY created_at DESC LIMIT 10";
-        try (PreparedStatement ps = conn.prepareStatement(userQuizzesSql)) {
+        // Fetch recently created quizzes (from all users)
+        String recentQuizzesSql = "SELECT q.id, q.title, q.description, u.username as creator_name " +
+                                 "FROM quizzes q " +
+                                 "JOIN users u ON q.creator_id = u.id " +
+                                 "ORDER BY q.created_at DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(recentQuizzesSql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> quiz = new HashMap<>();
+                quiz.put("id", rs.getInt("id"));
+                quiz.put("title", rs.getString("title"));
+                quiz.put("description", rs.getString("description"));
+                quiz.put("creator_name", rs.getString("creator_name"));
+                recentlyCreatedQuizzes.add(quiz);
+            }
+        }
+
+        // Fetch user's recent quiz taking activities
+        String userQuizActivitiesSql = "SELECT qs.id, q.title, qs.score, qs.total_possible_score, qs.percentage_score, qs.completed_at " +
+                                      "FROM quiz_submissions qs " +
+                                      "JOIN quizzes q ON qs.quiz_id = q.id " +
+                                      "WHERE qs.user_id = ? AND qs.completed_at IS NOT NULL " +
+                                      "ORDER BY qs.completed_at DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(userQuizActivitiesSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> quiz = new HashMap<>();
-                    quiz.put("id", rs.getInt("id"));
-                    quiz.put("title", rs.getString("title"));
-                    quiz.put("description", rs.getString("description"));
-                    userQuizzes.add(quiz);
+                    Map<String, Object> activity = new HashMap<>();
+                    activity.put("quiz_title", rs.getString("title"));
+                    activity.put("score", rs.getInt("score"));
+                    activity.put("total_possible_score", rs.getInt("total_possible_score"));
+                    activity.put("percentage_score", rs.getBigDecimal("percentage_score"));
+                    activity.put("completed_at", rs.getTimestamp("completed_at"));
+                    userRecentQuizActivities.add(activity);
+                }
+            }
+        }
+
+        // Fetch user's recent quiz creating activities
+        String userCreatingActivitiesSql = "SELECT id, title, description, created_at " +
+                                          "FROM quizzes " +
+                                          "WHERE creator_id = ? " +
+                                          "ORDER BY created_at DESC LIMIT 10";
+        try (PreparedStatement ps = conn.prepareStatement(userCreatingActivitiesSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> activity = new HashMap<>();
+                    activity.put("id", rs.getInt("id"));
+                    activity.put("title", rs.getString("title"));
+                    activity.put("description", rs.getString("description"));
+                    activity.put("created_at", rs.getTimestamp("created_at"));
+                    userRecentCreatingActivities.add(activity);
                 }
             }
         }
@@ -193,6 +269,14 @@
             font-weight: 600;
             box-shadow: 0 2px 12px rgba(0,0,0,0.12);
         }
+        .announcement h3 {
+            margin: 0 0 0.5rem 0;
+            color: #1e40af;
+        }
+        .announcement p {
+            margin: 0;
+            color: #374151;
+        }
         .topic-row {
             margin-bottom: 0.5rem;
         }
@@ -220,6 +304,7 @@
             font-weight: 500;
             color: #00eaff;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: box-shadow 0.2s, transform 0.2s, color 0.2s;
@@ -231,6 +316,43 @@
             transform: translateY(-3px) scale(1.03);
             color: #ff4ffb;
             text-shadow: 0 0 12px #ff4ffb, 0 0 24px #ff4ffb;
+        }
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .card-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+        }
+        .card-stats {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+        .activity-item {
+            background: rgba(20, 20, 40, 0.92);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid #00eaff;
+        }
+        .activity-title {
+            font-weight: 600;
+            color: #00eaff;
+            margin-bottom: 0.3rem;
+        }
+        .activity-details {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .empty-message {
+            text-align: left;
+            color: #a5b4fc;
+            font-style: italic;
+            padding: 2rem 0;
         }
         @media (max-width: 900px) {
             .main-content {
@@ -301,6 +423,13 @@
             border-color: #e11d48;
             background: #fdf2f8;
         }
+        body.light-mode .activity-item {
+            background: #fff;
+            border-left-color: #3b82f6;
+        }
+        body.light-mode .activity-title {
+            color: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -339,56 +468,89 @@
         </div>
     </div>
 </div>
+
 <div class="main-content">
-    <div class="announcement">
-        Welcome to the new and improved QuizHub! Check out the new features.
-    </div>
+    <!-- Announcements Section -->
+    <% if (!announcements.isEmpty()) { %>
+        <div class="topic-row">
+            <h2>Announcements</h2>
+            <% for (Map<String, Object> announcement : announcements) { %>
+                <div class="announcement">
+                    <h3><%= announcement.get("title") %></h3>
+                    <p><%= announcement.get("content") %></p>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
 
+    <!-- Popular Quizzes Section (Most Taken) -->
     <div class="topic-row">
-        <h2>Recently Created By You</h2>
+        <h2>Popular Quizzes</h2>
         <div class="card-row">
-            <% for (Map<String, Object> quiz : userQuizzes) { %>
-            <div class="card">
-                <a href="take_quiz.jsp?id=<%= quiz.get("id") %>" class="card-link">
+            <% for (Map<String, Object> quiz : popularQuizzes) { %>
+                <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= quiz.get("id") %>'">
                     <div class="card-title"><%= quiz.get("title") %></div>
                     <div class="card-desc"><%= quiz.get("description") %></div>
-                </a>
-            </div>
+                    <div class="card-stats"><%= quiz.get("attempt_count") %> attempts</div>
+                </div>
+            <% } %>
+            <% if (popularQuizzes.isEmpty()) { %>
+                <div class="empty-message">No quizzes have been taken yet.</div>
             <% } %>
         </div>
     </div>
 
+    <!-- Recently Created Quizzes Section (From All Users) -->
     <div class="topic-row">
-        <h2>All Recent Quizzes</h2>
+        <h2>Recently Created Quizzes</h2>
         <div class="card-row">
-            <% for (Map<String, Object> quiz : allQuizzes) { %>
-            <div class="card">
-                <a href="take_quiz.jsp?id=<%= quiz.get("id") %>" class="card-link">
+            <% for (Map<String, Object> quiz : recentlyCreatedQuizzes) { %>
+                <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= quiz.get("id") %>'">
                     <div class="card-title"><%= quiz.get("title") %></div>
                     <div class="card-desc"><%= quiz.get("description") %></div>
-                </a>
-            </div>
+                    <div class="card-stats">by <%= quiz.get("creator_name") %></div>
+                </div>
             <% } %>
-            <% if (allQuizzes.isEmpty()) { %>
-                <p>No quizzes available yet. Why not create one?</p>
+            <% if (recentlyCreatedQuizzes.isEmpty()) { %>
+                <div class="empty-message">No quizzes have been created yet.</div>
             <% } %>
         </div>
     </div>
 
-    <h2 style="color:#3b82f6;">Available Quizzes</h2>
-    <div class="card-row">
-        <% for (Map<String, Object> quiz : allQuizzes) { %>
-            <div class="card" style="min-width:300px; margin:1rem; padding:1.5rem; background:#23243a; border-radius:12px; box-shadow:0 2px 8px #0002;">
-                <a href="TakeQuizServlet?quizId=<%= quiz.get("id") %>" style="font-size:1.2rem; font-weight:600; color:#00eaff; text-decoration:none;">
-                    <%= quiz.get("title") %>
-                </a>
-                <div style="color:#a5b4fc; margin-top:0.5rem; font-size:0.95rem;"><%= quiz.get("description") %></div>
-            </div>
-        <% } %>
-        <% if (allQuizzes.isEmpty()) { %>
-            <div style="color:#e11d48; font-size:1.1rem;">No quizzes available yet. Create one!</div>
+    <!-- User's Recent Quiz Taking Activities -->
+    <div class="topic-row">
+        <h2>Your Recent Quiz Activities</h2>
+        <% if (!userRecentQuizActivities.isEmpty()) { %>
+            <% for (Map<String, Object> activity : userRecentQuizActivities) { %>
+                <div class="activity-item">
+                    <div class="activity-title"><%= activity.get("quiz_title") %></div>
+                    <div class="activity-details">
+                        Score: <%= activity.get("score") %>/<%= activity.get("total_possible_score") %> 
+                        (<%= activity.get("percentage_score") %> percent)
+                        - <%= activity.get("completed_at") %>
+                    </div>
+                </div>
+            <% } %>
+        <% } else { %>
+            <div class="empty-message">You haven't taken any quizzes yet. Start exploring!</div>
         <% } %>
     </div>
+
+    <!-- User's Recent Quiz Creating Activities -->
+    <% if (!userRecentCreatingActivities.isEmpty()) { %>
+        <div class="topic-row">
+            <h2>Your Recent Quiz Creations</h2>
+            <div class="card-row">
+                <% for (Map<String, Object> activity : userRecentCreatingActivities) { %>
+                    <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= activity.get("id") %>'">
+                        <div class="card-title"><%= activity.get("title") %></div>
+                        <div class="card-desc"><%= activity.get("description") %></div>
+                        <div class="card-stats">Created: <%= activity.get("created_at") %></div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    <% } %>
 </div>
 
 <!-- Achievements Popup -->
@@ -507,11 +669,11 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
             <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">25</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;"><%= quizzesTakenCount %></div>
                 <div style="font-size: 0.9rem; color: #6b7280;">Quizzes Taken</div>
             </div>
             <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;"><%= userQuizzes.size() %></div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;"><%= userRecentCreatingActivities.size() %></div>
                 <div style="font-size: 0.9rem; color: #6b7280;">Quizzes Created</div>
             </div>
         </div>
@@ -529,6 +691,7 @@
     <h3>Friend Profile (placeholder)</h3>
     <p>This is where the friend's profile info will be shown.</p>
 </div>
+
 <script>
     function togglePopup(id) {
         document.querySelectorAll('.popup').forEach(p => p.classList.remove('active'));

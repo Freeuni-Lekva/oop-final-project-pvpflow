@@ -12,13 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMP NULL
 );
 
-DROP TABLE IF EXISTS userQuizes;
-CREATE TABLE userQuizes
-(username TEXT,
- id BIGINT(64),
- create_time TIMESTAMP
-);
-
 -- Table: announcements (for homepage announcements section)
 CREATE TABLE IF NOT EXISTS announcements (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -181,6 +174,12 @@ INSERT INTO achievements (name, description, points_required, quizzes_taken_requ
 ('Quiz Designer', 'Create 5 quizzes', 0, 0, 5, 0),
 ('Speed Demon', 'Complete a quiz in under 2 minutes', 0, 0, 0, 0),
 ('Consistent Performer', 'Get 3 perfect scores', 0, 0, 0, 3);
+
+-- Insert sample announcements (assuming admin user ID is 1)
+INSERT INTO announcements (title, content, created_by, is_active) VALUES
+('Welcome to QuizApp!', 'Welcome to the new and improved QuizApp! We have added many new features including announcements, popular quizzes, and activity tracking.', 1, TRUE),
+('New Features Available', 'Check out the new quiz creation tools with advanced question types and quiz properties. Create engaging quizzes for your friends!', 1, TRUE),
+('Quiz Competition Coming Soon', 'Get ready for our upcoming quiz competition! Practice with existing quizzes to improve your skills.', 1, TRUE);
 
 -- Create indexes for better performance
 CREATE INDEX idx_quiz_submissions_user_id ON quiz_submissions(user_id);

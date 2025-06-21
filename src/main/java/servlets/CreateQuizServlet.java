@@ -51,10 +51,11 @@ public class CreateQuizServlet extends HttpServlet {
             
             // Create quiz using QuizDAO
             int quizId = QuizDAO.createQuiz(conn, userId, title, description, 
-                                          isRandomized, isOnePage, immediateCorrection, practiceMode, questionCount);
+                                          isRandomized, isOnePage, immediateCorrection, practiceMode);
             System.out.println("Quiz created with ID: " + quizId);
             
             // Process questions and answers
+            int actualQuestionCount = 0;
             for (int i = 0; i < questionCount; i++) {
                 String qType = request.getParameter("questionType_" + i);
                 String qText = request.getParameter("questionText_" + i);
@@ -80,7 +81,11 @@ public class CreateQuizServlet extends HttpServlet {
                 
                 // Process answers based on question type
                 processAnswers(conn, questionId, qType, i, request);
+                actualQuestionCount++;
             }
+            
+            // Update the quiz with the actual number of questions added
+            QuizDAO.updateQuizQuestionCount(conn, quizId, actualQuestionCount);
             
             conn.commit();
             System.out.println("=== QUIZ CREATION COMPLETED SUCCESSFULLY ===");

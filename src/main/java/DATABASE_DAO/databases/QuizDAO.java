@@ -9,9 +9,9 @@ public class QuizDAO {
      */
     public static int createQuiz(Connection conn, int creatorId, String title, String description,
                                 boolean isRandomized, boolean isOnePage, boolean immediateCorrection, 
-                                boolean practiceMode, int questionCount) throws SQLException {
+                                boolean practiceMode) throws SQLException {
         String sql = "INSERT INTO quizzes (creator_id, title, description, is_randomized, is_one_page, " +
-                    "immediate_correction, practice_mode_enabled, question_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    "immediate_correction, practice_mode_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, creatorId);
             stmt.setString(2, title);
@@ -20,7 +20,6 @@ public class QuizDAO {
             stmt.setBoolean(5, isOnePage);
             stmt.setBoolean(6, immediateCorrection);
             stmt.setBoolean(7, practiceMode);
-            stmt.setInt(8, questionCount);
             stmt.executeUpdate();
             ResultSet rs = stmt.getGeneratedKeys();
             if (rs.next()) {
