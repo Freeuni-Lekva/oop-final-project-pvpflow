@@ -65,8 +65,8 @@ public class AdminServlet extends HttpServlet {
             case "createAnnouncement":
                 createAnnouncement(request, response, userId);
                 break;
-            case "deleteAnnouncement":
-                deleteAnnouncement(request, response);
+            case "toggleAnnouncementStatus":
+                toggleAnnouncementStatus(request, response);
                 break;
             case "deleteUser":
                 deleteUser(request, response);
@@ -118,7 +118,7 @@ public class AdminServlet extends HttpServlet {
             session.removeAttribute("error");
         }
         
-        request.setAttribute("announcements", adminDAO.getAnnouncements());
+        request.setAttribute("announcements", adminDAO.getAnnouncements(false));
         request.getRequestDispatcher("admin_announcements.jsp").forward(request, response);
     }
 
@@ -144,20 +144,20 @@ public class AdminServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/AdminServlet?action=announcements");
     }
 
-    private void deleteAnnouncement(HttpServletRequest request, HttpServletResponse response) 
+    private void toggleAnnouncementStatus(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession();
         try {
             int announcementId = Integer.parseInt(request.getParameter("announcementId"));
-            if (adminDAO.deleteAnnouncement(announcementId)) {
-                session.setAttribute("message", "Announcement deleted successfully!");
+            if (adminDAO.toggleAnnouncementStatus(announcementId)) {
+                session.setAttribute("message", "Announcement status changed successfully!");
             } else {
-                session.setAttribute("error", "Failed to delete announcement!");
+                session.setAttribute("error", "Failed to change announcement status!");
             }
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Invalid announcement ID!");
         }
-        
+
         response.sendRedirect(request.getContextPath() + "/AdminServlet?action=announcements");
     }
 

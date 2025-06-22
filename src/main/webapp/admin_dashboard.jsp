@@ -274,22 +274,22 @@
 
         <!-- Admin Functions -->
         <div class="admin-functions">
-            <a href="AdminServlet?action=announcements" class="function-card">
-                <span class="function-icon">📢</span>
-                <div class="function-title">Manage Announcements</div>
-                <div class="function-desc">Create, edit, and delete announcements that appear on the homepage. Keep users informed about important updates and news.</div>
-            </a>
-
             <a href="AdminServlet?action=users" class="function-card">
-                <span class="function-icon">👥</span>
+                <span class="function-icon">👤</span>
                 <div class="function-title">Manage Users</div>
-                <div class="function-desc">View all user accounts, remove users, and promote users to administrator status. Monitor user activity and manage permissions.</div>
+                <div class="function-desc">View, delete, and promote users to administrators.</div>
             </a>
 
             <a href="AdminServlet?action=quizzes" class="function-card">
                 <span class="function-icon">📝</span>
                 <div class="function-title">Manage Quizzes</div>
-                <div class="function-desc">View all quizzes, remove inappropriate content, and clear quiz history. Maintain quality and manage quiz submissions.</div>
+                <div class="function-desc">View, delete quizzes, and clear their submission histories.</div>
+            </a>
+
+            <a href="AdminServlet?action=announcements" class="function-card">
+                <span class="function-icon">📢</span>
+                <div class="function-title">Manage Announcements</div>
+                <div class="function-desc">Create, view, and delete site-wide announcements.</div>
             </a>
 
             <a href="AdminServlet?action=statistics" class="function-card">

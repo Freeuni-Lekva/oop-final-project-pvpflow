@@ -18,8 +18,11 @@
         return;
     }
 
-    // Get announcements
-    List<Map<String, Object>> announcements = adminDAO.getAnnouncements();
+    // Data is provided by the AdminServlet
+    List<Map<String, Object>> announcements = (List<Map<String, Object>>) request.getAttribute("announcements");
+    if (announcements == null) {
+        announcements = new ArrayList<>();
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -286,11 +289,11 @@
         <div class="header-content">
             <a href="admin_dashboard.jsp" class="logo">QuizApp Admin</a>
             <div class="nav-buttons">
-                <a href="admin_dashboard.jsp" class="nav-btn">Dashboard</a>
+                <a href="AdminServlet?action=dashboard" class="nav-btn">Dashboard</a>
                 <a href="AdminServlet?action=users" class="nav-btn">Users</a>
                 <a href="AdminServlet?action=quizzes" class="nav-btn">Quizzes</a>
+                <a href="AdminServlet?action=announcements" class="nav-btn">Announcements</a>
                 <a href="AdminServlet?action=statistics" class="nav-btn">Statistics</a>
-                <span class="admin-badge">ADMIN</span>
                 <a href="homepage.jsp" class="nav-btn">Home</a>
                 <a href="LogoutServlet" class="nav-btn">Logout</a>
             </div>
@@ -350,14 +353,22 @@
                             <div>
                                 <div class="announcement-title"><%= announcement.get("title") %></div>
                                 <div class="announcement-meta">
-                                    Created by <%= announcement.get("created_by_name") %> on <%= new java.text.SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm a").format(announcement.get("created_at")) %>
+                                    Status: <%
+                                        boolean isActive = (Boolean) announcement.get("is_active");
+                                        if (isActive) {
+                                            out.print("<span style='color: #4ade80;'>Active</span>");
+                                        } else {
+                                            out.print("<span style='color: #f87171;'>Inactive</span>");
+                                        }
+                                    %>
+                                    | Created by <%= announcement.get("created_by_name") %> on <%= new java.text.SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm a").format(announcement.get("created_at")) %>
                                 </div>
                             </div>
                             <form action="AdminServlet" method="post" class="announcement-actions">
-                                <input type="hidden" name="action" value="deleteAnnouncement">
+                                <input type="hidden" name="action" value="toggleAnnouncementStatus">
                                 <input type="hidden" name="announcementId" value="<%= announcement.get("id") %>">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this announcement? This action cannot be undone.')">
-                                    Delete
+                                <button type="submit" class="btn <%= isActive ? "btn-danger" : "" %>">
+                                    <%= isActive ? "Deactivate" : "Activate" %>
                                 </button>
                             </form>
                         </div>

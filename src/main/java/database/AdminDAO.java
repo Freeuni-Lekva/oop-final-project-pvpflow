@@ -145,13 +145,30 @@ public class AdminDAO {
         return false;
     }
     
-    public List<Map<String, Object>> getAnnouncements() {
+    public boolean toggleAnnouncementStatus(int announcementId) {
+        String sql = "UPDATE announcements SET is_active = NOT is_active WHERE id = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, announcementId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public List<Map<String, Object>> getAnnouncements(boolean activeOnly) {
         List<Map<String, Object>> announcements = new ArrayList<>();
-        String sql = "SELECT id, title, content, created_at, u.username as created_by_name " +
-                    "FROM announcements a " +
-                    "JOIN users u ON a.created_by = u.id " +
-                    "WHERE a.is_active = TRUE " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.id, a.title, a.content, a.created_at, a.is_active, u.username as created_by_name " +
+                     "FROM announcements a " +
+                     "JOIN users u ON a.created_by = u.id ";
+        
+        if (activeOnly) {
+            sql += "WHERE a.is_active = TRUE ";
+        }
+
+        sql += "ORDER BY a.created_at DESC";
+        
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -161,6 +178,7 @@ public class AdminDAO {
                 announcement.put("title", rs.getString("title"));
                 announcement.put("content", rs.getString("content"));
                 announcement.put("created_at", rs.getTimestamp("created_at"));
+                announcement.put("is_active", rs.getBoolean("is_active"));
                 announcement.put("created_by_name", rs.getString("created_by_name"));
                 announcements.add(announcement);
             }
