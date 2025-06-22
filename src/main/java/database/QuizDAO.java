@@ -1,6 +1,10 @@
 package database;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class QuizDAO {
     
@@ -11,7 +15,7 @@ public class QuizDAO {
                                 boolean isRandomized, boolean isOnePage, boolean immediateCorrection, 
                                 boolean practiceMode) throws SQLException {
         String sql = "INSERT INTO quizzes (creator_id, title, description, is_randomized, is_one_page, " +
-                    "immediate_correction, practice_mode_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    "immediate_correction, practice_mode_enabled, question_count) VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, creatorId);
             stmt.setString(2, title);
@@ -21,9 +25,10 @@ public class QuizDAO {
             stmt.setBoolean(6, immediateCorrection);
             stmt.setBoolean(7, practiceMode);
             stmt.executeUpdate();
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                return rs.getInt(1); // quiz_id
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1); // quiz_id
+                }
             }
         }
         throw new SQLException("Failed to create quiz");
@@ -44,9 +49,10 @@ public class QuizDAO {
             stmt.setInt(5, questionOrder);
             stmt.setBoolean(6, isOrdered);
             stmt.executeUpdate();
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                return rs.getInt(1); // question_id
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1); // question_id
+                }
             }
         }
         throw new SQLException("Failed to add question");
@@ -80,5 +86,47 @@ public class QuizDAO {
             stmt.setInt(2, quizId);
             stmt.executeUpdate();
         }
+    }
+
+    public List<Map<String, Object>> getQuizzesByCreatorId(int creatorId) throws SQLException {
+        List<Map<String, Object>> quizzes = new ArrayList<>();
+        String sql = "SELECT id, title, created_at FROM quizzes WHERE creator_id = ? ORDER BY created_at DESC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, creatorId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> quiz = new HashMap<>();
+                    quiz.put("id", rs.getInt("id"));
+                    quiz.put("title", rs.getString("title"));
+                    quiz.put("created_at", rs.getTimestamp("created_at"));
+                    quizzes.add(quiz);
+                }
+            }
+        }
+        return quizzes;
+    }
+
+    public List<Map<String, Object>> getQuizHistoryByUserId(int userId) throws SQLException {
+        List<Map<String, Object>> history = new ArrayList<>();
+        String sql = "SELECT q.title, qs.percentage_score, qs.completed_at " +
+                     "FROM quiz_submissions qs " +
+                     "JOIN quizzes q ON qs.quiz_id = q.id " +
+                     "WHERE qs.user_id = ? AND qs.completed_at IS NOT NULL " +
+                     "ORDER BY qs.completed_at DESC";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> record = new HashMap<>();
+                    record.put("title", rs.getString("title"));
+                    record.put("percentage_score", rs.getBigDecimal("percentage_score"));
+                    record.put("completed_at", rs.getTimestamp("completed_at"));
+                    history.add(record);
+                }
+            }
+        }
+        return history;
     }
 } 

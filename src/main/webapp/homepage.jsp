@@ -70,7 +70,7 @@
         String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
                                   "FROM quizzes q " +
                                   "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
-                                  "GROUP BY q.id, q.title, q.description " +
+                                  "GROUP BY q.id, q.title, q.description,q.created_at " +
                                   "ORDER BY attempt_count DESC, q.created_at DESC " +
                                   "LIMIT 10";
         try (PreparedStatement ps = conn.prepareStatement(popularQuizzesSql);
@@ -446,6 +446,41 @@
             color: #e0e7ff;
         }
 
+        .user-menu {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .username-display {
+            padding: 0.8rem 1rem;
+            background-color: #3a3a5a;
+            border-radius: 8px;
+            color: #e0e7ff;
+            font-weight: 600;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #2a2a4a;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: #e0e7ff;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-content a:hover {
+            background-color: #3a3a5a;
+        }
+        .user-menu:hover .dropdown-content {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -482,10 +517,13 @@
                 <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
                 <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
                 <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>!
+                <div class="user-menu">
+                    <span class="username-display"><%= username %></span>
+                    <div class="dropdown-content">
+                        <a href="profile">Profile</a>
+                        <a href="LogoutServlet">Logout</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
