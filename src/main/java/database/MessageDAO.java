@@ -12,7 +12,7 @@ public class MessageDAO {
      * Sends a message from a sender to a receiver.
      */
     public void sendMessage(int senderId, int receiverId, String messageText) throws SQLException {
-        String sql = "INSERT INTO messages (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO messages (sender_id, recipient_id, content, message_type) VALUES (?, ?, ?, 'general')";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, senderId);
@@ -32,26 +32,26 @@ public class MessageDAO {
         // and picks the top one for each pair.
         String sql = "WITH LatestMessages AS (" +
                      "    SELECT " +
-                     "        m.message_id, " +
-                     "        m.message_text, " +
-                     "        m.sent_at, " +
+                     "        m.id, " +
+                     "        m.content, " +
+                     "        m.created_at, " +
                      "        m.is_read, " +
                      "        m.sender_id, " +
-                     "        m.receiver_id, " +
-                     "        ROW_NUMBER() OVER(PARTITION BY LEAST(m.sender_id, m.receiver_id), GREATEST(m.sender_id, m.receiver_id) ORDER BY m.sent_at DESC) as rn " +
+                     "        m.recipient_id, " +
+                     "        ROW_NUMBER() OVER(PARTITION BY LEAST(m.sender_id, m.recipient_id), GREATEST(m.sender_id, m.recipient_id) ORDER BY m.created_at DESC) as rn " +
                      "    FROM messages m " +
-                     "    WHERE m.sender_id = ? OR m.receiver_id = ? " +
+                     "    WHERE m.sender_id = ? OR m.recipient_id = ? " +
                      ") " +
                      "SELECT " +
-                     "    lm.message_text, " +
-                     "    lm.sent_at, " +
+                     "    lm.content, " +
+                     "    lm.created_at, " +
                      "    lm.is_read, " +
                      "    u.id as friend_id, " +
                      "    u.username as friend_username " +
                      "FROM LatestMessages lm " +
-                     "JOIN users u ON u.id = IF(lm.sender_id = ?, lm.receiver_id, lm.sender_id) " +
+                     "JOIN users u ON u.id = IF(lm.sender_id = ?, lm.recipient_id, lm.sender_id) " +
                      "WHERE lm.rn = 1 " +
-                     "ORDER BY lm.sent_at DESC";
+                     "ORDER BY lm.created_at DESC";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -63,8 +63,8 @@ public class MessageDAO {
                     Map<String, Object> convo = new HashMap<>();
                     convo.put("friend_id", rs.getInt("friend_id"));
                     convo.put("friend_username", rs.getString("friend_username"));
-                    convo.put("last_message", rs.getString("message_text"));
-                    convo.put("sent_at", rs.getTimestamp("sent_at"));
+                    convo.put("last_message", rs.getString("content"));
+                    convo.put("sent_at", rs.getTimestamp("created_at"));
                     convo.put("is_read", rs.getBoolean("is_read"));
                     conversations.add(convo);
                 }
