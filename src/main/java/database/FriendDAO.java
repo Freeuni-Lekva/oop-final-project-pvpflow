@@ -12,10 +12,10 @@ import java.util.Map;
 public class FriendDAO {
 
     /**
-     * Sends a friend request from a requester to a requestee.
+     * Sends a friend request by creating a 'pending' entry in the friends table.
      */
     public void sendFriendRequest(int requesterId, int requesteeId) throws SQLException {
-        String sql = "INSERT INTO friend_requests (requester_id, requestee_id) VALUES (?, ?)";
+        String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, requesterId);
@@ -25,66 +25,57 @@ public class FriendDAO {
     }
 
     /**
-     * Accepts a friend request and creates a friendship.
+     * Accepts a friend request by updating the status and creating a reciprocal relationship.
      */
-    public void acceptFriendRequest(int requestId) throws SQLException {
-        String selectSql = "SELECT requester_id, requestee_id FROM friend_requests WHERE request_id = ? AND status = 'pending'";
-        String updateSql = "UPDATE friend_requests SET status = 'accepted' WHERE request_id = ?";
-        String insertSql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
-
+    public void acceptFriendRequest(int friendshipId) throws SQLException {
+        String updateSql = "UPDATE friends SET status = 'accepted' WHERE id = ?";
+        String selectSql = "SELECT user_id, friend_id FROM friends WHERE id = ?";
+        String insertSql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'accepted') ON DUPLICATE KEY UPDATE status = 'accepted'";
+        
         try (Connection conn = DBUtil.getConnection()) {
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false);
 
-            int requesterId = -1;
-            int requesteeId = -1;
-
-            // Get requester and requestee IDs
-            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
-                selectStmt.setInt(1, requestId);
-                try (ResultSet rs = selectStmt.executeQuery()) {
-                    if (rs.next()) {
-                        requesterId = rs.getInt("requester_id");
-                        requesteeId = rs.getInt("requestee_id");
-                    } else {
-                        throw new SQLException("Request not found or already handled.");
+            int userId = -1;
+            int friendId = -1;
+            
+            try(PreparedStatement stmt = conn.prepareStatement(selectSql)){
+                stmt.setInt(1, friendshipId);
+                try(ResultSet rs = stmt.executeQuery()){
+                    if(rs.next()){
+                        userId = rs.getInt("user_id");
+                        friendId = rs.getInt("friend_id");
                     }
                 }
             }
 
-            // Update request status
-            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                updateStmt.setInt(1, requestId);
-                updateStmt.executeUpdate();
+            if(userId == -1) throw new SQLException("Friend request not found.");
+
+            try(PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                stmt.setInt(1, friendshipId);
+                stmt.executeUpdate();
+            }
+            
+            try(PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                stmt.setInt(1, friendId);
+                stmt.setInt(2, userId);
+                stmt.executeUpdate();
             }
 
-            // Add to friends table (both ways)
-            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-                insertStmt.setInt(1, requesterId);
-                insertStmt.setInt(2, requesteeId);
-                insertStmt.addBatch();
-
-                insertStmt.setInt(1, requesteeId);
-                insertStmt.setInt(2, requesterId);
-                insertStmt.addBatch();
-                
-                insertStmt.executeBatch();
-            }
-
-            conn.commit(); // Commit transaction
+            conn.commit();
         } catch (SQLException e) {
-            // Rollback on error
+            // Consider rolling back here
             throw e;
         }
     }
     
     /**
-     * Rejects a friend request.
+     * Rejects a friend request by updating the status to 'rejected'.
      */
-    public void rejectFriendRequest(int requestId) throws SQLException {
-        String sql = "UPDATE friend_requests SET status = 'rejected' WHERE request_id = ?";
+    public void rejectFriendRequest(int friendshipId) throws SQLException {
+        String sql = "UPDATE friends SET status = 'rejected' WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, requestId);
+            stmt.setInt(1, friendshipId);
             stmt.executeUpdate();
         }
     }
@@ -125,14 +116,14 @@ public class FriendDAO {
      */
     public List<Map<String, Object>> getPendingRequests(int userId) throws SQLException {
         List<Map<String, Object>> requests = new ArrayList<>();
-        String sql = "SELECT fr.request_id, u.username FROM friend_requests fr JOIN users u ON fr.requester_id = u.id WHERE fr.requestee_id = ? AND fr.status = 'pending'";
+        String sql = "SELECT f.id, u.username FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> request = new HashMap<>();
-                    request.put("request_id", rs.getInt("request_id"));
+                    request.put("request_id", rs.getInt("id"));
                     request.put("username", rs.getString("username"));
                     requests.add(request);
                 }
@@ -146,7 +137,7 @@ public class FriendDAO {
      */
     public List<Map<String, Object>> getFriends(int userId) throws SQLException {
         List<Map<String, Object>> friends = new ArrayList<>();
-        String sql = "SELECT u.id, u.username FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ?";
+        String sql = "SELECT u.id, u.username FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = 'accepted'";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
