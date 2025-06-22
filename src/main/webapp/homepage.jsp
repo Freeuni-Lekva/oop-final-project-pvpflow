@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, java.util.*, DATABASE_DAO.DBUtil, DATABASE_DAO.FriendDAO, DATABASE_DAO.MessageDAO" %>
+<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
