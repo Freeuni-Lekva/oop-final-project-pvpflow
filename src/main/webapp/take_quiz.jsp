@@ -1,92 +1,257 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.QuizDAO" %>
 <%
-    Map<String, Object> quiz = (Map<String, Object>) request.getAttribute("quiz");
-    if (quiz == null) {
-        response.sendRedirect("homepage.jsp");
+    // --- User Session ---
+    String username = (String) session.getAttribute("user");
+    Integer userId = (Integer) session.getAttribute("userId");
+    if (username == null || userId == null) {
+        response.sendRedirect("login.jsp");
         return;
     }
-    List<Map<String, Object>> questions = (List<Map<String, Object>>) quiz.get("questions");
+
+    // --- Data Fetching ---
+    Map<String, Object> quiz = null;
+    List<Map<String, Object>> questions = new ArrayList<>();
+    String error = null;
+
+    String quizIdStr = request.getParameter("id");
+    if (quizIdStr == null || quizIdStr.trim().isEmpty()) {
+        error = "No quiz ID provided. Please select a quiz to take.";
+    } else {
+        try {
+            int quizId = Integer.parseInt(quizIdStr);
+            QuizDAO quizDAO = new QuizDAO();
+            quiz = quizDAO.getQuizById(quizId);
+
+            if (quiz == null) {
+                error = "The quiz you are looking for could not be found.";
+            } else {
+                questions = (List<Map<String, Object>>) quiz.get("questions");
+                if (questions == null || questions.isEmpty()) {
+                    error = "This quiz has no questions yet.";
+                }
+            }
+        } catch (NumberFormatException e) {
+            error = "Invalid quiz ID format.";
+        } catch (Exception e) {
+            error = "An error occurred while loading the quiz. Please try again later.";
+            e.printStackTrace(); // Log for debugging
+        }
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Take Quiz - <%= quiz.get("title") %></title>
+    <title>Take Quiz<% if (quiz != null) { %> - <%= quiz.get("title") %><% } %></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: #0a0a1a; color: #e0e7ff; }
-        .container { max-width: 900px; margin: 2rem auto; background: #1f2937; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.3); padding: 2.5rem; border: 2px solid #374151; }
-        h1 { color: #3b82f6; margin-bottom: 0.5rem; }
-        .desc { color: #a5b4fc; margin-bottom: 2rem; }
-        .question-block { background: #374151; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 1px solid #4b5563; }
-        .question-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem; }
-        .answers-list { margin-top: 1rem; }
-        .answer-row { margin-bottom: 0.7rem; }
-        input[type="text"], textarea { width: 100%; padding: 0.7rem; border: 1px solid #4b5563; border-radius: 8px; font-size: 1rem; background: #23243a; color: #e0e7ff; }
-        input[type="radio"], input[type="checkbox"] { margin-right: 0.5rem; }
-        .submit-btn { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; cursor: pointer; margin-top: 2rem; display: block; width: 100%; }
+        body {
+            margin: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background: #0a0a1a;
+            color: #e0e7ff;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00eaff;
+            text-decoration: none;
+        }
+        
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e7ff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .container {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border-radius: 16px;
+            padding: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 234, 255, 0.1);
+        }
+
+        h1 {
+            color: #00eaff;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+
+        .desc {
+            color: #a5b4fc;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        .question-block {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .question-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .answer-row {
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .answer-row:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #00eaff;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.2);
+            color: #e0e7ff;
+            box-sizing: border-box;
+        }
+
+        input[type="radio"], input[type="checkbox"] {
+            transform: scale(1.4);
+            accent-color: #3b82f6;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2rem;
+            display: block;
+            width: 100%;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1><%= quiz.get("title") %></h1>
-    <div class="desc"><%= quiz.get("description") %></div>
-    <form action="GradeQuizServlet" method="post">
-        <input type="hidden" name="quizId" value="<%= quiz.get("id") %>" />
-        <% for (int i = 0; i < questions.size(); i++) {
-            Map<String, Object> q = questions.get(i);
-            String qType = (String) q.get("question_type");
-            List<Map<String, Object>> answers = (List<Map<String, Object>>) q.get("answers");
-        %>
-        <div class="question-block">
-            <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
-            <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
-                <img src="<%= q.get("image_url") %>" alt="Question Image" style="max-width: 100%; margin-bottom: 1rem; border-radius: 8px;" />
-            <% } %>
-            <div class="answers-list">
-                <% if ("multiple_choice".equals(qType)) { %>
-                    <% for (int a = 0; a < answers.size(); a++) { %>
-                        <div class="answer-row">
-                            <input type="radio" name="q_<%=i%>" value="<%=a%>" required />
-                            <%= answers.get(a).get("answer_text") %>
-                        </div>
-                    <% } %>
-                <% } else if ("multi_choice_multi_answer".equals(qType)) { %>
-                    <% for (int a = 0; a < answers.size(); a++) { %>
-                        <div class="answer-row">
-                            <input type="checkbox" name="q_<%=i%>_a_<%=a%>" value="true" />
-                            <%= answers.get(a).get("answer_text") %>
-                        </div>
-                    <% } %>
-                <% } else if ("multi_answer".equals(qType)) { %>
-                    <% for (int a = 0; a < answers.size(); a++) { %>
-                        <div class="answer-row">
-                            <input type="text" name="q_<%=i%>_a_<%=a%>" placeholder="Answer <%=a+1%>" />
-                        </div>
-                    <% } %>
-                <% } else if ("matching".equals(qType)) { %>
-                    <% for (int a = 0; a < answers.size(); a++) {
-                        String[] pair = ((String)answers.get(a).get("answer_text")).split("::", 2);
-                        String left = pair.length > 0 ? pair[0] : "";
-                    %>
-                        <div class="answer-row">
-                            <span><%= left %> → </span>
-                            <input type="text" name="q_<%=i%>_match_<%=a%>" placeholder="Match for '<%= left %>'" />
-                        </div>
-                    <% } %>
-                <% } else if ("picture_response".equals(qType)) { %>
-                    <input type="text" name="q_<%=i%>_pic" placeholder="Your answer" />
-                <% } else if ("essay".equals(qType)) { %>
-                    <textarea name="q_<%=i%>_essay" rows="4" placeholder="Your answer"></textarea>
-                <% } else { %>
-                    <input type="text" name="q_<%=i%>_text" placeholder="Your answer" />
-                <% } %>
-            </div>
+    <div class="header">
+        <div class="header-content">
+            <a href="homepage.jsp" class="logo">QuizApp</a>
+            <a href="homepage.jsp" class="nav-btn">Back to Home</a>
         </div>
-        <% } %>
-        <button class="submit-btn" type="submit">Submit Answers</button>
-    </form>
-</div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <% if (error != null) { %>
+                <div class="error-message"><%= error %></div>
+            <% } else if (quiz != null) { %>
+                <h1><%= quiz.get("title") %></h1>
+                <div class="desc"><%= quiz.get("description") %></div>
+                
+                <form action="GradeQuizServlet" method="post" id="quizForm">
+                    <input type="hidden" name="quizId" value="<%= quiz.get("id") %>" />
+                    <% String practiceParam = request.getParameter("practice");
+                       if ("true".equals(practiceParam)) { %>
+                        <input type="hidden" name="practice" value="true">
+                    <% } %>
+                    <% for (int i = 0; i < questions.size(); i++) {
+                        Map<String, Object> q = questions.get(i);
+                        String qType = (String) q.get("question_type");
+                        List<Map<String, Object>> answers = (List<Map<String, Object>>) q.get("answers");
+                    %>
+                    <div class="question-block">
+                        <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
+                        <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
+                            <img src="<%= q.get("image_url") %>" alt="Question Image" style="max-width: 100%; margin-bottom: 1rem; border-radius: 8px;" />
+                        <% } %>
+                        <div class="answers-list">
+                            <% if ("multiple_choice".equals(qType)) { %>
+                                <% for (int a = 0; a < answers.size(); a++) { %>
+                                    <div class="answer-row">
+                                        <input type="radio" name="q_<%=q.get("id")%>" value="<%=answers.get(a).get("id")%>" id="q_<%=q.get("id")%>_a_<%=a%>" required />
+                                        <label for="q_<%=q.get("id")%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
+                                    </div>
+                                <% } %>
+                            <% } else if ("multi_choice_multi_answer".equals(qType)) { %>
+                                <% for (int a = 0; a < answers.size(); a++) { %>
+                                    <div class="answer-row">
+                                        <input type="checkbox" name="q_<%=q.get("id")%>_a_<%=answers.get(a).get("id")%>" value="true" />
+                                        <%= answers.get(a).get("answer_text") %>
+                                    </div>
+                                <% } %>
+                            <% } else if ("question_response".equals(qType) || "fill_in_blank".equals(qType)) { %>
+                                <input type="text" name="q_<%=q.get("id")%>_text" placeholder="Your answer" />
+                            <% } else if ("essay".equals(qType)) { %>
+                                <textarea name="q_<%=q.get("id")%>_essay" rows="5" placeholder="Your answer"></textarea>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+                    <button class="submit-btn" type="submit">Submit Answers</button>
+                </form>
+            <% } %>
+        </div>
+    </div>
 </body>
 </html> 
