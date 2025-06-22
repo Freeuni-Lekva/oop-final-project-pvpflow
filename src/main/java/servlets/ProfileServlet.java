@@ -21,7 +21,6 @@ import java.util.Map;
 public class ProfileServlet extends HttpServlet {
     private final FriendDAO friendDAO = new FriendDAO();
     private final UserDAO userDAO = new UserDAO();
-    private final QuizDAO quizDAO = new QuizDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
 
     @Override
@@ -42,12 +41,11 @@ public class ProfileServlet extends HttpServlet {
         try {
             friends = friendDAO.getFriends(userId);
             user = userDAO.getUserById(userId);
-            createdQuizzes = quizDAO.getQuizzesByCreatorId(userId);
-            quizHistory = quizDAO.getQuizHistoryByUserId(userId);
+            createdQuizzes = QuizDAO.getQuizzesByCreatorId(userId);
+            quizHistory = QuizDAO.getQuizHistoryByUserId(userId);
             achievements = achievementDAO.getAchievementsByUserId(userId);
         } catch (SQLException e) {
-            e.printStackTrace(); // Log the error
-            // Optionally, set an error message for the user
+            throw new ServletException("Database error while fetching profile data", e);
         }
 
         request.setAttribute("friends", friends);

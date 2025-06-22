@@ -88,7 +88,7 @@ public class QuizDAO {
         }
     }
 
-    public List<Map<String, Object>> getQuizzesByCreatorId(int creatorId) throws SQLException {
+    public static List<Map<String, Object>> getQuizzesByCreatorId(int creatorId) throws SQLException {
         List<Map<String, Object>> quizzes = new ArrayList<>();
         String sql = "SELECT id, title, created_at FROM quizzes WHERE creator_id = ? ORDER BY created_at DESC";
         try (Connection conn = DBUtil.getConnection();
@@ -107,7 +107,7 @@ public class QuizDAO {
         return quizzes;
     }
 
-    public List<Map<String, Object>> getQuizHistoryByUserId(int userId) throws SQLException {
+    public static List<Map<String, Object>> getQuizHistoryByUserId(int userId) throws SQLException {
         List<Map<String, Object>> history = new ArrayList<>();
         String sql = "SELECT q.title, qs.percentage_score, qs.completed_at " +
                      "FROM quiz_submissions qs " +
