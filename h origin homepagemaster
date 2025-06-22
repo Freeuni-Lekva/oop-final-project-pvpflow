@@ -1,0 +1,45 @@
+[33mcommit 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: ae8894c 060df1c
+Author: Sophie <sgurj22@freeuni.edu.ge>
+Date:   Sun Jun 22 12:49:13 2025 +0400
+
+    Merge pull request #5 from Freeuni-Lekva/feature/add-friends-and-messages
+    
+    Feature/add friends and messages
+
+[33mcommit 060df1c39fa5d67468872844b506a1247e5dcb2f[m[33m ([m[1;31morigin/feature/add-friends-and-messages[m[33m)[m
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Sun Jun 22 12:14:26 2025 +0400
+
+    Feat: Implement full friends and messaging system
+
+[33mcommit d05e9f482aae80ea7ebc7960c570e2b3bf90ddb0[m
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Sun Jun 22 12:11:43 2025 +0400
+
+    Fix(build): Correctly remove duplicate variables in DBUtil and add message/friends
+
+[33mcommit 3343d60bbf2929f1d5d14d9c0b659cd760374134[m
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Sun Jun 22 12:07:10 2025 +0400
+
+    Fix: Remove duplicate database credentials and add messages and frineds
+
+[33mcommit bdab04e4c7dad8487b058a79ac745e7e1b3ed68a[m
+Merge: de73f96 a6b20c6
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Sat Jun 21 14:19:39 2025 +0400
+
+    Merge remote homepage branch with local changes
+
+[33mcommit de73f96d1d50ad15af3dab272e381aeb7ba5de8f[m
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Sat Jun 21 14:03:16 2025 +0400
+
+    Saving my local work before pulling
+
+[33mcommit 20f6873ebfdb9f0be35881569fc2adf694f30bb8[m
+Author: Lodia15 <llodi22@freeuni.edu.ge>
+Date:   Thu Jun 19 20:14:53 2025 +0400
+
+    my local changes
