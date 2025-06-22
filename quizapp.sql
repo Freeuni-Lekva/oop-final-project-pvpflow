@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS submission_answers (
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
+<<<<<<< HEAD
 -- Table: achievements (for user achievements)
 CREATE TABLE IF NOT EXISTS achievements (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -192,4 +193,41 @@ CREATE INDEX idx_messages_is_read ON messages(is_read);
 CREATE INDEX idx_friends_user_id ON friends(user_id);
 CREATE INDEX idx_friends_status ON friends(status);
 
+=======
+-- Table: friend_requests
+CREATE TABLE IF NOT EXISTS friend_requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    requestee_id INT NOT NULL,
+    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (requester_id) REFERENCES users(id),
+    FOREIGN KEY (requestee_id) REFERENCES users(id),
+    UNIQUE KEY (requester_id, requestee_id)
+);
+
+-- Table: friends
+CREATE TABLE IF NOT EXISTS friends (
+    friendship_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    friend_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (friend_id) REFERENCES users(id),
+    UNIQUE KEY (user_id, friend_id)
+);
+
+-- Table: messages
+CREATE TABLE IF NOT EXISTS messages (
+    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message_text TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+
+>>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
 

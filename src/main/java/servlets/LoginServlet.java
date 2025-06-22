@@ -21,43 +21,32 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String usernameOrEmail = request.getParameter("usernameOrEmail");
         String password = request.getParameter("password");
-        String hashedPassword = PasswordUtil.hashPassword(password);
+        
+        try (Connection conn = DBUtil.getConnection()) {
+            String sql = "SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, usernameOrEmail);
+            stmt.setString(2, usernameOrEmail);
+            
+            ResultSet rs = stmt.executeQuery();
 
-        System.out.println("[DEBUG] Login attempt: usernameOrEmail='" + usernameOrEmail + "', hashedPassword='" + hashedPassword + "'");
-
-        int retries = 2;
-        while (retries > 0) {
-            try (Connection conn = DBUtil.getConnection()) {
-                String sql = "SELECT * FROM users WHERE (username = ? OR email = ?) AND password_hash = ?";
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                stmt.setString(1, usernameOrEmail);
-                stmt.setString(2, usernameOrEmail);
-                stmt.setString(3, hashedPassword);
-                ResultSet rs = stmt.executeQuery();
-                boolean found = rs.next();
-                System.out.println("[DEBUG] User found: " + found);
-                if (found) {
+            if (rs.next()) {
+                String storedHash = rs.getString("password_hash");
+                if (PasswordUtil.checkPassword(password, storedHash)) {
                     HttpSession session = request.getSession();
+                    session.setAttribute("userId", rs.getInt("id"));
                     session.setAttribute("user", rs.getString("username"));
                     session.setAttribute("email", rs.getString("email"));
-                    session.setAttribute("userId", rs.getInt("id"));
                     response.sendRedirect("homepage.jsp");
-                    return;
                 } else {
-                    response.sendRedirect("login.jsp?error=Invalid+username/email+or+password");
-                    return;
+                    response.sendRedirect("login.jsp?error=Invalid+credentials");
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                System.out.println("[DEBUG] SQL Error: " + e.getMessage());
-                retries--;
-                if (retries == 0) {
-                    response.sendRedirect("login.jsp?error=Database+error:+" + e.getMessage().replace(" ", "+"));
-                } else {
-                    System.out.println("[DEBUG] Retrying... (" + retries + " attempts left)");
-                    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
-                }
+            } else {
+                response.sendRedirect("login.jsp?error=Invalid+credentials");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.sendRedirect("login.jsp?error=Database+error");
         }
     }
 }

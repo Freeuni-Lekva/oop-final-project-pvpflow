@@ -6,10 +6,15 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<<<<<<< HEAD
 <%@ page import="java.sql.*, java.util.*, DATABASE_DAO.DBUtil" %>
+=======
+<%@ page import="java.sql.*, java.util.*, DATABASE_DAO.DBUtil, DATABASE_DAO.FriendDAO, DATABASE_DAO.MessageDAO" %>
+>>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
+    Integer userId = (Integer) session.getAttribute("userId");
     String email = (String) session.getAttribute("email");
     Integer userId = (Integer) session.getAttribute("userId"); // Assuming userId is stored in session
 
@@ -19,6 +24,7 @@
         return;
     }
 
+<<<<<<< HEAD
     // --- Data Fetching ---
     List<Map<String, Object>> announcements = new ArrayList<>();
     List<Map<String, Object>> popularQuizzes = new ArrayList<>();
@@ -135,6 +141,49 @@
         if (conn != null) {
             try { conn.close(); } catch (SQLException ignore) {}
         }
+=======
+    // DAO for fetching friend-related data
+    FriendDAO friendDAO = new FriendDAO();
+    List<Map<String, Object>> friends = new ArrayList<>();
+    List<Map<String, Object>> pendingRequests = new ArrayList<>();
+    List<Map<String, Object>> potentialFriends = new ArrayList<>();
+
+    // DAO for fetching message data
+    MessageDAO messageDAO = new MessageDAO();
+    List<Map<String, Object>> conversations = new ArrayList<>();
+
+    List<Map<String, Object>> quizzes = new ArrayList<>();
+    Connection conn = null;
+    Statement stmt = null;
+    ResultSet rs = null;
+    try {
+        // Fetch quizzes
+        conn = DBUtil.getConnection();
+        stmt = conn.createStatement();
+        rs = stmt.executeQuery("SELECT id, title, description FROM quizzes ORDER BY created_at DESC");
+        while (rs.next()) {
+            Map<String, Object> quiz = new HashMap<>();
+            quiz.put("id", rs.getInt("id"));
+            quiz.put("title", rs.getString("title"));
+            quiz.put("description", rs.getString("description"));
+            quizzes.add(quiz);
+        }
+
+        // Fetch friend data
+        friends = friendDAO.getFriends(userId);
+        pendingRequests = friendDAO.getPendingRequests(userId);
+        potentialFriends = friendDAO.findPotentialFriends(userId);
+
+        // Fetch message data
+        conversations = messageDAO.getConversations(userId);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+        try { if (stmt != null) stmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+        try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+>>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
     }
 %>
 <!DOCTYPE html>
@@ -423,12 +472,42 @@
             border-color: #e11d48;
             background: #fdf2f8;
         }
+<<<<<<< HEAD
         body.light-mode .activity-item {
             background: #fff;
             border-left-color: #3b82f6;
         }
         body.light-mode .activity-title {
             color: #2563eb;
+=======
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: #e11d48;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 8px #e11d48;
+        }
+        .friend-item {
+            padding: 0.8rem;
+            background: #2a2a4a;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #e0e7ff; /* Light text for dark mode */
+        }
+        body.light-mode .friend-item {
+            background: #eef2ff; /* Light background for light mode */
+            color: #1f2937; /* Dark text for light mode */
+>>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
         }
     </style>
 </head>
@@ -437,10 +516,19 @@
     <div class="logo">QuizApp</div>
     <div class="header-actions">
         <div class="icon-group">
-            <a class="icon-btn" id="createQuizBtn" href="create_quiz.jsp" title="Create Quiz" style="display: flex; align-items: center; justify-content: center;">
+            <a class="icon-btn" id="createQuizBtn" href="CreateQuizServlet" title="Create Quiz" style="display: flex; align-items: center; justify-content: center;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             </a>
             <div class="icon-label">Create</div>
+        </div>
+        <div class="icon-group">
+            <button class="icon-btn" id="requestsBtn" onclick="togglePopup('requestsPopup')" title="Friend Requests">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
+                <% if (!pendingRequests.isEmpty()) { %>
+                    <span class="notification-badge"><%= pendingRequests.size() %></span>
+                <% } %>
+            </button>
+            <div class="icon-label">Requests</div>
         </div>
         <div class="icon-group">
             <button class="icon-btn" id="achievementsBtn" onclick="togglePopup('achievementsPopup')" title="Achievements">
@@ -549,9 +637,74 @@
                     </div>
                 <% } %>
             </div>
+<<<<<<< HEAD
         </div>
     <% } %>
+=======
+        <% } %>
+        <% if (quizzes.isEmpty()) { %>
+            <div class="card" style="color:#e11d48; font-size:1.1rem;">No quizzes available yet. Create one!</div>
+        <% } %>
+    </div>
+>>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
 </div>
+
+<!-- Achievements Popup -->
+<div class="popup" id="achievementsPopup">
+    <button class="close-btn" onclick="closePopup('achievementsPopup')">&times;</button>
+    <h3>Achievements</h3>
+    <div style="margin-top: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
+            <div style="width: 2.5rem; height: 2.5rem; background: #fbbf24; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🏆</div>
+            <div>
+                <div style="font-weight: 600; color: #1f2937;">Quiz Master</div>
+                <div style="font-size: 0.9rem; color: #6b7280;">Complete 50 quizzes</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
+            <div style="width: 2.5rem; height: 2.5rem; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">⭐</div>
+            <div>
+                <div style="font-weight: 600; color: #1f2937;">Perfect Score</div>
+                <div style="font-size: 0.9rem; color: #6b7280;">Get 100% on any quiz</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
+            <div style="width: 2.5rem; height: 2.5rem; background: #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🎯</div>
+            <div>
+                <div style="font-weight: 600; color: #1f2937;">Creator</div>
+                <div style="font-size: 0.9rem; color: #6b7280;">Create your first quiz</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Requests Popup -->
+<div class="popup" id="requestsPopup">
+    <button class="close-btn" onclick="closePopup('requestsPopup')">&times;</button>
+    <h3>Friend Requests</h3>
+    <% if (!pendingRequests.isEmpty()) { %>
+        <% for (Map<String, Object> friendReq : pendingRequests) { %>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
+                <span style="font-weight: 600;"><%= friendReq.get("username") %></span>
+                <div>
+                    <form action="FriendRequestServlet" method="post" style="display: inline;">
+                        <input type="hidden" name="action" value="accept">
+                        <input type="hidden" name="requestId" value="<%= friendReq.get("request_id") %>">
+                        <button type="submit" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Accept</button>
+                    </form>
+                    <form action="FriendRequestServlet" method="post" style="display: inline;">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="requestId" value="<%= friendReq.get("request_id") %>">
+                        <button type="submit" style="background: #e11d48; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Reject</button>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    <% } else { %>
+        <p>No new friend requests.</p>
+    <% } %>
+</div>
+
 
 <!-- Achievements Popup -->
 <div class="popup" id="achievementsPopup">
@@ -585,74 +738,68 @@
 <!-- Friends Popup -->
 <div class="popup" id="friendsPopup">
     <button class="close-btn" onclick="closePopup('friendsPopup')">&times;</button>
-    <h3>Friends' Activities</h3>
+    <h3>Your Friends</h3>
     <div style="margin-top: 1rem;">
-        <div style="margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;" onclick="showFriendProfile('John Doe')">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">JD</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">John Doe</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Just completed "Science Facts" quiz</div>
-                </div>
+        <% if (!friends.isEmpty()) { %>
+            <% for (Map<String, Object> friend : friends) { %>
+                <div class="friend-item"><%= friend.get("username") %></div>
+            <% } %>
+        <% } else { %>
+            <p>You haven't added any friends yet.</p>
+        <% } %>
+    </div>
+    <h3 style="margin-top: 2rem;">Find New Friends</h3>
+    <div style="margin-top: 1rem;">
+    <% if (!potentialFriends.isEmpty()) { %>
+        <% for (Map<String, Object> pFriend : potentialFriends) { %>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
+                <span style="font-weight: 600;"><%= pFriend.get("username") %></span>
+                <form action="FriendRequestServlet" method="post" style="display: inline;">
+                    <input type="hidden" name="action" value="send">
+                    <input type="hidden" name="requesteeId" value="<%= pFriend.get("id") %>">
+                    <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Add Friend</button>
+                </form>
             </div>
-        </div>
-        <div style="margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;" onclick="showFriendProfile('Jane Smith')">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #ec4899; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">JS</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">Jane Smith</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Created new quiz "Math Genius"</div>
-                </div>
-            </div>
-        </div>
-        <div style="padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;" onclick="showFriendProfile('Mike Johnson')">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">MJ</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">Mike Johnson</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Achieved "Perfect Score" badge</div>
-                </div>
-            </div>
-        </div>
+        <% } %>
+    <% } else { %>
+        <p>No new users to add.</p>
+    <% } %>
     </div>
 </div>
 
 <!-- Messages Popup -->
 <div class="popup" id="messagesPopup">
     <button class="close-btn" onclick="closePopup('messagesPopup')">&times;</button>
-    <h3>Messages</h3>
-    <div style="margin-top: 1rem;">
-        <div style="margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">JD</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937;">John Doe</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Hey! Check out my new quiz...</div>
+    <h3>Recent Messages</h3>
+    <div style="margin-top: 1rem; max-height: 300px; overflow-y: auto;">
+        <% if (!conversations.isEmpty()) { %>
+            <% for (Map<String, Object> convo : conversations) { %>
+                <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.get("friend_username") %></div>
+                    <div style="font-size: 0.9rem; color: #a5b4fc;"><%= convo.get("last_message") %></div>
                 </div>
-                <div style="font-size: 0.8rem; color: #9ca3af;">2m</div>
-            </div>
-        </div>
-        <div style="margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #ec4899; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">JS</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937;">Jane Smith</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Great job on the Science quiz!</div>
-                </div>
-                <div style="font-size: 0.8rem; color: #9ca3af;">5m</div>
-            </div>
-        </div>
-        <div style="padding: 0.8rem; background: #f8fafc; border-radius: 8px; cursor: pointer;">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">MJ</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937;">Mike Johnson</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Want to challenge me to a quiz?</div>
-                </div>
-                <div style="font-size: 0.8rem; color: #9ca3af;">1h</div>
-            </div>
-        </div>
+            <% } %>
+        <% } else { %>
+            <p>No messages yet. Send a note to a friend!</p>
+        <% } %>
     </div>
+    <h3 style="margin-top: 2rem;">Send a Note</h3>
+    <form action="MessageServlet" method="post" style="margin-top: 1rem;">
+        <input type="hidden" name="action" value="sendMessage">
+        <div style="margin-bottom: 1rem;">
+            <label for="receiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To:</label>
+            <select name="receiverId" id="receiverId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
+                <% for (Map<String, Object> friend : friends) { %>
+                    <option value="<%= friend.get("id") %>"><%= friend.get("username") %></option>
+                <% } %>
+            </select>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label for="messageText" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message:</label>
+            <textarea name="messageText" id="messageText" rows="3" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white; resize: vertical;"></textarea>
+        </div>
+        <button type="submit" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 600;">Send</button>
+    </form>
 </div>
 
 <!-- Profile Popup -->
