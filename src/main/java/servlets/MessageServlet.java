@@ -1,6 +1,6 @@
 package servlets;
 
-import DATABASE_DAO.MessageDAO;
+import database.MessageDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

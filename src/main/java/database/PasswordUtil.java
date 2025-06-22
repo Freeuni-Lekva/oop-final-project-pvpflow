@@ -1,4 +1,4 @@
-package DATABASE_DAO;
+package database;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

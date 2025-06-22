@@ -1,4 +1,4 @@
-package DATABASE_DAO.databases;
+package database;
 
 import java.sql.*;
 

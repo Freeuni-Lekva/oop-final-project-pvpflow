@@ -1,7 +1,7 @@
 package servlets;
 
-import DATABASE_DAO.DBUtil;
-import DATABASE_DAO.databases.QuizDAO;
+import database.DBUtil;
+import database.QuizDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
