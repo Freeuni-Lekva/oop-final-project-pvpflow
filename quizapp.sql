@@ -100,7 +100,6 @@ CREATE TABLE IF NOT EXISTS submission_answers (
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
-<<<<<<< HEAD
 -- Table: achievements (for user achievements)
 CREATE TABLE IF NOT EXISTS achievements (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -193,7 +192,6 @@ CREATE INDEX idx_messages_is_read ON messages(is_read);
 CREATE INDEX idx_friends_user_id ON friends(user_id);
 CREATE INDEX idx_friends_status ON friends(status);
 
-=======
 -- Table: friend_requests
 CREATE TABLE IF NOT EXISTS friend_requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -229,5 +227,4 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (receiver_id) REFERENCES users(id)
 );
 
->>>>>>> 0cce505cbbcffbf314a4b8c8bb4cceb0368dbf3a
 

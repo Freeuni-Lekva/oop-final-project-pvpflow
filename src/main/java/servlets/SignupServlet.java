@@ -1,7 +1,7 @@
 package servlets;
 
-import DATABASE_DAO.DBUtil;
-import DATABASE_DAO.PasswordUtil;
+import database.DBUtil;
+import database.PasswordUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

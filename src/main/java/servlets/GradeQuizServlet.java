@@ -1,6 +1,6 @@
 package servlets;
 
-import DATABASE_DAO.DBUtil;
+import database.DBUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
