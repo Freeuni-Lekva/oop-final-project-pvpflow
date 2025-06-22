@@ -19,4 +19,9 @@ public class PasswordUtil {
             throw new RuntimeException(e);
         }
     }
+
+    public static boolean checkPassword(String plainPassword, String hashedPassword) {
+        String hashedPlainPassword = hashPassword(plainPassword);
+        return hashedPlainPassword.equals(hashedPassword);
+    }
 } 

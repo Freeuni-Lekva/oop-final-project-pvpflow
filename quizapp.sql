@@ -79,4 +79,39 @@ CREATE TABLE IF NOT EXISTS submission_answers (
     FOREIGN KEY (question_id) REFERENCES questions(id)
 );
 
+-- Table: friend_requests
+CREATE TABLE IF NOT EXISTS friend_requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    requestee_id INT NOT NULL,
+    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (requester_id) REFERENCES users(id),
+    FOREIGN KEY (requestee_id) REFERENCES users(id),
+    UNIQUE KEY (requester_id, requestee_id)
+);
+
+-- Table: friends
+CREATE TABLE IF NOT EXISTS friends (
+    friendship_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    friend_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (friend_id) REFERENCES users(id),
+    UNIQUE KEY (user_id, friend_id)
+);
+
+-- Table: messages
+CREATE TABLE IF NOT EXISTS messages (
+    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message_text TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+
 
