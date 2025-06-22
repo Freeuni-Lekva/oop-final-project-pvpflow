@@ -133,6 +133,18 @@
             font-weight: 600;
             font-size: 1.2rem;
             margin-bottom: 1rem;
+            color: #e0e7ff;
+        }
+
+        .question-type {
+            font-size: 0.9rem;
+            color: #a5b4fc;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .answers-list {
+            margin-top: 1rem;
         }
 
         .answer-row {
@@ -152,6 +164,12 @@
             border-left: 3px solid #00eaff;
         }
 
+        .answer-row label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+        }
+
         input[type="text"], textarea {
             width: 100%;
             padding: 0.8rem;
@@ -161,11 +179,13 @@
             background: rgba(0,0,0,0.2);
             color: #e0e7ff;
             box-sizing: border-box;
+            margin-top: 0.5rem;
         }
 
         input[type="radio"], input[type="checkbox"] {
             transform: scale(1.4);
             accent-color: #3b82f6;
+            margin: 0;
         }
         
         .submit-btn {
@@ -180,6 +200,12 @@
             margin-top: 2rem;
             display: block;
             width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-2px);
         }
         
         .error-message {
@@ -190,6 +216,19 @@
             text-align: center;
             font-size: 1.1rem;
             border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .question-image {
+            max-width: 100%;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .required-field {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
@@ -215,43 +254,96 @@
                        if ("true".equals(practiceParam)) { %>
                         <input type="hidden" name="practice" value="true">
                     <% } %>
+                    
                     <% for (int i = 0; i < questions.size(); i++) {
                         Map<String, Object> q = questions.get(i);
                         String qType = (String) q.get("question_type");
                         List<Map<String, Object>> answers = (List<Map<String, Object>>) q.get("answers");
+                        int questionId = (int) q.get("id");
                     %>
                     <div class="question-block">
                         <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
+                        <div class="question-type">Type: <%= qType.replace("_", " ").toUpperCase() %></div>
+                        
                         <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
-                            <img src="<%= q.get("image_url") %>" alt="Question Image" style="max-width: 100%; margin-bottom: 1rem; border-radius: 8px;" />
+                            <img src="<%= q.get("image_url") %>" alt="Question Image" class="question-image" />
                         <% } %>
+                        
                         <div class="answers-list">
                             <% if ("multiple_choice".equals(qType)) { %>
                                 <% for (int a = 0; a < answers.size(); a++) { %>
                                     <div class="answer-row">
-                                        <input type="radio" name="q_<%=q.get("id")%>" value="<%=answers.get(a).get("id")%>" id="q_<%=q.get("id")%>_a_<%=a%>" required />
-                                        <label for="q_<%=q.get("id")%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
+                                        <input type="radio" name="q_<%=questionId%>" value="<%=answers.get(a).get("id")%>" id="q_<%=questionId%>_a_<%=a%>" required />
+                                        <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
                                     </div>
                                 <% } %>
-                            <% } else if ("multi_choice_multi_answer".equals(qType)) { %>
+                                <div class="required-field">* Please select one answer</div>
+                                
+                            <% } else if ("multi_choice_multi_answer".equals(qType) || "multi_answer".equals(qType)) { %>
                                 <% for (int a = 0; a < answers.size(); a++) { %>
                                     <div class="answer-row">
-                                        <input type="checkbox" name="q_<%=q.get("id")%>_a_<%=answers.get(a).get("id")%>" value="true" />
-                                        <%= answers.get(a).get("answer_text") %>
+                                        <input type="checkbox" name="q_<%=questionId%>_a_<%=answers.get(a).get("id")%>" value="true" id="q_<%=questionId%>_a_<%=a%>" />
+                                        <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
                                     </div>
                                 <% } %>
+                                <div class="required-field">* Select all correct answers</div>
+                                
                             <% } else if ("question_response".equals(qType) || "fill_in_blank".equals(qType)) { %>
-                                <input type="text" name="q_<%=q.get("id")%>_text" placeholder="Your answer" />
+                                <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
+                                <div class="required-field">* This field is required</div>
+                                
                             <% } else if ("essay".equals(qType)) { %>
-                                <textarea name="q_<%=q.get("id")%>_essay" rows="5" placeholder="Your answer"></textarea>
+                                <textarea name="q_<%=questionId%>_essay" rows="5" placeholder="Your detailed answer" required></textarea>
+                                <div class="required-field">* This field is required</div>
+                                
+                            <% } else if ("picture_response".equals(qType)) { %>
+                                <input type="text" name="q_<%=questionId%>_text" placeholder="Describe what you see in the image" required />
+                                <div class="required-field">* This field is required</div>
+                                
+                            <% } else if ("matching".equals(qType)) { %>
+                                <% for (int a = 0; a < answers.size(); a++) { %>
+                                    <div class="answer-row">
+                                        <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %>:</label>
+                                        <input type="text" name="q_<%=questionId%>_a_<%=a%>" placeholder="Your answer" required />
+                                    </div>
+                                <% } %>
+                                <div class="required-field">* All fields are required</div>
+                                
+                            <% } else { %>
+                                <!-- Default text input for other question types -->
+                                <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
+                                <div class="required-field">* This field is required</div>
                             <% } %>
                         </div>
                     </div>
                     <% } %>
+                    
                     <button class="submit-btn" type="submit">Submit Answers</button>
                 </form>
             <% } %>
         </div>
     </div>
+
+    <script>
+        // Add form validation
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            const requiredFields = document.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.style.borderColor = '#ef4444';
+                } else {
+                    field.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    </script>
 </body>
 </html> 

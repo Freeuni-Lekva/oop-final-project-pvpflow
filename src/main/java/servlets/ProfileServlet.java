@@ -31,7 +31,22 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        Integer userId = (Integer) session.getAttribute("userId");
+        Integer currentUserId = (Integer) session.getAttribute("userId");
+        String targetUserIdStr = request.getParameter("id");
+        Integer targetUserId = null;
+        
+        // If no ID provided, show current user's profile
+        if (targetUserIdStr == null || targetUserIdStr.isEmpty()) {
+            targetUserId = currentUserId;
+        } else {
+            try {
+                targetUserId = Integer.parseInt(targetUserIdStr);
+            } catch (NumberFormatException e) {
+                response.sendRedirect("homepage.jsp");
+                return;
+            }
+        }
+
         List<Map<String, Object>> friends = new ArrayList<>();
         Map<String, Object> user = null;
         List<Map<String, Object>> createdQuizzes = new ArrayList<>();
@@ -39,11 +54,20 @@ public class ProfileServlet extends HttpServlet {
         List<Map<String, Object>> achievements = new ArrayList<>();
 
         try {
-            friends = friendDAO.getFriends(userId);
-            user = userDAO.getUserById(userId);
-            createdQuizzes = QuizDAO.getQuizzesByCreatorId(userId);
-            quizHistory = QuizDAO.getQuizHistoryByUserId(userId);
-            achievements = achievementDAO.getAchievementsByUserId(userId);
+            user = userDAO.getUserById(targetUserId);
+            if (user == null) {
+                response.sendRedirect("homepage.jsp");
+                return;
+            }
+            
+            // Only show friends and achievements for current user's own profile
+            if (targetUserId.equals(currentUserId)) {
+                friends = friendDAO.getFriends(targetUserId);
+                achievements = achievementDAO.getAchievementsByUserId(targetUserId);
+            }
+            
+            createdQuizzes = QuizDAO.getQuizzesByCreatorId(targetUserId);
+            quizHistory = QuizDAO.getQuizHistoryByUserId(targetUserId);
         } catch (SQLException e) {
             throw new ServletException("Database error while fetching profile data", e);
         }
@@ -53,6 +77,7 @@ public class ProfileServlet extends HttpServlet {
         request.setAttribute("createdQuizzes", createdQuizzes);
         request.setAttribute("quizHistory", quizHistory);
         request.setAttribute("achievements", achievements);
+        request.setAttribute("isOwnProfile", targetUserId.equals(currentUserId));
         request.getRequestDispatcher("profile.jsp").forward(request, response);
     }
 } 

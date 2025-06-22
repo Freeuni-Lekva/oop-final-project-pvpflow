@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS friends (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     friend_id INT NOT NULL,
-    status ENUM('pending', 'accepted', 'blocked') DEFAULT 'pending',
+    status ENUM('pending', 'accepted', 'rejected', 'blocked') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -173,7 +173,13 @@ INSERT INTO achievements (name, description, points_required, quizzes_taken_requ
 ('Quiz Master', 'Take 10 quizzes', 0, 10, 0, 0),
 ('Quiz Designer', 'Create 5 quizzes', 0, 0, 5, 0),
 ('Speed Demon', 'Complete a quiz in under 2 minutes', 0, 0, 0, 0),
-('Consistent Performer', 'Get 3 perfect scores', 0, 0, 0, 3);
+('Consistent Performer', 'Get 3 perfect scores', 0, 0, 0, 3),
+('Amateur Author', 'Create 1 quiz', 0, 0, 1, 0),
+('Prolific Author', 'Create 5 quizzes', 0, 0, 5, 0),
+('Prodigious Author', 'Create 10 quizzes', 0, 0, 10, 0),
+('Quiz Machine', 'Take 10 quizzes', 0, 10, 0, 0),
+('I am the Greatest', 'Have the highest score on a quiz', 0, 0, 0, 0),
+('Practice Makes Perfect', 'Take a quiz in practice mode', 0, 0, 0, 0);
 
 -- Insert sample announcements (assuming admin user ID is 1)
 INSERT INTO announcements (title, content, created_by, is_active) VALUES
@@ -190,41 +196,4 @@ CREATE INDEX idx_answers_question_id ON answers(question_id);
 CREATE INDEX idx_messages_recipient_id ON messages(recipient_id);
 CREATE INDEX idx_messages_is_read ON messages(is_read);
 CREATE INDEX idx_friends_user_id ON friends(user_id);
-CREATE INDEX idx_friends_status ON friends(status);
-
--- Table: friend_requests
-CREATE TABLE IF NOT EXISTS friend_requests (
-    request_id INT AUTO_INCREMENT PRIMARY KEY,
-    requester_id INT NOT NULL,
-    requestee_id INT NOT NULL,
-    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (requester_id) REFERENCES users(id),
-    FOREIGN KEY (requestee_id) REFERENCES users(id),
-    UNIQUE KEY (requester_id, requestee_id)
-);
-
--- Table: friends
-CREATE TABLE IF NOT EXISTS friends (
-    friendship_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    friend_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id),
-    UNIQUE KEY (user_id, friend_id)
-);
-
--- Table: messages
-CREATE TABLE IF NOT EXISTS messages (
-    message_id INT AUTO_INCREMENT PRIMARY KEY,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
-    message_text TEXT NOT NULL,
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id)
-);
-
-
+CREATE INDEX idx_friends_status ON friends(status); 

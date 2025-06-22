@@ -2,12 +2,14 @@ package database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DBUtil {
     private static final String URL = "jdbc:mysql://localhost:3306/quizapp";
     private static final String USER = "root";
-    private static final String PASSWORD = "lukalodia";
+    private static final String PASSWORD = "sofo";
 
     public static Connection getConnection() throws SQLException {
         System.out.println("DBUtil: Attempting to connect to database at " + URL);
@@ -41,5 +43,61 @@ public class DBUtil {
         System.out.println("URL: " + URL);
         System.out.println("USER: " + USER);
         System.out.println("PASSWORD: " + PASSWORD);
+    }
+    
+    /**
+     * Test method to verify database connectivity and check quizzes table
+     */
+    public static void testDatabaseConnection() {
+        System.out.println("=== DATABASE CONNECTION TEST ===");
+        try (Connection conn = getConnection()) {
+            System.out.println("✓ Database connection successful");
+            
+            // Test if quizzes table exists
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM quizzes")) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        int quizCount = rs.getInt(1);
+                        System.out.println("✓ Quizzes table exists with " + quizCount + " quizzes");
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("✗ Quizzes table test failed: " + e.getMessage());
+            }
+            
+            // Test if users table exists
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM users")) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        int userCount = rs.getInt(1);
+                        System.out.println("✓ Users table exists with " + userCount + " users");
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("✗ Users table test failed: " + e.getMessage());
+            }
+            
+            // Show recent quizzes
+            try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT q.id, q.title, q.creator_id, u.username FROM quizzes q " +
+                "JOIN users u ON q.creator_id = u.id " +
+                "ORDER BY q.created_at DESC LIMIT 5")) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    System.out.println("✓ Recent quizzes:");
+                    while (rs.next()) {
+                        System.out.println("  - ID: " + rs.getInt("id") + 
+                                         ", Title: " + rs.getString("title") + 
+                                         ", Creator: " + rs.getString("username"));
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("✗ Recent quizzes query failed: " + e.getMessage());
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("✗ Database connection test failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+        System.out.println("=== END DATABASE TEST ===");
     }
 } 

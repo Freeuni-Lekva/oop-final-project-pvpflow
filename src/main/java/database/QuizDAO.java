@@ -18,8 +18,15 @@ public class QuizDAO {
     public static int createQuiz(Connection conn, int creatorId, String title, String description,
                                 boolean isRandomized, boolean isOnePage, boolean immediateCorrection, 
                                 boolean practiceMode) throws SQLException {
+        System.out.println("QuizDAO: Creating quiz with title: " + title);
+        System.out.println("QuizDAO: Creator ID: " + creatorId);
+        System.out.println("QuizDAO: Description: " + description);
+        System.out.println("QuizDAO: Properties - Randomized: " + isRandomized + ", OnePage: " + isOnePage + 
+                          ", ImmediateCorrection: " + immediateCorrection + ", PracticeMode: " + practiceMode);
+        
         String sql = "INSERT INTO quizzes (creator_id, title, description, is_randomized, is_one_page, " +
                     "immediate_correction, practice_mode_enabled, question_count) VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
+        
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, creatorId);
             stmt.setString(2, title);
@@ -28,14 +35,28 @@ public class QuizDAO {
             stmt.setBoolean(5, isOnePage);
             stmt.setBoolean(6, immediateCorrection);
             stmt.setBoolean(7, practiceMode);
-            stmt.executeUpdate();
+            
+            System.out.println("QuizDAO: Executing quiz creation SQL");
+            int affectedRows = stmt.executeUpdate();
+            System.out.println("QuizDAO: Affected rows: " + affectedRows);
+            
+            if (affectedRows == 0) {
+                throw new SQLException("Creating quiz failed, no rows affected.");
+            }
+            
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // quiz_id
+                    int quizId = rs.getInt(1);
+                    System.out.println("QuizDAO: Quiz created successfully with ID: " + quizId);
+                    return quizId;
+                } else {
+                    throw new SQLException("Creating quiz failed, no ID obtained.");
                 }
             }
+        } catch (SQLException e) {
+            System.err.println("QuizDAO: Error creating quiz: " + e.getMessage());
+            throw e;
         }
-        throw new SQLException("Failed to create quiz");
     }
 
     /**
@@ -43,8 +64,15 @@ public class QuizDAO {
      */
     public static int addQuestion(Connection conn, int quizId, String questionType, String questionText,
                                  String imageUrl, int questionOrder, boolean isOrdered) throws SQLException {
+        System.out.println("QuizDAO: Adding question to quiz " + quizId);
+        System.out.println("QuizDAO: Question type: " + questionType);
+        System.out.println("QuizDAO: Question text: " + questionText);
+        System.out.println("QuizDAO: Question order: " + questionOrder);
+        System.out.println("QuizDAO: Is ordered: " + isOrdered);
+        
         String sql = "INSERT INTO questions (quiz_id, question_type, question_text, image_url, question_order, is_ordered) " +
                     "VALUES (?, ?, ?, ?, ?, ?)";
+        
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, quizId);
             stmt.setString(2, questionType);
@@ -52,21 +80,41 @@ public class QuizDAO {
             stmt.setString(4, imageUrl);
             stmt.setInt(5, questionOrder);
             stmt.setBoolean(6, isOrdered);
-            stmt.executeUpdate();
+            
+            System.out.println("QuizDAO: Executing question creation SQL");
+            int affectedRows = stmt.executeUpdate();
+            System.out.println("QuizDAO: Affected rows: " + affectedRows);
+            
+            if (affectedRows == 0) {
+                throw new SQLException("Adding question failed, no rows affected.");
+            }
+            
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // question_id
+                    int questionId = rs.getInt(1);
+                    System.out.println("QuizDAO: Question added successfully with ID: " + questionId);
+                    return questionId;
+                } else {
+                    throw new SQLException("Adding question failed, no ID obtained.");
                 }
             }
+        } catch (SQLException e) {
+            System.err.println("QuizDAO: Error adding question: " + e.getMessage());
+            throw e;
         }
-        throw new SQLException("Failed to add question");
     }
 
     /**
      * Adds an answer to a question
      */
     public static void addAnswer(Connection conn, int questionId, String answerText, boolean isCorrect, Integer answerOrder) throws SQLException {
+        System.out.println("QuizDAO: Adding answer to question " + questionId);
+        System.out.println("QuizDAO: Answer text: " + answerText);
+        System.out.println("QuizDAO: Is correct: " + isCorrect);
+        System.out.println("QuizDAO: Answer order: " + answerOrder);
+        
         String sql = "INSERT INTO answers (question_id, answer_text, is_correct, answer_order) VALUES (?, ?, ?, ?)";
+        
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, questionId);
             stmt.setString(2, answerText);
@@ -76,7 +124,17 @@ public class QuizDAO {
             } else {
                 stmt.setNull(4, java.sql.Types.INTEGER);
             }
-            stmt.executeUpdate();
+            
+            System.out.println("QuizDAO: Executing answer creation SQL");
+            int affectedRows = stmt.executeUpdate();
+            System.out.println("QuizDAO: Answer added successfully, affected rows: " + affectedRows);
+            
+            if (affectedRows == 0) {
+                throw new SQLException("Adding answer failed, no rows affected.");
+            }
+        } catch (SQLException e) {
+            System.err.println("QuizDAO: Error adding answer: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -84,11 +142,24 @@ public class QuizDAO {
      * Updates the question count for a quiz
      */
     public static void updateQuizQuestionCount(Connection conn, int quizId, int questionCount) throws SQLException {
+        System.out.println("QuizDAO: Updating question count for quiz " + quizId + " to " + questionCount);
+        
         String sql = "UPDATE quizzes SET question_count = ? WHERE id = ?";
+        
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, questionCount);
             stmt.setInt(2, quizId);
-            stmt.executeUpdate();
+            
+            System.out.println("QuizDAO: Executing question count update SQL");
+            int affectedRows = stmt.executeUpdate();
+            System.out.println("QuizDAO: Question count updated successfully, affected rows: " + affectedRows);
+            
+            if (affectedRows == 0) {
+                throw new SQLException("Updating question count failed, no rows affected.");
+            }
+        } catch (SQLException e) {
+            System.err.println("QuizDAO: Error updating question count: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -275,10 +346,24 @@ public class QuizDAO {
         return null;
     }
 
-    public List<Map<String, Object>> getUserPerformanceOnQuiz(int userId, int quizId) throws SQLException {
+    public List<Map<String, Object>> getUserPerformanceOnQuiz(int userId, int quizId, String sortBy) throws SQLException {
         List<Map<String, Object>> performance = new ArrayList<>();
-        String sql = "SELECT score, total_possible_score, percentage_score, completed_at, total_time_seconds " +
-                     "FROM quiz_submissions WHERE user_id = ? AND quiz_id = ? ORDER BY completed_at DESC";
+        
+        String orderBy;
+        switch (sortBy) {
+            case "score":
+                orderBy = "percentage_score DESC, total_time_seconds ASC";
+                break;
+            case "time":
+                orderBy = "total_time_seconds ASC";
+                break;
+            case "date":
+            default:
+                orderBy = "completed_at DESC";
+                break;
+        }
+
+        String sql = "SELECT * FROM quiz_submissions WHERE user_id = ? AND quiz_id = ? AND completed_at IS NOT NULL ORDER BY " + orderBy;
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
@@ -341,18 +426,113 @@ public class QuizDAO {
         return performers;
     }
 
-    public Map<String, Object> getQuizSummaryStatistics(int quizId) throws SQLException {
-        Map<String, Object> stats = new HashMap<>();
-        String sql = "SELECT COUNT(*) as attempt_count, AVG(percentage_score) as avg_score FROM quiz_submissions WHERE quiz_id = ?";
+    public List<Map<String, Object>> getTopPerformersToday(int quizId, int limit) throws SQLException {
+        List<Map<String, Object>> performers = new ArrayList<>();
+        String sql = "SELECT u.username, qs.percentage_score " +
+                     "FROM quiz_submissions qs JOIN users u ON qs.user_id = u.id " +
+                     "WHERE qs.quiz_id = ? AND qs.completed_at >= NOW() - INTERVAL 1 DAY " +
+                     "ORDER BY qs.percentage_score DESC, qs.total_time_seconds ASC LIMIT ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quizId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                stats.put("attempt_count", rs.getInt("attempt_count"));
-                stats.put("avg_score", rs.getDouble("avg_score"));
+            stmt.setInt(2, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> p = new HashMap<>();
+                    p.put("username", rs.getString("username"));
+                    p.put("percentage_score", rs.getBigDecimal("percentage_score"));
+                    performers.add(p);
+                }
+            }
+        }
+        return performers;
+    }
+
+    public Map<String, Object> getQuizSummaryStatistics(int quizId) throws SQLException {
+        Map<String, Object> stats = new HashMap<>();
+        String sql = "SELECT COUNT(*) as attempt_count, AVG(percentage_score) as avg_score, MIN(total_time_seconds) as fastest_time " +
+                     "FROM quiz_submissions WHERE quiz_id = ? AND completed_at IS NOT NULL";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, quizId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    stats.put("attempt_count", rs.getInt("attempt_count"));
+                    stats.put("avg_score", rs.getBigDecimal("avg_score"));
+                    stats.put("fastest_time", rs.getObject("fastest_time"));
+                }
             }
         }
         return stats;
+    }
+
+    public Map<String, Object> getUsersHighestScore(int userId, int quizId) throws SQLException {
+        Map<String, Object> highScore = null;
+        String sql = "SELECT percentage_score, total_time_seconds, completed_at " +
+                     "FROM quiz_submissions " +
+                     "WHERE user_id = ? AND quiz_id = ? AND completed_at IS NOT NULL " +
+                     "ORDER BY percentage_score DESC, total_time_seconds ASC " +
+                     "LIMIT 1";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, quizId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    highScore = new HashMap<>();
+                    highScore.put("score", rs.getBigDecimal("percentage_score"));
+                    highScore.put("time", rs.getInt("total_time_seconds"));
+                    highScore.put("date", rs.getTimestamp("completed_at"));
+                }
+            }
+        }
+        return highScore;
+    }
+
+    /**
+     * Gets all quizzes for debugging purposes
+     */
+    public static List<Map<String, Object>> getAllQuizzes() throws SQLException {
+        List<Map<String, Object>> quizzes = new ArrayList<>();
+        String sql = "SELECT q.id, q.title, q.description, q.question_count, q.created_at, u.username as creator_name " +
+                    "FROM quizzes q " +
+                    "JOIN users u ON q.creator_id = u.id " +
+                    "ORDER BY q.created_at DESC";
+        
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                Map<String, Object> quiz = new HashMap<>();
+                quiz.put("id", rs.getInt("id"));
+                quiz.put("title", rs.getString("title"));
+                quiz.put("description", rs.getString("description"));
+                quiz.put("question_count", rs.getInt("question_count"));
+                quiz.put("created_at", rs.getTimestamp("created_at"));
+                quiz.put("creator_name", rs.getString("creator_name"));
+                quizzes.add(quiz);
+            }
+        }
+        return quizzes;
+    }
+
+    /**
+     * Gets quiz count by creator ID
+     */
+    public static int getQuizCountByCreator(int creatorId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
+        
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, creatorId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
     }
 } 

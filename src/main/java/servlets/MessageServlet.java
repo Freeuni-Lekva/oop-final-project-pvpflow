@@ -39,6 +39,12 @@ public class MessageServlet extends HttpServlet {
                 // response.sendRedirect("homepage.jsp?error=Failed+to+send+message");
                 // For now, we'll just redirect silently on failure.
             }
+        } else if ("markAsRead".equals(action)) {
+            try {
+                messageDAO.markMessagesAsRead(senderId);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         response.sendRedirect("homepage.jsp");
     }

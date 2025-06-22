@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
+<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.QuizDAO" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -36,6 +36,7 @@
     // DAO for fetching message data
     MessageDAO messageDAO = new MessageDAO();
     List<Map<String, Object>> conversations = new ArrayList<>();
+    int unreadMessageCount = 0;
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
     
@@ -51,7 +52,11 @@
     
     Connection conn = null;
     try {
+        // Test database connection first
+        DBUtil.testDatabaseConnection();
+        
         conn = DBUtil.getConnection();
+        System.out.println("Homepage: Database connection established successfully");
 
         // Fetch active announcements
         String announcementsSql = "SELECT title, content FROM announcements WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 5";
@@ -72,6 +77,7 @@
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     quizzesTakenCount = rs.getInt(1);
+                    System.out.println("Homepage: User " + userId + " has taken " + quizzesTakenCount + " quizzes");
                 }
             }
         }
@@ -80,13 +86,10 @@
         String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
                                   "FROM quizzes q " +
                                   "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
-
-                                  "GROUP BY q.id, q.title, q.description,q.created_at " +
-
                                   "GROUP BY q.id, q.title, q.description, q.created_at " +
-
                                   "ORDER BY attempt_count DESC, q.created_at DESC " +
                                   "LIMIT 10";
+        System.out.println("Homepage: Executing popular quizzes query: " + popularQuizzesSql);
         try (PreparedStatement ps = conn.prepareStatement(popularQuizzesSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -96,14 +99,17 @@
                 quiz.put("description", rs.getString("description"));
                 quiz.put("attempt_count", rs.getInt("attempt_count"));
                 popularQuizzes.add(quiz);
+                System.out.println("Homepage: Found popular quiz - ID: " + rs.getInt("id") + ", Title: " + rs.getString("title"));
             }
         }
+        System.out.println("Homepage: Total popular quizzes found: " + popularQuizzes.size());
 
         // Fetch recently created quizzes (from all users)
-        String recentQuizzesSql = "SELECT q.id, q.title, q.description, u.username as creator_name " +
+        String recentQuizzesSql = "SELECT q.id, q.title, q.description, u.username as creator_name, q.created_at " +
                                  "FROM quizzes q " +
                                  "JOIN users u ON q.creator_id = u.id " +
                                  "ORDER BY q.created_at DESC LIMIT 10";
+        System.out.println("Homepage: Executing recent quizzes query: " + recentQuizzesSql);
         try (PreparedStatement ps = conn.prepareStatement(recentQuizzesSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -112,9 +118,12 @@
                 quiz.put("title", rs.getString("title"));
                 quiz.put("description", rs.getString("description"));
                 quiz.put("creator_name", rs.getString("creator_name"));
+                quiz.put("created_at", rs.getTimestamp("created_at"));
                 recentlyCreatedQuizzes.add(quiz);
+                System.out.println("Homepage: Found recent quiz - ID: " + rs.getInt("id") + ", Title: " + rs.getString("title") + ", Creator: " + rs.getString("creator_name"));
             }
         }
+        System.out.println("Homepage: Total recent quizzes found: " + recentlyCreatedQuizzes.size());
 
         // Fetch user's recent quiz taking activities
         String userQuizActivitiesSql = "SELECT qs.id, q.title, qs.score, qs.total_possible_score, qs.percentage_score, qs.completed_at " +
@@ -142,6 +151,7 @@
                                           "FROM quizzes " +
                                           "WHERE creator_id = ? " +
                                           "ORDER BY created_at DESC LIMIT 10";
+        System.out.println("Homepage: Executing user creating activities query for user " + userId);
         try (PreparedStatement ps = conn.prepareStatement(userCreatingActivitiesSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -152,9 +162,11 @@
                     activity.put("description", rs.getString("description"));
                     activity.put("created_at", rs.getTimestamp("created_at"));
                     userRecentCreatingActivities.add(activity);
+                    System.out.println("Homepage: Found user created quiz - ID: " + rs.getInt("id") + ", Title: " + rs.getString("title"));
                 }
             }
         }
+        System.out.println("Homepage: Total user created quizzes found: " + userRecentCreatingActivities.size());
 
         // Fetch all quizzes for the quizzes list
         String allQuizzesSql = "SELECT id, title, description FROM quizzes ORDER BY created_at DESC";
@@ -176,6 +188,7 @@
 
         // Fetch message data
         conversations = messageDAO.getConversations(userId);
+        unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
         
         // --- Achievements Data Calculation ---
         String perfectScoreSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
@@ -190,17 +203,22 @@
         
         // Count of created quizzes
         String createdCountSql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
+        System.out.println("Homepage: Executing created count query for user " + userId);
         try (PreparedStatement ps = conn.prepareStatement(createdCountSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     quizzesCreatedCount = rs.getInt(1);
+                    System.out.println("Homepage: User " + userId + " has created " + quizzesCreatedCount + " quizzes");
                 }
             }
         }
 
         // Check for highest score
-        String highestScoreSql = "SELECT COUNT(*) FROM quiz_submissions s WHERE s.user_id = ? AND s.score = (SELECT MAX(score) FROM quiz_submissions WHERE quiz_id = s.quiz_id)";
+        String highestScoreSql = "SELECT COUNT(*) FROM quiz_submissions s1 " +
+                                "WHERE s1.user_id = ? AND s1.score = (" +
+                                "SELECT MAX(s2.score) FROM quiz_submissions s2 " +
+                                "WHERE s2.quiz_id = s1.quiz_id AND s2.score > 0)";
         try (PreparedStatement ps = conn.prepareStatement(highestScoreSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -224,6 +242,21 @@
         quizMasterProgress = Math.min(100.0, (double) quizzesTakenCount / QUIZ_MASTER_GOAL * 100);
         perfectScoreProgress = hasPerfectScore ? 100.0 : 0.0;
         creatorProgress = !userRecentCreatingActivities.isEmpty() ? 100.0 : 0.0;
+
+        // Debug: Show all quizzes in database
+        try {
+            List<Map<String, Object>> allQuizzesDebug = QuizDAO.getAllQuizzes();
+            System.out.println("Homepage: === ALL QUIZZES IN DATABASE ===");
+            System.out.println("Homepage: Total quizzes in database: " + allQuizzesDebug.size());
+            for (Map<String, Object> quiz : allQuizzesDebug) {
+                System.out.println("Homepage: Quiz - ID: " + quiz.get("id") + 
+                                 ", Title: " + quiz.get("title") + 
+                                 ", Creator: " + quiz.get("creator_name") + 
+                                 ", Created: " + quiz.get("created_at"));
+            }
+        } catch (Exception e) {
+            System.err.println("Homepage: Error getting all quizzes for debug: " + e.getMessage());
+        }
 
     } catch (Exception e) {
         e.printStackTrace(); // Log error to server console
@@ -293,6 +326,34 @@
         .nav-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
+        }
+
+        .nav-btn-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 2px solid #1a1a3a;
+            min-width: 20px;
+            box-sizing: border-box;
+        }
+
+        .notification-badge.hidden {
+            display: none;
         }
 
         .user-info {
@@ -634,7 +695,7 @@
             .main-content {
                 padding: 0 1rem;
             }
-        }
+        }}
     </style>
 </head>
 <body>
@@ -643,11 +704,20 @@
             <a href="homepage.jsp" class="logo">QuizApp</a>
             <div class="nav-buttons">
                 <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
-                <a href="take_quiz.jsp" class="nav-btn">Take Quiz</a>
                 <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
-                <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
+                <div class="nav-btn-container">
+                    <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
+                    <% if (!pendingRequests.isEmpty()) { %>
+                        <div class="notification-badge"><%= pendingRequests.size() %></div>
+                    <% } %>
+                </div>
                 <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
-                <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
+                <div class="nav-btn-container">
+                    <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
+                    <% if (unreadMessageCount > 0) { %>
+                        <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
+                    <% } %>
+                </div>
                 <div class="user-menu">
                     <span class="username-display"><%= username %></span>
                     <div class="dropdown-content">
@@ -660,7 +730,20 @@
     </div>
 
     <div class="main-content">
-        <!-- Welcome Section -->
+        <!-- Success Message Display -->
+        <% if (request.getParameter("success") != null) { %>
+            <div class="success-message" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
+                <%= request.getParameter("success").replace("+", " ") %>
+            </div>
+        <% } %>
+        
+        <!-- Error Message Display -->
+        <% if (request.getParameter("error") != null) { %>
+            <div class="error-message" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
+                <%= request.getParameter("error").replace("+", " ") %>
+            </div>
+        <% } %>
+
         <div class="welcome-section">
             <h1 class="welcome-title">Welcome back, <%= username %>!</h1>
             <p class="welcome-subtitle">Ready to challenge yourself with some quizzes?</p>
@@ -671,7 +754,7 @@
                     <div class="stat-label">Quizzes Taken</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number"><%= userRecentCreatingActivities.size() %></div>
+                    <div class="stat-number"><%= quizzesCreatedCount %></div>
                     <div class="stat-label">Quizzes Created</div>
                 </div>
                 <div class="stat-card">
@@ -703,7 +786,7 @@
             <h2>Popular Quizzes</h2>
             <div class="card-row">
                 <% for (Map<String, Object> quiz : popularQuizzes) { %>
-                    <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= quiz.get("id") %>'">
+                    <div class="card" onclick='window.location.href="take_quiz.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
                         <div class="card-stats">
@@ -722,7 +805,7 @@
             <h2>Recently Created Quizzes</h2>
             <div class="card-row">
                 <% for (Map<String, Object> quiz : recentlyCreatedQuizzes) { %>
-                    <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= quiz.get("id") %>'">
+                    <div class="card" onclick='window.location.href="quiz_summary.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
                         <div class="card-stats">
@@ -761,7 +844,7 @@
                 <h2>Your Recent Quiz Creations</h2>
                 <div class="card-row">
                     <% for (Map<String, Object> activity : userRecentCreatingActivities) { %>
-                        <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= activity.get("id") %>'">
+                        <div class="card" onclick='window.location.href="quiz_summary.jsp?id=<%= activity.get("id") %>"'>
                             <div class="card-title"><%= activity.get("title") %></div>
                             <div class="card-desc"><%= activity.get("description") %></div>
                             <div class="card-stats">Created: <%= activity.get("created_at") %></div>
@@ -978,6 +1061,22 @@
             document.querySelectorAll('.progress-bar').forEach(bar => {
                 const progress = bar.getAttribute('data-progress');
                 bar.style.width = progress + '%';
+            });
+        }
+        if (popupId === 'messagesPopup') {
+            // Mark messages as read when popup is opened
+            fetch('MessageServlet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=markAsRead'
+            }).then(() => {
+                // Hide the notification badge
+                const badge = document.querySelector('.nav-btn-container:has(button[onclick*="messagesPopup"]) .notification-badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
             });
         }
     }
