@@ -14,5 +14,6 @@ DROP TABLE IF EXISTS user_achievements;
 DROP TABLE IF EXISTS achievements;
 DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS friend_requests;
 DROP TABLE IF EXISTS user_stats;
 -- The 'users' table is intentionally not dropped. 

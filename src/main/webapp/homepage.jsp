@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
+<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.AdminDAO" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -44,7 +44,7 @@
         conn = DBUtil.getConnection();
 
         // Fetch active announcements
-        String announcementsSql = "SELECT title, content FROM announcements WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 5";
+        String announcementsSql = "SELECT title, content FROM announcements WHERE is_active = TRUE ORDER BY created_at DESC";
         try (PreparedStatement ps = conn.prepareStatement(announcementsSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -70,7 +70,7 @@
         String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
                                   "FROM quizzes q " +
                                   "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
-                                  "GROUP BY q.id, q.title, q.description " +
+                                  "GROUP BY q.id, q.title, q.description, q.created_at " +
                                   "ORDER BY attempt_count DESC, q.created_at DESC " +
                                   "LIMIT 10";
         try (PreparedStatement ps = conn.prepareStatement(popularQuizzesSql);
@@ -358,6 +358,31 @@
             border-radius: 12px;
             margin-bottom: 1rem;
             border-left: 4px solid #00eaff;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .announcement::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 234, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .announcement:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 234, 255, 0.3);
+            border-left-color: #a5b4fc;
+        }
+
+        .announcement:hover::before {
+            left: 100%;
         }
 
         .announcement-title {
@@ -365,11 +390,15 @@
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: #e0e7ff;
+            position: relative;
+            z-index: 1;
         }
 
         .announcement-content {
             color: #a5b4fc;
             line-height: 1.6;
+            position: relative;
+            z-index: 1;
         }
 
         .activity-item {
@@ -446,6 +475,72 @@
             color: #e0e7ff;
         }
 
+        .announcements-carousel {
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+
+        .announcements-group {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateX(50px);
+        }
+
+        .announcements-group.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .announcements-group.slide-out {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .indicator.active {
+            background: #00eaff;
+            transform: scale(1.3);
+            box-shadow: 0 0 15px rgba(0, 234, 255, 0.5);
+        }
+
+        .indicator.active::before {
+            left: 100%;
+        }
+
+        .indicator:hover {
+            background: rgba(0, 234, 255, 0.7);
+            transform: scale(1.1);
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -482,6 +577,13 @@
                 <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
                 <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
                 <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
+                <% 
+                    // Check if user is admin and show admin link
+                    AdminDAO adminDAO = new AdminDAO();
+                    if (adminDAO.isAdmin(userId)) {
+                %>
+                    <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Admin</a>
+                <% } %>
                 <a href="LogoutServlet" class="nav-btn">Logout</a>
             </div>
             <div class="user-info">
@@ -519,13 +621,32 @@
         <!-- Announcements Section -->
         <% if (!announcements.isEmpty()) { %>
             <div class="topic-row">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Latest Announcements</h2>
+                    <a href="all_announcements.jsp" class="nav-btn" style="background: #3b82f6; color: white;">View All Announcements</a>
+                </div>
+                <div class="announcements-carousel" id="announcementsCarousel">
+                    <% for (int i = 0; i < announcements.size(); i += 3) { %>
+                        <div class="announcements-group" style="display: <%= i == 0 ? "block" : "none" %>;">
+                            <% for (int j = i; j < Math.min(i + 3, announcements.size()); j++) { %>
+                                <div class="announcement">
+                                    <div class="announcement-title"><%= announcements.get(j).get("title") %></div>
+                                    <div class="announcement-content"><%= announcements.get(j).get("content") %></div>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="carousel-indicators" id="carouselIndicators">
+                    <% for (int i = 0; i < Math.ceil(announcements.size() / 3.0); i++) { %>
+                        <span class="indicator <%= i == 0 ? "active" : "" %>" onclick="goToSlide(<%= i %>)"></span>
+                    <% } %>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="topic-row">
                 <h2>Latest Announcements</h2>
-                <% for (Map<String, Object> announcement : announcements) { %>
-                    <div class="announcement">
-                        <div class="announcement-title"><%= announcement.get("title") %></div>
-                        <div class="announcement-content"><%= announcement.get("content") %></div>
-                    </div>
-                <% } %>
+                <div class="empty-message">There are no announcements at this time.</div>
             </div>
         <% } %>
 
@@ -750,6 +871,107 @@
             if (event.target == popups[i]) {
                 popups[i].style.display = 'none';
             }
+        }
+    }
+
+    // Announcements Carousel
+    let currentSlide = 0;
+    let carouselInterval;
+    let isPaused = false;
+    const slideGroups = document.querySelectorAll('.announcements-group');
+    const indicators = document.querySelectorAll('.indicator');
+    const totalSlides = slideGroups.length;
+
+    function showSlide(slideIndex) {
+        // Add slide-out effect to current slide
+        if (slideGroups[currentSlide]) {
+            slideGroups[currentSlide].classList.add('slide-out');
+        }
+        
+        // Remove active class from current indicator
+        if (indicators[currentSlide]) {
+            indicators[currentSlide].classList.remove('active');
+        }
+        
+        // Wait for slide-out animation, then show new slide
+        setTimeout(() => {
+            // Hide all slides
+            slideGroups.forEach(group => {
+                group.style.display = 'none';
+                group.classList.remove('active', 'slide-out');
+            });
+            
+            // Show new slide
+            if (slideGroups[slideIndex]) {
+                slideGroups[slideIndex].style.display = 'block';
+                // Trigger reflow
+                slideGroups[slideIndex].offsetHeight;
+                slideGroups[slideIndex].classList.add('active');
+            }
+            
+            // Update indicator
+            if (indicators[slideIndex]) {
+                indicators[slideIndex].classList.add('active');
+            }
+            
+            currentSlide = slideIndex;
+        }, 400); // Half of the transition duration
+    }
+
+    function nextSlide() {
+        if (!isPaused) {
+            const nextIndex = (currentSlide + 1) % totalSlides;
+            showSlide(nextIndex);
+        }
+    }
+
+    function goToSlide(slideIndex) {
+        if (slideIndex !== currentSlide) {
+            showSlide(slideIndex);
+            resetInterval();
+        }
+    }
+
+    function startCarousel() {
+        carouselInterval = setInterval(nextSlide, 5000); // 5 seconds
+    }
+
+    function resetInterval() {
+        clearInterval(carouselInterval);
+        startCarousel();
+    }
+
+    function pauseCarousel() {
+        isPaused = true;
+    }
+
+    function resumeCarousel() {
+        isPaused = false;
+    }
+
+    // Initialize carousel if there are announcements
+    if (totalSlides > 1) {
+        // Set initial active state
+        if (slideGroups[0]) {
+            slideGroups[0].style.display = 'block';
+            slideGroups[0].classList.add('active');
+        }
+        
+        startCarousel();
+        
+        // Add hover events to announcements
+        const announcements = document.querySelectorAll('.announcement');
+        announcements.forEach(announcement => {
+            announcement.addEventListener('mouseenter', pauseCarousel);
+            announcement.addEventListener('mouseleave', resumeCarousel);
+        });
+    } else if (totalSlides === 1) {
+        // If there's only one slide, just show it
+        if (slideGroups[0]) {
+            slideGroups[0].style.display = 'block';
+            slideGroups[0].classList.add('active');
+            // Hide indicators if there is only one slide
+            document.getElementById('carouselIndicators').style.display = 'none';
         }
     }
 </script>

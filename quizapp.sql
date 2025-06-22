@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(256) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL
 );
@@ -175,11 +176,15 @@ INSERT INTO achievements (name, description, points_required, quizzes_taken_requ
 ('Speed Demon', 'Complete a quiz in under 2 minutes', 0, 0, 0, 0),
 ('Consistent Performer', 'Get 3 perfect scores', 0, 0, 0, 3);
 
--- Insert sample announcements (assuming admin user ID is 1)
-INSERT INTO announcements (title, content, created_by, is_active) VALUES
-('Welcome to QuizApp!', 'Welcome to the new and improved QuizApp! We have added many new features including announcements, popular quizzes, and activity tracking.', 1, TRUE),
-('New Features Available', 'Check out the new quiz creation tools with advanced question types and quiz properties. Create engaging quizzes for your friends!', 1, TRUE),
-('Quiz Competition Coming Soon', 'Get ready for our upcoming quiz competition! Practice with existing quizzes to improve your skills.', 1, TRUE);
+-- Ensure admin user is inserted with id=1
+DELETE FROM users;
+ALTER TABLE users AUTO_INCREMENT = 1;
+
+-- Insert sample admin user (password: admin123)
+INSERT INTO users (username, email, password_hash, is_admin) VALUES
+('admin', 'admin@quizapp.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', TRUE);
+
+-- Sample announcements can be created through the admin interface
 
 -- Create indexes for better performance
 CREATE INDEX idx_quiz_submissions_user_id ON quiz_submissions(user_id);
