@@ -1,6 +1,6 @@
 package servlets;
 
-import DATABASE_DAO.FriendDAO;
+import database.FriendDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
