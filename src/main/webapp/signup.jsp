@@ -3,6 +3,7 @@
 <html>
 <head>
     <title>Sign Up - QuizApp</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: #f6f7fb; }
         .container { display: flex; height: 100vh; }

@@ -45,8 +45,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quiz Summary: <%= quizDetails.get("title") %></title>
+    <title>Quiz Summary - QuizApp</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: #0a0a1a; color: #e0e7ff; line-height: 1.6; }
         .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); padding: 1rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }

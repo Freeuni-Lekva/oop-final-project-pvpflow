@@ -26,6 +26,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard - QuizApp</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {

@@ -9,6 +9,7 @@
 <html>
 <head>
     <title>Login - QuizApp</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body {
             margin: 0;

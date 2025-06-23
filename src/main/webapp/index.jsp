@@ -15,7 +15,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>QuizApp - Home</title>
+    <title>QuizApp</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body { font-family: Arial, sans-serif; background: #f6f7fb; margin: 0; }
         .container { max-width: 600px; margin: 100px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2rem; text-align: center; }

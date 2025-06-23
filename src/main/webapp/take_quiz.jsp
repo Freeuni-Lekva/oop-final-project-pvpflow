@@ -45,6 +45,7 @@
     <meta charset="UTF-8">
     <title>Take Quiz<% if (quiz != null) { %> - <%= quiz.get("title") %><% } %></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body {
             margin: 0;
