@@ -30,6 +30,9 @@
             color: #00eaff;
             text-decoration: none;
         }
+        .logo-text {
+            display: inline-block;
+        }
         .main-content {
             padding: 2.5rem;
             max-width: 1200px;
@@ -160,6 +163,10 @@
         <% } %>
     </section>
 
+    <%
+        Boolean isOwnProfile = (Boolean) request.getAttribute("isOwnProfile");
+        if (isOwnProfile != null && isOwnProfile) {
+    %>
     <section class="profile-section">
         <h2>Friends</h2>
         <%
@@ -194,6 +201,7 @@
             <p>No achievements unlocked yet. Keep playing!</p>
         <% } %>
     </section>
+    <% } %>
 
 </main>
 

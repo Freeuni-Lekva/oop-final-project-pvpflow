@@ -1,5 +1,6 @@
 package servlets;
 
+import database.AchievementDAO;
 import database.DBUtil;
 import database.QuizDAO;
 
@@ -11,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.*;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/CreateQuizServlet")
 public class CreateQuizServlet extends HttpServlet {
@@ -23,9 +26,19 @@ public class CreateQuizServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        
+        // Test database connection first
+        DBUtil.testDatabaseConnection();
+        
         HttpSession session = request.getSession(false);
         Integer userId = (session != null) ? (Integer) session.getAttribute("userId") : null;
+        
+        System.out.println("=== QUIZ CREATION STARTED ===");
+        System.out.println("Session: " + session);
+        System.out.println("UserId: " + userId);
+        
         if (userId == null) {
+            System.out.println("User not logged in, redirecting to login");
             response.sendRedirect("login.jsp");
             return;
         }
@@ -33,7 +46,32 @@ public class CreateQuizServlet extends HttpServlet {
         // Get quiz basic information
         String title = request.getParameter("title");
         String description = request.getParameter("description");
-        int questionCount = Integer.parseInt(request.getParameter("questionCount"));
+        String questionCountStr = request.getParameter("questionCount");
+        
+        // Validate required fields
+        if (title == null || title.trim().isEmpty()) {
+            System.out.println("Error: Title is required");
+            response.sendRedirect("create_quiz.jsp?error=Title+is+required");
+            return;
+        }
+        
+        if (questionCountStr == null || questionCountStr.trim().isEmpty()) {
+            System.out.println("Error: Question count is required");
+            response.sendRedirect("create_quiz.jsp?error=Question+count+is+required");
+            return;
+        }
+        
+        int questionCount;
+        try {
+            questionCount = Integer.parseInt(questionCountStr);
+            if (questionCount <= 0 || questionCount > 50) {
+                throw new NumberFormatException("Invalid question count");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Invalid question count: " + questionCountStr);
+            response.sendRedirect("create_quiz.jsp?error=Invalid+question+count");
+            return;
+        }
         
         // Get quiz properties (new required properties)
         boolean isRandomized = "on".equals(request.getParameter("isRandomized"));
@@ -81,6 +119,17 @@ public class CreateQuizServlet extends HttpServlet {
                 System.out.println("Image URL: " + imageUrl);
                 System.out.println("Is Ordered: " + isOrdered);
                 
+                // Validate image URL if provided
+                if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                    try {
+                        new java.net.URL(imageUrl);
+                    } catch (Exception e) {
+                        System.err.println("Invalid image URL: " + imageUrl);
+                        response.sendRedirect("create_quiz.jsp?error=Invalid+image+URL+format");
+                        return;
+                    }
+                }
+                
                 // Add question using QuizDAO
                 int questionId = QuizDAO.addQuestion(conn, quizId, qType, qText, imageUrl, i + 1, isOrdered);
                 System.out.println("Question added with ID: " + questionId);
@@ -95,21 +144,78 @@ public class CreateQuizServlet extends HttpServlet {
             
             conn.commit();
             System.out.println("=== QUIZ CREATION COMPLETED SUCCESSFULLY ===");
+            System.out.println("Quiz ID: " + quizId + ", Questions added: " + actualQuestionCount);
+            
+            // Verify the quiz was created properly by querying it back
+            try {
+                String verifySql = "SELECT q.id, q.title, q.description, q.question_count, u.username as creator_name " +
+                                 "FROM quizzes q " +
+                                 "JOIN users u ON q.creator_id = u.id " +
+                                 "WHERE q.id = ?";
+                try (PreparedStatement verifyStmt = conn.prepareStatement(verifySql)) {
+                    verifyStmt.setInt(1, quizId);
+                    try (ResultSet verifyRs = verifyStmt.executeQuery()) {
+                        if (verifyRs.next()) {
+                            System.out.println("=== QUIZ VERIFICATION SUCCESSFUL ===");
+                            System.out.println("Verified Quiz ID: " + verifyRs.getInt("id"));
+                            System.out.println("Verified Title: " + verifyRs.getString("title"));
+                            System.out.println("Verified Description: " + verifyRs.getString("description"));
+                            System.out.println("Verified Question Count: " + verifyRs.getInt("question_count"));
+                            System.out.println("Verified Creator: " + verifyRs.getString("creator_name"));
+                        } else {
+                            System.out.println("=== QUIZ VERIFICATION FAILED ===");
+                            System.out.println("Quiz not found in database after creation!");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error during quiz verification: " + e.getMessage());
+            }
+            
+            // Check and award achievements after quiz creation
+            try {
+                AchievementDAO achievementDAO = new AchievementDAO();
+                List<Map<String, Object>> newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
+                
+                // Create system messages for newly earned achievements
+                for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                    achievementDAO.createAchievementMessage(conn, userId, (String) achievement.get("name"));
+                }
+                
+                if (!newlyEarnedAchievements.isEmpty()) {
+                    System.out.println("=== ACHIEVEMENTS AWARDED ===");
+                    for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                        System.out.println("Awarded: " + achievement.get("name"));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error checking achievements: " + e.getMessage());
+                // Don't fail the quiz creation if achievement checking fails
+            }
+            
             response.sendRedirect("homepage.jsp?success=Quiz+created+successfully");
             
         } catch (Exception e) {
+            System.err.println("=== QUIZ CREATION ERROR ===");
             e.printStackTrace();
             if (conn != null) {
                 try { 
                     conn.rollback(); 
-                } catch (SQLException ignored) {}
+                    System.out.println("Database transaction rolled back");
+                } catch (SQLException ignored) {
+                    System.err.println("Failed to rollback transaction");
+                }
             }
-            response.sendRedirect("create_quiz.jsp?error=Database+error:+%s".formatted(e.getMessage()));
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred";
+            response.sendRedirect("create_quiz.jsp?error=Database+error:+%s".formatted(errorMessage.replace(" ", "+")));
         } finally {
             if (conn != null) {
                 try { 
                     conn.close(); 
-                } catch (Exception ignored) {}
+                    System.out.println("Database connection closed");
+                } catch (Exception ignored) {
+                    System.err.println("Failed to close database connection");
+                }
             }
         }
     }
@@ -118,6 +224,7 @@ public class CreateQuizServlet extends HttpServlet {
      * Process answers for different question types
      */
     private void processAnswers(Connection conn, int questionId, String questionType, int questionIndex, HttpServletRequest request) throws SQLException {
+        System.out.println("Processing answers for question type: " + questionType);
         switch (questionType) {
             case "multiple_choice":
                 processMultipleChoiceAnswers(conn, questionId, questionIndex, request);

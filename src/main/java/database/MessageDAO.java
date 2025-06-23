@@ -72,4 +72,33 @@ public class MessageDAO {
         }
         return conversations;
     }
+
+    /**
+     * Gets the count of unread messages for a user.
+     */
+    public int getUnreadMessageCount(int userId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = FALSE";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Marks all messages sent to a user as read.
+     */
+    public void markMessagesAsRead(int userId) throws SQLException {
+        String sql = "UPDATE messages SET is_read = TRUE WHERE recipient_id = ? AND is_read = FALSE";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.executeUpdate();
+        }
+    }
 } 

@@ -1,4 +1,30 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
+<%
+    // Get user information from session
+    String username = (String) session.getAttribute("user");
+    Integer userId = (Integer) session.getAttribute("userId");
+
+    // Redirect to login if not logged in
+    if (username == null || userId == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+
+    // Fetch notification data
+    FriendDAO friendDAO = new FriendDAO();
+    MessageDAO messageDAO = new MessageDAO();
+    List<Map<String, Object>> pendingRequests = new ArrayList<>();
+    int unreadMessageCount = 0;
+    
+    try {
+        pendingRequests = friendDAO.getPendingRequests(userId);
+        unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
+    } catch (Exception e) {
+        // Silently handle errors for notifications
+        e.printStackTrace();
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,6 +75,15 @@
             text-decoration: none;
         }
 
+        .logo img {
+            height: 2rem;
+            width: auto;
+        }
+
+        .logo-text {
+            display: inline-block;
+        }
+
         .nav-buttons {
             flex-grow: 1;
             display: flex;
@@ -82,6 +117,34 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
             border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-btn-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 2px solid #1a1a3a;
+            min-width: 20px;
+            box-sizing: border-box;
+        }
+
+        .notification-badge.hidden {
+            display: none;
         }
 
         .user-info {
@@ -310,6 +373,42 @@
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
+        .picture-note {
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #93c5fd;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .preview-image-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .preview-image-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+        }
+
+        .image-preview {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         .popup {
             display: none;
             position: fixed;
@@ -379,11 +478,22 @@
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
             <div class="nav-buttons">
+                <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
                 <a href="homepage.jsp" class="nav-btn">Home</a>
                 <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
-                <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
+                <div class="nav-btn-container">
+                    <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
+                    <% if (!pendingRequests.isEmpty()) { %>
+                        <div class="notification-badge"><%= pendingRequests.size() %></div>
+                    <% } %>
+                </div>
                 <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
-                <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
+                <div class="nav-btn-container">
+                    <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
+                    <% if (unreadMessageCount > 0) { %>
+                        <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
+                    <% } %>
+                </div>
                 <a href="LogoutServlet" class="nav-btn">Logout</a>
             </div>
             <div class="user-info">
@@ -406,12 +516,7 @@
                 </div>
                 <div class="form-group">
                     <label for="questionCount">Number of Questions</label>
-                    <select id="questionCount" name="questionCount" required>
-                        <option value="1">1</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                    </select>
+                    <input type="number" id="questionCount" name="questionCount" min="1" max="100" required placeholder="Enter number of questions" />
                 </div>
                 
                 <!-- Quiz Properties Section -->
@@ -513,7 +618,9 @@
                 '</div>' +
                 '<div class="form-group image-url-group" style="display:none;">' +
                     '<label>Image URL (for Picture-Response)</label>' +
-                    '<input type="text" name="imageUrl_' + idx + '" />' +
+                    '<input type="text" name="imageUrl_' + idx + '" placeholder="https://example.com/image.jpg" />' +
+                    '<button type="button" class="preview-image-btn">Preview Image</button>' +
+                    '<div class="image-preview" style="display: none;"></div>' +
                 '</div>' +
                 '<div class="form-group time-limit-group" style="display:none;">' +
                     '<label>Time Limit (seconds, for Timed)</label>' +
@@ -530,6 +637,7 @@
                 '</div>' +
                 '<div class="form-group essay-note" style="display:none; color: #e11d48; font-weight: 600;">This question will be graded by an administrator.</div>' +
                 '<div class="form-group auto-note" style="display:none; color: #3b82f6; font-weight: 600;">This question will be auto-generated by the system.</div>' +
+                '<div class="form-group picture-note" style="display:none; color: #10b981; font-weight: 600;">Students will describe what they see in the image. You can provide an expected answer for grading.</div>' +
             '</div>';
         }
 
@@ -549,6 +657,11 @@
             } else if (type === 'multi_answer') {
                 return '<div class="answer-row">' +
                     '<input type="text" name="answer_' + idx + '_' + aIdx + '" placeholder="Answer" required />' +
+                    '<button type="button" class="remove-answer-btn">-</button>' +
+                '</div>';
+            } else if (type === 'picture_response') {
+                return '<div class="answer-row">' +
+                    '<input type="text" name="answer_' + idx + '_' + aIdx + '" placeholder="Expected answer (optional)" />' +
                     '<button type="button" class="remove-answer-btn">-</button>' +
                 '</div>';
             } else {
@@ -574,6 +687,7 @@
             const orderGroup = qBlock.querySelector('.order-group');
             const essayNote = qBlock.querySelector('.essay-note');
             const autoNote = qBlock.querySelector('.auto-note');
+            const pictureNote = qBlock.querySelector('.picture-note');
             const imgGroup = qBlock.querySelector('.image-url-group');
             const timeLimitGroup = qBlock.querySelector('.time-limit-group');
             answersList.innerHTML = '';
@@ -581,6 +695,7 @@
             orderGroup.style.display = 'none';
             essayNote.style.display = 'none';
             autoNote.style.display = 'none';
+            pictureNote.style.display = 'none';
             imgGroup.style.display = 'none';
             timeLimitGroup.style.display = 'none';
             if (type === 'multiple_choice') {
@@ -603,6 +718,7 @@
                 addRemoveMatchingListeners(qBlock);
             } else if (type === 'picture_response') {
                 imgGroup.style.display = '';
+                pictureNote.style.display = '';
                 answersList.innerHTML += createAnswerRow(idx, 0, type);
             } else if (type === 'essay') {
                 essayNote.style.display = '';
@@ -624,6 +740,29 @@
                     this.parentElement.remove();
                 };
             });
+            
+            // Add image preview functionality
+            const previewBtn = qBlock.querySelector('.preview-image-btn');
+            if (previewBtn) {
+                previewBtn.onclick = function() {
+                    const imageUrlInput = qBlock.querySelector('input[name^="imageUrl_"]');
+                    const previewDiv = qBlock.querySelector('.image-preview');
+                    const imageUrl = imageUrlInput.value.trim();
+                    
+                    if (imageUrl === '') {
+                        alert('Please enter an image URL first.');
+                        return;
+                    }
+                    
+                    try {
+                        new URL(imageUrl);
+                        previewDiv.innerHTML = '<img src="' + imageUrl + '" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onerror="this.parentElement.innerHTML=\'<p style=\\\'color: #ef4444;\\\'>Failed to load image. Please check the URL.</p>\'" />';
+                        previewDiv.style.display = 'block';
+                    } catch (e) {
+                        alert('Please enter a valid image URL.');
+                    }
+                };
+            }
         }
 
         function addRemoveMatchingListeners(qBlock) {
@@ -695,12 +834,43 @@
                     console.log(element.name + ': ' + element.value);
                 }
             }
+            
+            // Validate image URLs for picture_response questions
+            const imageUrlFields = document.querySelectorAll('input[name^="imageUrl_"]');
+            for (let field of imageUrlFields) {
+                if (field.value.trim() !== '') {
+                    try {
+                        new URL(field.value);
+                    } catch (e) {
+                        alert('Please enter a valid image URL for the picture-response question.');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
         });
     });
 
     function openPopup(id) {
         document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
+        
+        if (id === 'messagesPopup') {
+            // Mark messages as read when popup is opened
+            fetch('MessageServlet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=markAsRead'
+            }).then(() => {
+                // Hide the notification badge
+                const badge = document.querySelector('.nav-btn-container:has(button[onclick*="messagesPopup"]) .notification-badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            });
+        }
     }
     
     function closePopup(id) {

@@ -13,9 +13,11 @@ public class FriendDAO {
 
     /**
      * Sends a friend request by creating a 'pending' entry in the friends table.
+     * If a previous request was rejected, it updates the existing record.
      */
     public void sendFriendRequest(int requesterId, int requesteeId) throws SQLException {
-        String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
+        String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending') " +
+                     "ON DUPLICATE KEY UPDATE status = 'pending', updated_at = CURRENT_TIMESTAMP";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, requesterId);
@@ -32,7 +34,9 @@ public class FriendDAO {
         String selectSql = "SELECT user_id, friend_id FROM friends WHERE id = ?";
         String insertSql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'accepted') ON DUPLICATE KEY UPDATE status = 'accepted'";
         
-        try (Connection conn = DBUtil.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
             conn.setAutoCommit(false);
 
             int userId = -1;
@@ -52,7 +56,10 @@ public class FriendDAO {
 
             try(PreparedStatement stmt = conn.prepareStatement(updateSql)) {
                 stmt.setInt(1, friendshipId);
-                stmt.executeUpdate();
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("Friend request not found or already processed.");
+                }
             }
             
             try(PreparedStatement stmt = conn.prepareStatement(insertSql)) {
@@ -63,8 +70,24 @@ public class FriendDAO {
 
             conn.commit();
         } catch (SQLException e) {
-            // Consider rolling back here
+            // Rollback the transaction on error
+            if (conn != null && !conn.getAutoCommit()) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    // Log rollback error but throw the original exception
+                    System.err.println("Error during rollback: " + rollbackEx.getMessage());
+                }
+            }
             throw e;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    System.err.println("Error closing connection: " + e.getMessage());
+                }
+            }
         }
     }
     
@@ -76,7 +99,12 @@ public class FriendDAO {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, friendshipId);
-            stmt.executeUpdate();
+            int rowsAffected = stmt.executeUpdate();
+            
+            // Check if the friend request actually existed
+            if (rowsAffected == 0) {
+                throw new SQLException("Friend request not found or already processed.");
+            }
         }
     }
 
@@ -85,20 +113,18 @@ public class FriendDAO {
      */
     public List<Map<String, Object>> findPotentialFriends(int currentUserId) throws SQLException {
         List<Map<String, Object>> users = new ArrayList<>();
-        // This query finds users who are NOT the current user, are NOT already friends,
-        // and do NOT have a pending sent or received friend request with the current user.
         String sql = "SELECT id, username FROM users u " +
                      "WHERE u.id != ? " +
-                     "AND NOT EXISTS (SELECT 1 FROM friends f WHERE (f.user_id = u.id AND f.friend_id = ?) OR (f.friend_id = u.id AND f.user_id = ?)) " +
-                     "AND NOT EXISTS (SELECT 1 FROM friend_requests fr WHERE (fr.requester_id = u.id AND fr.requestee_id = ? AND fr.status = 'pending') OR (fr.requestee_id = u.id AND fr.requester_id = ? AND fr.status = 'pending'))";
+                     "AND NOT EXISTS (SELECT 1 FROM friends f WHERE " +
+                     "  (f.user_id = u.id AND f.friend_id = ? AND f.status IN ('pending', 'accepted')) OR " +
+                     "  (f.friend_id = u.id AND f.user_id = ? AND f.status IN ('pending', 'accepted'))) " +
+                     "ORDER BY RAND() LIMIT 10";
         
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, currentUserId);
             stmt.setInt(2, currentUserId);
             stmt.setInt(3, currentUserId);
-            stmt.setInt(4, currentUserId);
-            stmt.setInt(5, currentUserId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> user = new HashMap<>();
@@ -130,6 +156,41 @@ public class FriendDAO {
             }
         }
         return requests;
+    }
+
+    /**
+     * Checks if a friend request exists and is in pending status.
+     */
+    public boolean isPendingRequest(int friendshipId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM friends WHERE id = ? AND status = 'pending'";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, friendshipId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a user has permission to accept/reject a specific friend request.
+     */
+    public boolean canUserProcessRequest(int userId, int friendshipId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM friends WHERE id = ? AND friend_id = ? AND status = 'pending'";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, friendshipId);
+            stmt.setInt(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 
     /**
