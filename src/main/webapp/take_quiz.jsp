@@ -137,10 +137,16 @@
         }
 
         .question-type {
-            font-size: 0.9rem;
-            color: #a5b4fc;
+            font-size: 0.95rem;
+            color: #e0e7ff;
+            background: rgba(10, 10, 30, 0.95);
             margin-bottom: 1rem;
-            font-style: italic;
+            font-style: normal;
+            padding: 0.35em 1em;
+            border-radius: 1em;
+            display: inline-block;
+            font-weight: 600;
+            letter-spacing: 0.03em;
         }
 
         .answers-list {

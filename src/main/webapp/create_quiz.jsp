@@ -471,6 +471,30 @@
                 align-items: stretch;
             }
         }
+
+        .question-type-select {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: #e0e7ff;
+            border: 1px solid #3a3a5a;
+            border-radius: 1em;
+            padding: 0.5em 1.2em;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            margin-top: 0.2rem;
+            outline: none;
+            box-shadow: none;
+            transition: border-color 0.2s;
+        }
+        .question-type-select:focus {
+            border-color: #00eaff;
+        }
+        /* Custom dropdown background for Webkit browsers (Chrome, Safari, Edge Chromium) */
+        .question-type-select option {
+            background-color: #2a225a;
+            color: #e0e7ff;
+        }
+        /* For Firefox, users may need to set OS theme to dark for full effect. */
     </style>
 </head>
 <body>
