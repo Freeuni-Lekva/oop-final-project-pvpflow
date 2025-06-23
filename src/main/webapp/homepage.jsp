@@ -21,7 +21,6 @@
 
     // --- Data Fetching ---
     List<Map<String, Object>> announcements = new ArrayList<>();
-    List<Map<String, Object>> popularQuizzes = new ArrayList<>();
     List<Map<String, Object>> recentlyCreatedQuizzes = new ArrayList<>();
     List<Map<String, Object>> userRecentQuizActivities = new ArrayList<>();
     List<Map<String, Object>> userRecentCreatingActivities = new ArrayList<>();
@@ -38,6 +37,16 @@
     List<Map<String, Object>> conversations = new ArrayList<>();
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
+    
+    // --- Achievements Variables ---
+    final int QUIZ_MASTER_GOAL = 50;
+    boolean hasPerfectScore = false;
+    double quizMasterProgress = 0.0;
+    double perfectScoreProgress = 0.0;
+    double creatorProgress = 0.0;
+    int quizzesCreatedCount = 0;
+    boolean hasHighestScore = false;
+    boolean hasTakenPracticeQuiz = false;
     
     Connection conn = null;
     try {
@@ -56,7 +65,7 @@
         }
 
         // Fetch user's quizzes taken count
-        String quizzesTakenSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ?";
+        String quizzesTakenSql = "SELECT COUNT(DISTINCT quiz_id) FROM quiz_submissions WHERE user_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(quizzesTakenSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -68,11 +77,11 @@
 
         // Fetch popular quizzes (most taken)
         String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
-                                  "FROM quizzes q " +
-                                  "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
-                                  "GROUP BY q.id, q.title, q.description, q.created_at " +
-                                  "ORDER BY attempt_count DESC, q.created_at DESC " +
-                                  "LIMIT 10";
+                                    "FROM quizzes q " +
+                                    "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
+                                    " q.id, q.title, q.description, q.created_at " +
+                                    "ORDER BY attempt_count DESC, q.created_at DESC " +
+                                    "LIMIT 10";
         try (PreparedStatement ps = conn.prepareStatement(popularQuizzesSql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -162,6 +171,54 @@
 
         // Fetch message data
         conversations = messageDAO.getConversations(userId);
+        
+        // --- Achievements Data Calculation ---
+        String perfectScoreSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
+        try (PreparedStatement ps = conn.prepareStatement(perfectScoreSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    hasPerfectScore = true;
+                }
+            }
+        }
+        
+        // Count of created quizzes
+        String createdCountSql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(createdCountSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    quizzesCreatedCount = rs.getInt(1);
+                }
+            }
+        }
+
+        // Check for highest score
+        String highestScoreSql = "SELECT COUNT(*) FROM quiz_submissions s WHERE s.user_id = ? AND s.score = (SELECT MAX(score) FROM quiz_submissions WHERE quiz_id = s.quiz_id)";
+        try (PreparedStatement ps = conn.prepareStatement(highestScoreSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    hasHighestScore = true;
+                }
+            }
+        }
+        
+        // Check for practice mode quiz
+        String practiceQuizSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND is_practice_mode = TRUE";
+        try (PreparedStatement ps = conn.prepareStatement(practiceQuizSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    hasTakenPracticeQuiz = true;
+                }
+            }
+        }
+
+        quizMasterProgress = Math.min(100.0, (double) quizzesTakenCount / QUIZ_MASTER_GOAL * 100);
+        perfectScoreProgress = hasPerfectScore ? 100.0 : 0.0;
+        creatorProgress = !userRecentCreatingActivities.isEmpty() ? 100.0 : 0.0;
 
     } catch (Exception e) {
         e.printStackTrace(); // Log error to server console
@@ -552,6 +609,109 @@
             transform: scale(1.1);
         }
 
+        .user-menu {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .username-display {
+            padding: 0.8rem 1rem;
+            background-color: #3a3a5a;
+            border-radius: 8px;
+            color: #e0e7ff;
+            font-weight: 600;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #2a2a4a;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: #e0e7ff;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-content a:hover {
+            background-color: #3a3a5a;
+        }
+        .user-menu:hover .dropdown-content {
+            display: block;
+        }
+
+        .achievement-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .achievement-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .achievement-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .achievement-icon.quiz-master { background-color: #fbbf24; }
+        .achievement-icon.perfect-score { background-color: #10b981; }
+        .achievement-icon.creator { background-color: #8b5cf6; }
+        .achievement-icon.author { background-color: #3b82f6; }
+        .achievement-icon.machine { background-color: #ef4444; }
+        .achievement-icon.greatest { background-color: #f59e0b; }
+        .achievement-icon.practice { background-color: #14b8a6; }
+
+        .achievement-details {
+            flex-grow: 1;
+        }
+
+        .achievement-title {
+            font-weight: 600;
+            color: #e0e7ff;
+            font-size: 1.1rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.9rem;
+            color: #a5b4fc;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #2dd4bf);
+            border-radius: 8px;
+            transition: width 0.5s ease-in-out;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -575,7 +735,7 @@
                 padding: 0 1rem;
             }
         }
-    </style>
+   </style>
 </head>
 <body>
     <div class="header">
@@ -594,14 +754,16 @@
                 %>
                     <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Admin</a>
                 <% } %>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>!
+                <div class="user-menu">
+                    <span class="username-display"><%= username %></span>
+                    <div class="dropdown-content">
+                        <a href="profile">Profile</a>
+                        <a href="LogoutServlet">Logout</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
     <div class="main-content">
         <!-- Welcome Section -->
         <div class="welcome-section">
@@ -665,7 +827,7 @@
             <h2>Popular Quizzes</h2>
             <div class="card-row">
                 <% for (Map<String, Object> quiz : popularQuizzes) { %>
-                    <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= quiz.get("id") %>'">
+                    <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= quiz.get("id") %>'">
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
                         <div class="card-stats">
@@ -684,7 +846,7 @@
             <h2>Recently Created Quizzes</h2>
             <div class="card-row">
                 <% for (Map<String, Object> quiz : recentlyCreatedQuizzes) { %>
-                    <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= quiz.get("id") %>'">
+                    <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= quiz.get("id") %>'">
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
                         <div class="card-stats">
@@ -723,7 +885,7 @@
                 <h2>Your Recent Quiz Creations</h2>
                 <div class="card-row">
                     <% for (Map<String, Object> activity : userRecentCreatingActivities) { %>
-                        <div class="card" onclick="window.location.href='take_quiz.jsp?id=<%= activity.get("id") %>'">
+                        <div class="card" onclick="window.location.href='quiz_summary.jsp?id=<%= activity.get("id") %>'">
                             <div class="card-title"><%= activity.get("title") %></div>
                             <div class="card-desc"><%= activity.get("description") %></div>
                             <div class="card-stats">Created: <%= activity.get("created_at") %></div>
@@ -739,26 +901,94 @@
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('achievementsPopup')">&times;</button>
         <h3>Achievements</h3>
-        <div style="margin-top: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #fbbf24; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🏆</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">Quiz Master</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Complete 50 quizzes</div>
+        <%
+            // Author achievements
+            double amateurAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 1 * 100);
+            double prolificAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 5 * 100);
+            double prodigiousAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 10 * 100);
+            // Quiz taker achievements
+            double quizMachineProgress = Math.min(100.0, (double) quizzesTakenCount / 10 * 100);
+            // Special achievements
+            double iAmTheGreatestProgress = hasHighestScore ? 100.0 : 0.0;
+            double practiceMakesPerfectProgress = hasTakenPracticeQuiz ? 100.0 : 0.0;
+        %>
+        <div style="margin-top: 1.5rem;">
+            <!-- Amateur Author -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon author">✍️</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">Amateur Author</div>
+                        <div class="achievement-desc">Create 1 quiz (<%= quizzesCreatedCount %> / 1)</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= amateurAuthorProgress %>"></div>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">⭐</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">Perfect Score</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Get 100% on any quiz</div>
+            <!-- Prolific Author -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon author">📚</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">Prolific Author</div>
+                        <div class="achievement-desc">Create 5 quizzes (<%= quizzesCreatedCount %> / 5)</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= prolificAuthorProgress %>"></div>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px;">
-                <div style="width: 2.5rem; height: 2.5rem; background: #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🎯</div>
-                <div>
-                    <div style="font-weight: 600; color: #1f2937;">Creator</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Create your first quiz</div>
+            <!-- Prodigious Author -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon author">👑</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">Prodigious Author</div>
+                        <div class="achievement-desc">Create 10 quizzes (<%= quizzesCreatedCount %> / 10)</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= prodigiousAuthorProgress %>"></div>
+                </div>
+            </div>
+            <!-- Quiz Machine -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon machine">🤖</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">Quiz Machine</div>
+                        <div class="achievement-desc">Take 10 quizzes (<%= quizzesTakenCount %> / 10)</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= quizMachineProgress %>"></div>
+                </div>
+            </div>
+            <!-- I am the Greatest -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon greatest">🏆</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">I am the Greatest</div>
+                        <div class="achievement-desc">Have the highest score on a quiz</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= iAmTheGreatestProgress %>"></div>
+                </div>
+            </div>
+            <!-- Practice Makes Perfect -->
+            <div class="achievement-item">
+                <div class="achievement-header">
+                    <div class="achievement-icon practice">💪</div>
+                    <div class="achievement-details">
+                        <div class="achievement-title">Practice Makes Perfect</div>
+                        <div class="achievement-desc">Take a quiz in practice mode</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="<%= practiceMakesPerfectProgress %>"></div>
                 </div>
             </div>
         </div>
@@ -868,6 +1098,12 @@
 <script>
     function openPopup(popupId) {
         document.getElementById(popupId).style.display = 'block';
+        if (popupId === 'achievementsPopup') {
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                const progress = bar.getAttribute('data-progress');
+                bar.style.width = progress + '%';
+            });
+        }
     }
 
     function closePopup(popupId) {
