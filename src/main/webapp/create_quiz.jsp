@@ -37,7 +37,6 @@
 
         .header-content {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             max-width: 1200px;
             margin: 0 auto;
@@ -51,26 +50,38 @@
         }
 
         .nav-buttons {
+            flex-grow: 1;
             display: flex;
+            justify-content: center;
             gap: 1rem;
             align-items: center;
         }
 
         .nav-btn {
-            background: rgba(255, 255, 255, 0.1);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(49, 46, 129, 0.4);
             color: #e0e7ff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.6rem 1.4rem;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 500;
+            font-size: 15px;
             transition: all 0.3s ease;
             cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(67, 56, 202, 0.6);
             transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .user-info {
@@ -368,8 +379,7 @@
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
             <div class="nav-buttons">
-                <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
-                <a href="take_quiz.jsp" class="nav-btn">Take Quiz</a>
+                <a href="homepage.jsp" class="nav-btn">Home</a>
                 <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
                 <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
                 <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
