@@ -32,6 +32,8 @@ public class LoginServlet extends HttpServlet {
 
             if (rs.next()) {
                 String storedHash = rs.getString("password_hash");
+                // Debug output
+                System.out.println("Login attempt: usernameOrEmail=" + usernameOrEmail + ", entered password=" + password + ", storedHash=" + storedHash + ", hash(entered)=" + PasswordUtil.hashPassword(password));
                 if (PasswordUtil.checkPassword(password, storedHash)) {
                     HttpSession session = request.getSession();
                     session.setAttribute("userId", rs.getInt("id"));
