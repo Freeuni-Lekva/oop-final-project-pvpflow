@@ -30,6 +30,12 @@ public class GradeQuizServlet extends HttpServlet {
         }
 
         boolean isPractice = "true".equals(request.getParameter("practice"));
+        int timeTaken = 0;
+        try {
+            timeTaken = Integer.parseInt(request.getParameter("timeTaken"));
+        } catch (Exception e) {
+            // fallback to 0 if missing or invalid
+        }
 
         try {
             int quizId = Integer.parseInt(request.getParameter("quizId"));
@@ -113,7 +119,7 @@ public class GradeQuizServlet extends HttpServlet {
             try (Connection conn = DBUtil.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
-                    int submissionId = quizDAO.saveSubmission(conn, quizId, userId, score, totalPossibleScore, percentage, isPractice);
+                    int submissionId = quizDAO.saveSubmission(conn, quizId, userId.intValue(), score, totalPossibleScore, percentage, isPractice, timeTaken);
                     for (int i = 0; i < userAnswersReview.size(); i++) {
                         Map<String, Object> reviewItem = userAnswersReview.get(i);
                         quizDAO.saveSubmissionAnswer(conn, submissionId, (int) questions.get(i).get("id"), 

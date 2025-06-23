@@ -254,6 +254,7 @@
                        if ("true".equals(practiceParam)) { %>
                         <input type="hidden" name="practice" value="true">
                     <% } %>
+                    <input type="hidden" id="timeTaken" name="timeTaken" value="0" />
                     
                     <% for (int i = 0; i < questions.size(); i++) {
                         Map<String, Object> q = questions.get(i);
@@ -343,6 +344,13 @@
                 e.preventDefault();
                 alert('Please fill in all required fields.');
             }
+        });
+
+        let startTime = Date.now();
+        const form = document.getElementById('quizForm');
+        form.addEventListener('submit', function() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timeTaken').value = elapsed;
         });
     </script>
 </body>
