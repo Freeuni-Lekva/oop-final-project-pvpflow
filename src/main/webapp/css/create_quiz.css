@@ -1,0 +1,190 @@
+/* Add create_quiz.jsp styles here */ 
+
+body {
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    background: #0a0a1a;
+    color: #e0e7ff;
+    line-height: 1.6;
+}
+
+.header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #00eaff;
+    text-decoration: none;
+}
+
+.logo img {
+    height: 2rem;
+    width: auto;
+}
+
+.logo-text {
+    display: inline-block;
+}
+
+.nav-buttons {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(49, 46, 129, 0.4);
+    color: #e0e7ff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.6rem 1.4rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-btn:hover {
+    background: rgba(67, 56, 202, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn-container {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 2px solid #1a1a3a;
+    min-width: 20px;
+    box-sizing: border-box;
+}
+
+.notification-badge.hidden {
+    display: none;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #a5b4fc;
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.container {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border-radius: 16px;
+    padding: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 25px rgba(0, 234, 255, 0.1);
+}
+
+h1 {
+    color: #00eaff;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    background: linear-gradient(135deg, #00eaff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e0e7ff;
+}
+
+select, input[type="text"], textarea, input[type="number"] {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e7ff;
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+button, .submit-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    outline: none;
+}
+button:hover, .submit-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
+    transform: translateY(-2px) scale(1.03);
+}
+
+button.remove-answer-btn, .remove-answer-btn {
+    background: #e11d48;
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    transition: background 0.2s, transform 0.1s;
+}
+button.remove-answer-btn:hover, .remove-answer-btn:hover {
+    background: #be123c;
+    transform: scale(1.08);
+} 

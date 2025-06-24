@@ -48,45 +48,7 @@
     <title>Quiz Summary - QuizApp</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
-    <style>
-        body { margin: 0; font-family: 'Inter', Arial, sans-serif; background: #0a0a1a; color: #e0e7ff; line-height: 1.6; }
-        .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); padding: 1rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
-        .logo { 
-            font-size: 1.8rem; 
-            font-weight: 700; 
-            color: #00eaff; 
-            text-decoration: none; 
-        }
-        .logo img {
-            height: 2rem;
-            width: auto;
-        }
-        .logo-text {
-            display: inline-block;
-        }
-        .nav-btn { background: rgba(255,255,255,0.1); color: #e0e7ff; border: 1px solid rgba(255,255,255,0.2); padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 500; }
-        .main-content { max-width: 1000px; margin: 2rem auto; padding: 0 2rem; }
-        .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-        .main-column, .sidebar { background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
-        h1, h2, h3 { color: #00eaff; }
-        h1 { font-size: 2.2rem; margin-top: 0; }
-        h2 { border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; margin-top: 2rem; }
-        .description { margin-bottom: 1.5rem; color: #a5b4fc; }
-        .creator-link { color: #818cf8; text-decoration: none; font-weight: 600; }
-        .action-buttons { display: flex; gap: 1rem; margin-top: 2rem; }
-        .action-btn { flex: 1; text-align: center; padding: 1rem; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.2s ease; }
-        .start-btn { background: #10b981; color: white; }
-        .practice-btn { background: #f59e0b; color: white; }
-        .edit-btn { background: #6366f1; color: white; }
-        .performance-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        .performance-table th, .performance-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .performance-table th { color: #a5b4fc; }
-        .performance-table th a { color: #a5b4fc; text-decoration: none; }
-        .performance-table th a:hover { text-decoration: underline; }
-        .stat-card { background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; }
-        .stat-card h3 { margin-top: 0; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/quiz_summary.css">
 </head>
 <body>
     <div class="header">

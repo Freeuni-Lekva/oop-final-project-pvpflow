@@ -1,0 +1,93 @@
+body {
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    background: #0a0a1a;
+    color: #e0e7ff;
+}
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(20, 20, 40, 0.92);
+    padding: 1.2rem 2.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.logo {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #00eaff;
+    text-decoration: none;
+}
+.logo-text {
+    display: inline-block;
+}
+.main-content {
+    padding: 2.5rem;
+    max-width: 1200px;
+    margin: auto;
+}
+.profile-header {
+    background: rgba(26, 26, 50, 0.8);
+    padding: 2rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #00eaff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #0a0a1a;
+}
+.profile-info h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    color: #e0e7ff;
+}
+.profile-info p {
+    margin: 0.5rem 0 0;
+    font-size: 1.1rem;
+    color: #a5b4fc;
+}
+.profile-section {
+    background: rgba(26, 26, 50, 0.8);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+.profile-section h2 {
+    margin-top: 0;
+    color: #00eaff;
+    border-bottom: 2px solid #3a3a5a;
+    padding-bottom: 0.8rem;
+}
+.item-list {
+    list-style-type: none;
+    padding: 0;
+}
+.list-item {
+    background: #2a2a4a;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.list-item:last-child {
+    margin-bottom: 0;
+}
+.achievement-icon {
+    font-size: 1.5rem;
+} 
