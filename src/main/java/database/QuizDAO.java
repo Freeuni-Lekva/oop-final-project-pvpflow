@@ -294,8 +294,8 @@ public class QuizDAO {
     /**
      * Saves a quiz submission and returns the generated submission ID.
      */
-    public int saveSubmission(Connection conn, int quizId, int userId, int score, int totalPossibleScore, double percentage, boolean isPractice) throws SQLException {
-        String sql = "INSERT INTO quiz_submissions (quiz_id, user_id, completed_at, score, total_possible_score, percentage_score, is_practice_mode) VALUES (?, ?, NOW(), ?, ?, ?, ?)";
+    public int saveSubmission(Connection conn, int quizId, int userId, int score, int totalPossibleScore, double percentage, boolean isPractice, int timeTaken) throws SQLException {
+        String sql = "INSERT INTO quiz_submissions (quiz_id, user_id, completed_at, score, total_possible_score, percentage_score, is_practice_mode, total_time_seconds) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, quizId);
             stmt.setInt(2, userId);
@@ -303,6 +303,7 @@ public class QuizDAO {
             stmt.setInt(4, totalPossibleScore);
             stmt.setDouble(5, percentage);
             stmt.setBoolean(6, isPractice);
+            stmt.setInt(7, timeTaken);
             stmt.executeUpdate();
             ResultSet rs = stmt.getGeneratedKeys();
             if (rs.next()) {

@@ -95,21 +95,17 @@ public class FriendDAO {
      * Rejects a friend request by updating the status to 'rejected'.
      */
     public void rejectFriendRequest(int friendshipId) throws SQLException {
-        String sql = "UPDATE friends SET status = 'rejected' WHERE id = ?";
+        String sql = "UPDATE friends SET status = 'rejected' WHERE id = ? AND status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, friendshipId);
             int rowsAffected = stmt.executeUpdate();
-            
-            // Check if the friend request actually existed
-            if (rowsAffected == 0) {
-                throw new SQLException("Friend request not found or already processed.");
-            }
         }
     }
 
     /**
      * Gets a list of all users, excluding the current user and users with pending/accepted requests.
+     * Users with 'rejected' or 'blocked' status can appear as potential friends (so requests can be sent again after rejection).
      */
     public List<Map<String, Object>> findPotentialFriends(int currentUserId) throws SQLException {
         List<Map<String, Object>> users = new ArrayList<>();

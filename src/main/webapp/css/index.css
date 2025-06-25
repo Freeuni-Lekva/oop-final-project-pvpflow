@@ -1,0 +1,5 @@
+body { font-family: Arial, sans-serif; background: #f6f7fb; margin: 0; }
+.container { max-width: 600px; margin: 100px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2rem; text-align: center; }
+h1 { color: #3b82f6; }
+.logout { margin-top: 2rem; display: inline-block; color: #fff; background: #e11d48; padding: 0.7rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; }
+.logout:hover { background: #be123c; } 

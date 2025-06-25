@@ -60,7 +60,7 @@ public class FriendRequestServlet extends HttpServlet {
                     System.out.println("FriendRequestServlet: User " + currentUserId + " attempting to reject friend request " + requestId);
                     if (!friendDAO.isPendingRequest(requestId)) {
                         System.out.println("FriendRequestServlet: Friend request " + requestId + " not found or not pending");
-                        response.sendRedirect("homepage.jsp?error=Friend+request+not+found+or+already+processed.");
+                        response.sendRedirect("homepage.jsp?success=Friend+request+rejected");
                         return;
                     }
                     if (!friendDAO.canUserProcessRequest(currentUserId, requestId)) {
