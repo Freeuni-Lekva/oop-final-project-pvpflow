@@ -92,11 +92,9 @@
             %>
                 <div class="answer-item <%= (boolean) userAnswer.get("isCorrect") ? "correct" : "incorrect" %>">
                     <div class="question-type">Question <%= (i+1) %> - <%= questionType != null ? questionType.replace("_", " ").toUpperCase() : "UNKNOWN TYPE" %></div>
-                    <p><span class="answer-label">Question:</span><span class="answer-text"><%= userAnswer.get("questionText") %></span></p>
-                    <p><span class="answer-label">Your Answer:</span><span class="answer-text <%= (boolean) userAnswer.get("isCorrect") ? "correct-answer" : "incorrect-answer" %>"><%= userAnswer.get("userAnswerText") %></span></p>
-                    <% if (!(boolean) userAnswer.get("isCorrect")) { %>
-                        <p><span class="answer-label">Correct Answer:</span><span class="answer-text correct-answer"><%= userAnswer.get("correctAnswerText") %></span></p>
-                    <% } %>
+                    <p><span class="answer-label">Question:</span> <span class="answer-text"><%= userAnswer.get("questionText") %></span></p>
+                    <p><span class="answer-label">Your Answer:</span> <span class="answer-text <%= (boolean) userAnswer.get("isCorrect") ? "correct-answer" : "incorrect-answer" %>"><%= userAnswer.get("userAnswerText") %></span></p>
+                    <p><span class="answer-label">Correct Answer:</span> <span class="answer-text correct-answer"><%= userAnswer.get("correctAnswerText") %></span></p>
                 </div>
             <% } %>
         </div>

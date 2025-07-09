@@ -145,11 +145,7 @@
             { value: 'multiple_choice', label: 'Multiple Choice' },
             { value: 'picture_response', label: 'Picture-Response' },
             { value: 'multi_answer', label: 'Multi-Answer' },
-            { value: 'multi_choice_multi_answer', label: 'Multiple Choice (Multiple Answers)' },
-            { value: 'matching', label: 'Matching' },
-            { value: 'essay', label: 'Essay (Admin Graded)' },
-            { value: 'auto_generated', label: 'Auto-Generated' },
-            { value: 'timed', label: 'Timed' }
+            { value: 'multi_choice_multi_answer', label: 'Multiple Choice (Multiple Answers)' }
         ];
 
         function createQuestionBlock(idx) {
@@ -251,28 +247,9 @@
             } else if (type === 'multi_answer') {
                 for (let i = 0; i < 2; i++) answersList.innerHTML += createAnswerRow(idx, i, type);
                 orderGroup.style.display = '';
-            } else if (type === 'matching') {
-                matchingGroup.style.display = '';
-                const pairsDiv = matchingGroup.querySelector('.matching-pairs');
-                pairsDiv.innerHTML = '';
-                for (let i = 0; i < 2; i++) pairsDiv.innerHTML += createMatchingPair(idx, i);
-                matchingGroup.querySelector('.add-matching-btn').onclick = function() {
-                    const pairIdx = pairsDiv.querySelectorAll('.matching-pair-row').length;
-                    pairsDiv.innerHTML += createMatchingPair(idx, pairIdx);
-                    addRemoveMatchingListeners(qBlock);
-                };
-                addRemoveMatchingListeners(qBlock);
             } else if (type === 'picture_response') {
                 imgGroup.style.display = '';
                 pictureNote.style.display = '';
-                answersList.innerHTML += createAnswerRow(idx, 0, type);
-            } else if (type === 'essay') {
-                essayNote.style.display = '';
-                answersList.innerHTML += createAnswerRow(idx, 0, type);
-            } else if (type === 'auto_generated') {
-                autoNote.style.display = '';
-            } else if (type === 'timed') {
-                timeLimitGroup.style.display = '';
                 answersList.innerHTML += createAnswerRow(idx, 0, type);
             } else {
                 answersList.innerHTML += createAnswerRow(idx, 0, type);

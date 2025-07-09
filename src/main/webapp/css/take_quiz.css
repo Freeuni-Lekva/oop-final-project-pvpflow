@@ -165,3 +165,13 @@ button:hover, .submit-btn:hover, input[type="submit"]:hover {
     box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
     transform: translateY(-2px) scale(1.03);
 } 
+
+.question-image {
+  width: 300px !important;
+  height: 200px !important;
+  object-fit: cover !important;
+  display: block !important;
+  margin: 16px auto !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+} 

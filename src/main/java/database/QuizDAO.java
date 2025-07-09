@@ -222,6 +222,7 @@ public class QuizDAO {
                     quiz.put("id", quizRs.getInt("id"));
                     quiz.put("title", quizRs.getString("title"));
                     quiz.put("description", quizRs.getString("description"));
+                    quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
                     // Add other quiz properties if needed
                     
                     List<Map<String, Object>> questions = getQuestionsForQuiz(conn, quizId);

@@ -235,11 +235,8 @@ public class CreateQuizServlet extends HttpServlet {
             case "multi_answer":
                 processMultiAnswer(conn, questionId, questionIndex, request);
                 break;
-            case "matching":
-                processMatchingAnswers(conn, questionId, questionIndex, request);
-                break;
             default:
-                // question_response, fill_in_blank, picture_response, essay, timed, auto_generated
+                // question_response, fill_in_blank, picture_response
                 processStandardAnswers(conn, questionId, questionIndex, request);
                 break;
         }
@@ -281,23 +278,6 @@ public class CreateQuizServlet extends HttpServlet {
             // For multi-answer, all answers are correct answers
             System.out.println("Answer " + a + ": " + ans + " (Correct: true)");
             QuizDAO.addAnswer(conn, questionId, ans, true, a + 1);
-        }
-    }
-    
-    private void processMatchingAnswers(Connection conn, int questionId, int questionIndex, HttpServletRequest request) throws SQLException {
-        System.out.println("Processing Matching Answers for Question " + questionIndex);
-        for (int a = 0; a < 10; a++) {
-            String left = request.getParameter("match_left_" + questionIndex + "_" + a);
-            String right = request.getParameter("match_right_" + questionIndex + "_" + a);
-            
-            if ((left == null || left.trim().isEmpty()) && (right == null || right.trim().isEmpty())) {
-                break;
-            }
-            
-            // Combine left and right parts for matching
-            String combinedAnswer = (left != null ? left : "") + "::" + (right != null ? right : "");
-            System.out.println("Match " + a + ": " + combinedAnswer);
-            QuizDAO.addAnswer(conn, questionId, combinedAnswer, true, a + 1);
         }
     }
     
