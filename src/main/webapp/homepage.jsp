@@ -25,6 +25,7 @@
     List<Map<String, Object>> recentlyCreatedQuizzes = new ArrayList<>();
     List<Map<String, Object>> userRecentQuizActivities = new ArrayList<>();
     List<Map<String, Object>> userRecentCreatingActivities = new ArrayList<>();
+    List<Map<String, Object>> popularQuizzes = new ArrayList<>();
     int quizzesTakenCount = 0;
     
     // DAO for fetching friend-related data

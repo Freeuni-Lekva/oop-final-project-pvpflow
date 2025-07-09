@@ -83,11 +83,6 @@ public class AchievementDAO {
         try (Connection conn = DBUtil.getConnection()) {
             // Get user statistics
             Map<String, Object> userStats = getUserStats(conn, userId);
-            int quizzesTaken = (int) userStats.get("quizzes_taken");
-            int quizzesCreated = (int) userStats.get("quizzes_created");
-            int perfectScores = (int) userStats.get("perfect_scores");
-            boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
-            boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
             
             // Get all achievements
             List<Map<String, Object>> allAchievements = getAllAchievementsWithProgress(userId);
@@ -238,41 +233,6 @@ public class AchievementDAO {
         }
         
         return stats;
-    }
-
-    /**
-     * Get achievement progress for display
-     */
-    public Map<String, Object> getAchievementProgress(int userId) throws SQLException {
-        Map<String, Object> progress = new HashMap<>();
-        
-        try (Connection conn = DBUtil.getConnection()) {
-            Map<String, Object> userStats = getUserStats(conn, userId);
-            
-            int quizzesTaken = (int) userStats.get("quizzes_taken");
-            int quizzesCreated = (int) userStats.get("quizzes_created");
-            int perfectScores = (int) userStats.get("perfect_scores");
-            boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
-            boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
-            
-            // Calculate progress percentages
-            progress.put("amateur_author_progress", Math.min(100.0, (double) quizzesCreated / 1 * 100));
-            progress.put("prolific_author_progress", Math.min(100.0, (double) quizzesCreated / 5 * 100));
-            progress.put("prodigious_author_progress", Math.min(100.0, (double) quizzesCreated / 10 * 100));
-            progress.put("quiz_machine_progress", Math.min(100.0, (double) quizzesTaken / 10 * 100));
-            progress.put("i_am_the_greatest_progress", hasHighestScore ? 100.0 : 0.0);
-            progress.put("practice_makes_perfect_progress", hasTakenPracticeQuiz ? 100.0 : 0.0);
-            progress.put("consistent_performer_progress", Math.min(100.0, (double) perfectScores / 3 * 100));
-            
-            // Add raw stats
-            progress.put("quizzes_taken", quizzesTaken);
-            progress.put("quizzes_created", quizzesCreated);
-            progress.put("perfect_scores", perfectScores);
-            progress.put("has_highest_score", hasHighestScore);
-            progress.put("has_taken_practice_quiz", hasTakenPracticeQuiz);
-        }
-        
-        return progress;
     }
 
     /**
