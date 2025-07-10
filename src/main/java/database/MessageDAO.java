@@ -23,6 +23,22 @@ public class MessageDAO {
     }
 
     /**
+     * Sends a challenge message with quiz link and challenger's score.
+     */
+    public void sendChallengeMessage(int challengerId, int challengeeId, int quizId, String quizTitle, double challengerScore) throws SQLException {
+        String content = String.format("challenged you to beat their score of %.1f%% on quiz '%s'. Take the quiz here: quiz_summary.jsp?id=%d", 
+                                     challengerScore, quizTitle, quizId);
+        String sql = "INSERT INTO messages (sender_id, recipient_id, content, message_type) VALUES (?, ?, ?, 'challenge')";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, challengerId);
+            stmt.setInt(2, challengeeId);
+            stmt.setString(3, content);
+            stmt.executeUpdate();
+        }
+    }
+
+    /**
      * Gets a list of conversations for a user, showing only the last message for each.
      */
     public List<Map<String, Object>> getConversations(int userId) throws SQLException {

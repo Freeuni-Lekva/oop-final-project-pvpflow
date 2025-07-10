@@ -637,15 +637,54 @@
                 <% for (Map<String, Object> convo : conversations) { %>
                     <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px;">
                         <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.get("friend_username") %></div>
-                        <div style="font-size: 0.9rem; color: #a5b4fc;"><%= convo.get("last_message") %></div>
+                        <div style="font-size: 0.9rem; color: #a5b4fc;">
+                        <% 
+                            String lastMessage = (String) convo.get("last_message");
+                            if (lastMessage != null && lastMessage.contains("Take the quiz here: quiz_summary.jsp?id=")) {
+                                int idx = lastMessage.indexOf("quiz_summary.jsp?id=");
+                                String before = lastMessage.substring(0, idx);
+                                String quizPart = lastMessage.substring(idx);
+                                int idStart = quizPart.indexOf("=") + 1;
+                                StringBuilder idStr = new StringBuilder();
+                                for (int i = idStart; i < quizPart.length(); i++) {
+                                    char c = quizPart.charAt(i);
+                                    if (Character.isDigit(c)) idStr.append(c);
+                                    else break;
+                                }
+                        %>
+                            <span><%= before %></span>
+                            <a href="take_quiz.jsp?id=<%= idStr.toString() %>" style="color:#3b82f6; text-decoration:underline;">Take the quiz here</a>
+                        <%  
+                            } else { 
+                        %>
+                            <%= lastMessage %>
+                        <%  } %>
+                        </div>
                     </div>
                 <% } %>
             <% } else { %>
                 <p>No messages yet. Send a note to a friend!</p>
             <% } %>
         </div>
-        <h3 style="margin-top: 2rem;">Send a Note</h3>
-        <form action="MessageServlet" method="post" style="margin-top: 1rem;">
+        <h3 style="margin-top: 2rem;">Send Message</h3>
+        
+        <!-- Message Type Selection -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message Type:</label>
+            <div style="display: flex; gap: 1rem;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="radio" name="messageType" value="note" checked onchange="toggleMessageForm()" style="margin-right: 0.5rem;">
+                    Note
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="radio" name="messageType" value="challenge" onchange="toggleMessageForm()" style="margin-right: 0.5rem;">
+                    Challenge
+                </label>
+            </div>
+        </div>
+
+        <!-- Note Form -->
+        <form id="noteForm" action="MessageServlet" method="post" style="margin-top: 1rem;">
             <input type="hidden" name="action" value="sendMessage">
             <div style="margin-bottom: 1rem;">
                 <label for="receiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To:</label>
@@ -659,7 +698,30 @@
                 <label for="messageText" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message:</label>
                 <textarea name="messageText" id="messageText" rows="3" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white; resize: vertical;"></textarea>
             </div>
-            <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Message</button>
+            <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Note</button>
+        </form>
+
+        <!-- Challenge Form -->
+        <form id="challengeForm" action="MessageServlet" method="post" style="margin-top: 1rem; display: none;">
+            <input type="hidden" name="action" value="sendChallenge">
+            <div style="margin-bottom: 1rem;">
+                <label for="challengeReceiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Challenge:</label>
+                <select name="receiverId" id="challengeReceiverId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
+                    <% for (Map<String, Object> friend : friends) { %>
+                        <option value="<%= friend.get("id") %>"><%= friend.get("username") %></option>
+                    <% } %>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="quizId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Quiz:</label>
+                <select name="quizId" id="quizId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
+                    <option value="">Select a quiz to challenge with</option>
+                    <% for (Map<String, Object> quiz : quizzes) { %>
+                        <option value="<%= quiz.get("id") %>"><%= quiz.get("title") %></option>
+                    <% } %>
+                </select>
+            </div>
+            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Challenge</button>
         </form>
     </div>
 </div>
@@ -803,6 +865,21 @@
             slideGroups[0].classList.add('active');
             // Hide indicators if there is only one slide
             document.getElementById('carouselIndicators').style.display = 'none';
+        }
+    }
+
+    // Function to toggle between note and challenge forms
+    function toggleMessageForm() {
+        const messageType = document.querySelector('input[name="messageType"]:checked').value;
+        const noteForm = document.getElementById('noteForm');
+        const challengeForm = document.getElementById('challengeForm');
+        
+        if (messageType === 'note') {
+            noteForm.style.display = 'block';
+            challengeForm.style.display = 'none';
+        } else {
+            noteForm.style.display = 'none';
+            challengeForm.style.display = 'block';
         }
     }
 </script>
