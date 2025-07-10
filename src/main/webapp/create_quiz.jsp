@@ -52,6 +52,7 @@
             <a href="homepage.jsp" class="logo">QuizApp</a>
             <div class="nav-buttons">
                 <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
+                <a href="all_quizzes.jsp" class="nav-btn">Quizzes</a>
                 <a href="homepage.jsp" class="nav-btn">Home</a>
                 <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
                 <div class="nav-btn-container">
