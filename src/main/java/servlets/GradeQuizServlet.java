@@ -28,11 +28,21 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
+    // Add this normalization helper at the top of the class (after class declaration)
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
+
+        // Debug: Log all received parameters
+        System.out.println("=== GradeQuizServlet: Received Parameters ===");
+        request.getParameterMap().forEach((k, v) -> System.out.println(k + " = " + Arrays.toString(v)));
+        System.out.println("===========================================");
 
         if (userId == null) {
             response.sendRedirect("login.jsp");
@@ -105,6 +115,8 @@ public class GradeQuizServlet extends HttpServlet {
                     isCorrect = result.isCorrect;
                     userAnswerText = result.userAnswerText;
                 }
+                // Debug: Log user answer for this question
+                System.out.println("Question ID: " + questionId + ", Type: " + questionType + ", User Answer: '" + userAnswerText + "', Correct: '" + correctAnswerText + "', isCorrect: " + isCorrect);
                 if (isCorrect) {
                     score++;
                 }
@@ -250,7 +262,9 @@ public class GradeQuizServlet extends HttpServlet {
     }
     private GradingResult gradeTextResponse(HttpServletRequest request, int questionId, String correctAnswerText) {
         String userAnswerText = request.getParameter("q_" + questionId + "_text");
-        boolean isCorrect = userAnswerText != null && userAnswerText.trim().equalsIgnoreCase(correctAnswerText.trim());
+        String normalizedUser = normalize(userAnswerText);
+        String normalizedCorrect = normalize(correctAnswerText);
+        boolean isCorrect = !normalizedUser.isEmpty() && normalizedUser.equals(normalizedCorrect);
         return new GradingResult(isCorrect, userAnswerText != null ? userAnswerText.trim() : "");
     }
 } 

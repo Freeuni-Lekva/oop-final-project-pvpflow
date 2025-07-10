@@ -16,6 +16,13 @@
     }
     // Clear the session attribute after retrieving it
     session.removeAttribute("newlyEarnedAchievements");
+
+    // Debug: Print all userAnswers objects
+    System.out.println("=== quiz_result.jsp: userAnswers ===");
+    for (int i = 0; i < userAnswers.size(); i++) {
+        System.out.println("userAnswers[" + i + "]: " + userAnswers.get(i));
+    }
+    System.out.println("====================================");
 %>
 <!DOCTYPE html>
 <html lang="en">
