@@ -34,15 +34,7 @@
     <div class="header">
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
-            <div class="nav-buttons">
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
-                <span class="admin-badge">ADMIN</span>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>! <span class="admin-badge">ADMIN</span>
-            </div>
+            <!-- Navigation buttons and user-info removed for admin_dashboard.jsp only -->
         </div>
     </div>
 

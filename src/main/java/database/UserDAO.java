@@ -73,4 +73,13 @@ public class UserDAO {
         }
         return null;
     }
+
+    public void updateLastLogin(int userId) throws SQLException {
+        String sql = "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.executeUpdate();
+        }
+    }
 } 

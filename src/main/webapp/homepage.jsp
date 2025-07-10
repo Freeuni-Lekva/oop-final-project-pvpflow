@@ -301,7 +301,7 @@
                         AdminDAO adminDAO = new AdminDAO();
                         if (adminDAO.isAdmin(userId)) {
                     %>
-                        <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Admin</a>
+                        <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Dashboard</a>
                     <% } %>
                 </div>
                 <div class="user-menu">
@@ -389,7 +389,10 @@
         <div class="topic-row">
             <h2>Popular Quizzes</h2>
             <div class="card-row">
-                <% for (Map<String, Object> quiz : popularQuizzes) { %>
+                <% int maxPopular = Math.min(6, popularQuizzes.size());
+                   for (int i = 0; i < maxPopular; i++) {
+                       Map<String, Object> quiz = popularQuizzes.get(i);
+                %>
                     <div class="card" onclick='window.location.href="take_quiz.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
@@ -408,7 +411,10 @@
         <div class="topic-row">
             <h2>Recently Created Quizzes</h2>
             <div class="card-row">
-                <% for (Map<String, Object> quiz : recentlyCreatedQuizzes) { %>
+                <% int maxRecent = Math.min(6, recentlyCreatedQuizzes.size());
+                   for (int i = 0; i < maxRecent; i++) {
+                       Map<String, Object> quiz = recentlyCreatedQuizzes.get(i);
+                %>
                     <div class="card" onclick='window.location.href="quiz_summary.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>

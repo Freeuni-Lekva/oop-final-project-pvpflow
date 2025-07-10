@@ -50,29 +50,7 @@
     <div class="header">
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
-            <div class="nav-buttons">
-                <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
-                <a href="all_quizzes.jsp" class="nav-btn">Quizzes</a>
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
-                <div class="nav-btn-container">
-                    <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
-                    <% if (!pendingRequests.isEmpty()) { %>
-                        <div class="notification-badge"><%= pendingRequests.size() %></div>
-                    <% } %>
-                </div>
-                <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
-                <div class="nav-btn-container">
-                    <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
-                    <% if (unreadMessageCount > 0) { %>
-                        <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
-                    <% } %>
-                </div>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, User!
-            </div>
+            <!-- Navigation buttons removed for create_quiz.jsp only -->
         </div>
     </div>
 
@@ -122,13 +100,6 @@
                     </label>
                 </div>
                 
-                <div class="form-group">
-                    <label for="isAdminGraded">Admin Graded?</label>
-                    <select id="isAdminGraded" name="isAdminGraded">
-                        <option value="false">No</option>
-                        <option value="true">Yes (e.g., essay questions)</option>
-                    </select>
-                </div>
                 <div class="questions-section" id="questionsSection"></div>
                 <button type="submit" class="submit-btn">Create Quiz</button>
             </form>

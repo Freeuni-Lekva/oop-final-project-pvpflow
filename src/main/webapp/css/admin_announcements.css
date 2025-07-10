@@ -19,10 +19,11 @@ body {
 
 .header-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .logo {
@@ -30,12 +31,15 @@ body {
     font-weight: 700;
     color: #00eaff;
     text-decoration: none;
+    margin-right: 2rem;
 }
 
 .nav-buttons {
     display: flex;
-    gap: 1rem;
+    justify-content: center;
     align-items: center;
+    gap: 1.2rem;
+    flex: 1;
 }
 
 .nav-btn {
@@ -165,4 +169,118 @@ body {
 
 .btn-danger:hover {
     box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+} 
+
+/* Announcements List Modern Card Design */
+.announcements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.announcement-card {
+    background: linear-gradient(120deg, #181830 0%, #23235a 100%);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 8px 0 rgba(0,234,255,0.08);
+    padding: 2rem 2.5rem 1.5rem 1.5rem;
+    position: relative;
+    border-left: 8px solid #4ade80; /* Default accent for active */
+    transition: box-shadow 0.3s, border-color 0.3s;
+    overflow: hidden;
+    animation: cardFadeIn 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.announcement-card:hover {
+    box-shadow: 0 12px 40px 0 rgba(0,234,255,0.18), 0 2px 12px 0 rgba(0,234,255,0.12);
+    transform: translateY(-2px) scale(1.01);
+}
+.announcement-card.inactive {
+    border-left: 8px solid #f87171;
+    opacity: 0.85;
+}
+.announcement-card.active {
+    border-left: 8px solid #4ade80;
+    box-shadow: 0 0 16px 2px #4ade80, 0 8px 32px 0 rgba(0,0,0,0.25);
+    animation: activeGlow 2s infinite alternate;
+}
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes activeGlow {
+    from { box-shadow: 0 0 16px 2px #4ade80, 0 8px 32px 0 rgba(0,0,0,0.25); }
+    to { box-shadow: 0 0 32px 8px #4ade80, 0 8px 32px 0 rgba(0,0,0,0.25); }
+}
+.announcement-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+    gap: 2rem;
+}
+.announcement-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #e0e7ff;
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.01em;
+}
+.announcement-meta {
+    font-size: 0.98rem;
+    color: #a5b4fc;
+    margin-bottom: 0.2rem;
+}
+.announcement-content {
+    font-size: 1.13rem;
+    color: #e0e7ff;
+    margin-top: 0.7rem;
+    line-height: 1.7;
+    word-break: break-word;
+}
+.announcement-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1.5rem;
+}
+.announcement-card .btn,
+.announcement-card .btn-danger {
+    min-width: 120px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    margin-top: 0.2rem;
+    box-shadow: 0 2px 8px rgba(0,234,255,0.08);
+    transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.announcement-card .btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+}
+.announcement-card .btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    box-shadow: 0 0 12px 2px #ef4444;
+}
+.announcement-card .btn:not(.btn-danger) {
+    background: linear-gradient(135deg, #00eaff 0%, #3b82f6 100%);
+    color: #fff;
+}
+.announcement-card .btn:not(.btn-danger):hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #00eaff 100%);
+    box-shadow: 0 0 12px 2px #00eaff;
+}
+
+/* Responsive for mobile */
+@media (max-width: 700px) {
+    .announcement-card {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+    }
+    .announcement-header {
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    .announcement-actions {
+        margin-left: 0;
+    }
 } 
