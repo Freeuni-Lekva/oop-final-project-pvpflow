@@ -601,7 +601,14 @@
         <div style="margin-top: 1rem;">
             <% if (!friends.isEmpty()) { %>
                 <% for (Map<String, Object> friend : friends) { %>
-                    <div class="friend-item"><%= friend.get("username") %></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
+                        <span style="font-weight: 600;"><%= friend.get("username") %></span>
+                        <form action="FriendRequestServlet" method="post" style="display: inline; margin: 0;">
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="friendId" value="<%= friend.get("id") %>">
+                            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Remove</button>
+                        </form>
+                    </div>
                 <% } %>
             <% } else { %>
                 <p>You haven't added any friends yet.</p>
