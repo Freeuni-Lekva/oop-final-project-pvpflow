@@ -20,19 +20,6 @@
     <link rel="stylesheet" type="text/css" href="css/all_quizzes.css">
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #18192a; color: #e0e7ff; margin: 0; }
-        .container { max-width: 900px; margin: 40px auto; background: #23235b; border-radius: 12px; padding: 32px; box-shadow: 0 4px 24px #0002; }
-        h1 { color: #00eaff; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; background: #23235b; }
-        th, td { padding: 14px 10px; text-align: left; }
-        th { background: #23235b; color: #00eaff; font-size: 1.1em; }
-        tr { border-bottom: 1px solid #2d2e5e; }
-        tr:last-child { border-bottom: none; }
-        a.quiz-link { color: #38bdf8; text-decoration: none; font-weight: 600; }
-        a.quiz-link:hover { text-decoration: underline; color: #00eaff; }
-        .empty-msg { color: #94a3b8; text-align: center; padding: 40px 0; }
-    </style>
 </head>
 <body>
     <div class="container">
