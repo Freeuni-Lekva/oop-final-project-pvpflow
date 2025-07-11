@@ -130,7 +130,7 @@
                                         <form action="AdminServlet" method="post" style="display: inline;">
                                             <input type="hidden" name="action" value="clearQuizHistory">
                                             <input type="hidden" name="quizId" value="<%= quiz.get("id") %>">
-                                            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clear all history for quiz \"<%= quiz.get("title") %>\"? This action cannot be undone.')">
+                                            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clear all history for quiz \'<%= quiz.get("title") %>\'? This action cannot be undone.')">
                                                 Clear History
                                             </button>
                                         </form>
@@ -139,7 +139,7 @@
                                     <form action="AdminServlet" method="post" style="display: inline;">
                                         <input type="hidden" name="action" value="deleteQuiz">
                                         <input type="hidden" name="quizId" value="<%= quiz.get("id") %>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete quiz \"<%= quiz.get("title") %>\"? This action cannot be undone.')">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete quiz \'<%= quiz.get("title") %>\'? This action cannot be undone.')">
                                             Delete Quiz
                                         </button>
                                     </form>
