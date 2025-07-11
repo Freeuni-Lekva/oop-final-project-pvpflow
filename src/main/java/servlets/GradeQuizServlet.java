@@ -18,11 +18,31 @@ import java.util.stream.Collectors;
 
 @WebServlet("/GradeQuizServlet")
 public class GradeQuizServlet extends HttpServlet {
+    // Add GradingResult as a static inner class
+    private static class GradingResult {
+        boolean isCorrect;
+        String userAnswerText;
+        GradingResult(boolean isCorrect, String userAnswerText) {
+            this.isCorrect = isCorrect;
+            this.userAnswerText = userAnswerText;
+        }
+    }
+
+    // Add this normalization helper at the top of the class (after class declaration)
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
+
+        // Debug: Log all received parameters
+        System.out.println("=== GradeQuizServlet: Received Parameters ===");
+        request.getParameterMap().forEach((k, v) -> System.out.println(k + " = " + Arrays.toString(v)));
+        System.out.println("===========================================");
 
         if (userId == null) {
             response.sendRedirect("login.jsp");
@@ -69,40 +89,37 @@ public class GradeQuizServlet extends HttpServlet {
                         .collect(Collectors.joining(", "));
                 boolean isCorrect = false;
 
+                // New: Use a holder object to get both isCorrect and userAnswerText
+                GradingResult result = null;
                 switch (questionType) {
                     case "multiple_choice":
-                        isCorrect = handleMultipleChoice(request, questionId, answers, userAnswerText);
+                        result = gradeMultipleChoice(request, questionId, answers);
                         break;
-                        
                     case "multi_choice_multi_answer":
-                    case "multi_answer":
-                        isCorrect = handleMultiChoiceMultiAnswer(request, questionId, answers, userAnswerText);
+                        result = gradeMultiChoiceMultiAnswer(request, questionId, answers);
                         break;
-                        
+                    case "multi_answer":
+                        Boolean isOrdered = (question.containsKey("is_ordered") && question.get("is_ordered") != null) ? (Boolean) question.get("is_ordered") : false;
+                        result = gradeMultiAnswer(request, questionId, answers, isOrdered);
+                        break;
                     case "question_response":
                     case "fill_in_blank":
                     case "picture_response":
-                        isCorrect = handleTextResponse(request, questionId, correctAnswerText, userAnswerText);
+                        result = gradeTextResponse(request, questionId, correctAnswerText);
                         break;
-                        
-                    case "essay":
-                        isCorrect = handleEssay(request, questionId, correctAnswerText, userAnswerText);
-                        break;
-                        
-                    case "matching":
-                        isCorrect = handleMatching(request, questionId, answers, userAnswerText);
-                        break;
-                        
                     default:
-                        // Default to text response for unknown question types
-                        isCorrect = handleTextResponse(request, questionId, correctAnswerText, userAnswerText);
+                        result = gradeTextResponse(request, questionId, correctAnswerText);
                         break;
                 }
-
+                if (result != null) {
+                    isCorrect = result.isCorrect;
+                    userAnswerText = result.userAnswerText;
+                }
+                // Debug: Log user answer for this question
+                System.out.println("Question ID: " + questionId + ", Type: " + questionType + ", User Answer: '" + userAnswerText + "', Correct: '" + correctAnswerText + "', isCorrect: " + isCorrect);
                 if (isCorrect) {
                     score++;
                 }
-
                 Map<String, Object> reviewItem = new HashMap<>();
                 reviewItem.put("questionText", questionText);
                 reviewItem.put("userAnswerText", userAnswerText != null ? userAnswerText : "No answer");
@@ -170,30 +187,30 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
-    private boolean handleMultipleChoice(HttpServletRequest request, int questionId, 
-                                       List<Map<String, Object>> answers, String userAnswerText) {
+    // New helper methods to return both isCorrect and userAnswerText
+    private GradingResult gradeMultipleChoice(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
         String userAnswerIdStr = request.getParameter("q_" + questionId);
+        String userAnswerText = "";
+        boolean isCorrect = false;
         if (userAnswerIdStr != null && !userAnswerIdStr.trim().isEmpty()) {
             try {
                 int userAnswerId = Integer.parseInt(userAnswerIdStr);
                 for (Map<String, Object> answer : answers) {
                     if ((int) answer.get("id") == userAnswerId) {
                         userAnswerText = (String) answer.get("answer_text");
-                        return (boolean) answer.get("is_correct");
+                        isCorrect = (boolean) answer.get("is_correct");
+                        break;
                     }
                 }
             } catch (NumberFormatException e) {
-                // Invalid answer ID, return false
+                // Invalid answer ID
             }
         }
-        return false;
+        return new GradingResult(isCorrect, userAnswerText);
     }
-
-    private boolean handleMultiChoiceMultiAnswer(HttpServletRequest request, int questionId, 
-                                               List<Map<String, Object>> answers, String userAnswerText) {
+    private GradingResult gradeMultiChoiceMultiAnswer(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
         List<String> userAnswerIds = new ArrayList<>();
         List<String> userAnswerTexts = new ArrayList<>();
-        
         for (Map<String, Object> answer : answers) {
             int answerId = (int) answer.get("id");
             if (request.getParameter("q_" + questionId + "_a_" + answerId) != null) {
@@ -201,64 +218,53 @@ public class GradeQuizServlet extends HttpServlet {
                 userAnswerTexts.add((String) answer.get("answer_text"));
             }
         }
-        
-        userAnswerText = String.join(", ", userAnswerTexts);
-        
+        String userAnswerText = String.join(", ", userAnswerTexts);
         Set<String> correctAnswerIds = answers.stream()
             .filter(a -> (boolean) a.get("is_correct"))
             .map(a -> String.valueOf(a.get("id")))
             .collect(Collectors.toSet());
-
-        return new HashSet<>(userAnswerIds).equals(correctAnswerIds);
+        boolean isCorrect = new HashSet<>(userAnswerIds).equals(correctAnswerIds);
+        return new GradingResult(isCorrect, userAnswerText);
     }
-
-    private boolean handleTextResponse(HttpServletRequest request, int questionId, 
-                                     String correctAnswerText, String userAnswerText) {
-        userAnswerText = request.getParameter("q_" + questionId + "_text");
-        if (userAnswerText != null && !userAnswerText.trim().isEmpty()) {
-            return userAnswerText.trim().equalsIgnoreCase(correctAnswerText.trim());
-        }
-        return false;
-    }
-
-    private boolean handleEssay(HttpServletRequest request, int questionId, 
-                              String correctAnswerText, String userAnswerText) {
-        userAnswerText = request.getParameter("q_" + questionId + "_essay");
-        if (userAnswerText != null && !userAnswerText.trim().isEmpty()) {
-            // For essay questions, we might want to do more sophisticated comparison
-            // For now, we'll do a simple case-insensitive comparison
-            return userAnswerText.trim().equalsIgnoreCase(correctAnswerText.trim());
-        }
-        return false;
-    }
-
-    private boolean handleMatching(HttpServletRequest request, int questionId, 
-                                 List<Map<String, Object>> answers, String userAnswerText) {
+    private GradingResult gradeMultiAnswer(HttpServletRequest request, int questionId, List<Map<String, Object>> answers, boolean isOrdered) {
         List<String> userAnswers = new ArrayList<>();
-        List<String> correctAnswers = new ArrayList<>();
-        
-        for (int i = 0; i < answers.size(); i++) {
-            String userAnswer = request.getParameter("q_" + questionId + "_a_" + i);
-            String correctAnswer = (String) answers.get(i).get("answer_text");
-            
-            if (userAnswer != null && !userAnswer.trim().isEmpty()) {
-                userAnswers.add(userAnswer.trim());
-                correctAnswers.add(correctAnswer.trim());
+        List<String> correctAnswers = answers.stream()
+            .filter(a -> (boolean) a.get("is_correct"))
+            .map(a -> ((String) a.get("answer_text")).trim())
+            .collect(Collectors.toList());
+        int correctCount = correctAnswers.size();
+        for (int i = 0; i < correctCount; i++) {
+            String userInput = request.getParameter("q_" + questionId + "_a_" + i);
+            if (userInput != null && !userInput.trim().isEmpty()) {
+                userAnswers.add(userInput.trim());
             }
         }
-        
-        userAnswerText = String.join(", ", userAnswers);
-        
-        // Check if all answers match (case-insensitive)
+        String userAnswerText = String.join(", ", userAnswers);
+        boolean isCorrect = false;
         if (userAnswers.size() == correctAnswers.size()) {
-            for (int i = 0; i < userAnswers.size(); i++) {
-                if (!userAnswers.get(i).equalsIgnoreCase(correctAnswers.get(i))) {
-                    return false;
+            if (isOrdered) {
+                isCorrect = true;
+                for (int i = 0; i < correctAnswers.size(); i++) {
+                    if (!userAnswers.get(i).equalsIgnoreCase(correctAnswers.get(i))) {
+                        isCorrect = false;
+                        break;
+                    }
                 }
+            } else {
+                List<String> userCopy = new ArrayList<>(userAnswers);
+                List<String> correctCopy = new ArrayList<>(correctAnswers);
+                Collections.sort(userCopy, String.CASE_INSENSITIVE_ORDER);
+                Collections.sort(correctCopy, String.CASE_INSENSITIVE_ORDER);
+                isCorrect = userCopy.equals(correctCopy);
             }
-            return true;
         }
-        
-        return false;
+        return new GradingResult(isCorrect, userAnswerText);
+    }
+    private GradingResult gradeTextResponse(HttpServletRequest request, int questionId, String correctAnswerText) {
+        String userAnswerText = request.getParameter("q_" + questionId + "_text");
+        String normalizedUser = normalize(userAnswerText);
+        String normalizedCorrect = normalize(correctAnswerText);
+        boolean isCorrect = !normalizedUser.isEmpty() && normalizedUser.equals(normalizedCorrect);
+        return new GradingResult(isCorrect, userAnswerText != null ? userAnswerText.trim() : "");
     }
 } 

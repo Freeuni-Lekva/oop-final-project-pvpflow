@@ -20,8 +20,10 @@ body {
 .header-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .logo {
@@ -29,6 +31,7 @@ body {
     font-weight: 700;
     color: #00eaff;
     text-decoration: none;
+    margin-right: 2rem;
 }
 
 .logo img {
@@ -41,11 +44,11 @@ body {
 }
 
 .nav-buttons {
-    flex-grow: 1;
     display: flex;
     justify-content: center;
-    gap: 1rem;
     align-items: center;
+    gap: 1.2rem;
+    flex: 1;
 }
 
 .nav-btn {
@@ -148,12 +151,28 @@ label {
 }
 
 select, input[type="text"], textarea, input[type="number"] {
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
     color: #e0e7ff;
     width: 100%;
     padding: 0.8rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
+select {
+    background: linear-gradient(135deg, #23235b 0%, #312e81 100%) !important;
+    color: #e0e7ff !important;
+    border-radius: 10px;
+    border: 1px solid #312e81;
+    box-shadow: 0 2px 8px #18192a33;
+}
+select:focus {
+    outline: 2px solid #00eaff;
+    background: linear-gradient(135deg, #312e81 0%, #23235b 100%) !important;
+}
+option {
+    background: #23235b;
+    color: #e0e7ff;
+}
+/* Note: The dropdown list background may still appear white on some browsers (like Chrome/Edge) due to OS-level rendering. For full control, use a custom select library. */
 
 button, .submit-btn {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
@@ -187,4 +206,23 @@ button.remove-answer-btn, .remove-answer-btn {
 button.remove-answer-btn:hover, .remove-answer-btn:hover {
     background: #be123c;
     transform: scale(1.08);
+} 
+
+.answer-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.7rem;
+}
+.answer-row input[type="radio"],
+.answer-row input[type="checkbox"] {
+    margin: 0 0.5rem 0 0;
+    flex-shrink: 0;
+}
+.answer-row input[type="text"] {
+    flex: 1 1 0;
+    margin: 0;
+}
+.answer-row .remove-answer-btn {
+    margin-left: 0.7rem;
 } 

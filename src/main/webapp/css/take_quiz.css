@@ -165,3 +165,75 @@ button:hover, .submit-btn:hover, input[type="submit"]:hover {
     box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
     transform: translateY(-2px) scale(1.03);
 } 
+
+.question-image {
+  width: 300px !important;
+  height: 200px !important;
+  object-fit: cover !important;
+  display: block !important;
+  margin: 16px auto !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+/* Multi-page quiz navigation styles */
+.multi-page-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.multi-page-nav button {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.multi-page-nav button:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+.multi-page-nav button:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#multiPageQuiz {
+    min-height: 400px;
+}
+
+#questionBlock {
+    min-height: 300px;
+}
+
+.required-field {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.error-message {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 600;
+} 

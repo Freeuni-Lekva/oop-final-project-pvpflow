@@ -281,6 +281,7 @@
             <a href="homepage.jsp" class="logo">QuizApp</a>
             <div class="nav-buttons">
                 <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
+                <a href="all_quizzes.jsp" class="nav-btn">Quizzes</a>
                 <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
                 <div class="nav-btn-container">
                     <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
@@ -300,7 +301,7 @@
                         AdminDAO adminDAO = new AdminDAO();
                         if (adminDAO.isAdmin(userId)) {
                     %>
-                        <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Admin</a>
+                        <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Dashboard</a>
                     <% } %>
                 </div>
                 <div class="user-menu">
@@ -388,7 +389,10 @@
         <div class="topic-row">
             <h2>Popular Quizzes</h2>
             <div class="card-row">
-                <% for (Map<String, Object> quiz : popularQuizzes) { %>
+                <% int maxPopular = Math.min(6, popularQuizzes.size());
+                   for (int i = 0; i < maxPopular; i++) {
+                       Map<String, Object> quiz = popularQuizzes.get(i);
+                %>
                     <div class="card" onclick='window.location.href="take_quiz.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
@@ -407,7 +411,10 @@
         <div class="topic-row">
             <h2>Recently Created Quizzes</h2>
             <div class="card-row">
-                <% for (Map<String, Object> quiz : recentlyCreatedQuizzes) { %>
+                <% int maxRecent = Math.min(6, recentlyCreatedQuizzes.size());
+                   for (int i = 0; i < maxRecent; i++) {
+                       Map<String, Object> quiz = recentlyCreatedQuizzes.get(i);
+                %>
                     <div class="card" onclick='window.location.href="quiz_summary.jsp?id=<%= quiz.get("id") %>"'>
                         <div class="card-title"><%= quiz.get("title") %></div>
                         <div class="card-desc"><%= quiz.get("description") %></div>
@@ -594,7 +601,14 @@
         <div style="margin-top: 1rem;">
             <% if (!friends.isEmpty()) { %>
                 <% for (Map<String, Object> friend : friends) { %>
-                    <div class="friend-item"><%= friend.get("username") %></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
+                        <span style="font-weight: 600;"><%= friend.get("username") %></span>
+                        <form action="FriendRequestServlet" method="post" style="display: inline; margin: 0;">
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="friendId" value="<%= friend.get("id") %>">
+                            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Remove</button>
+                        </form>
+                    </div>
                 <% } %>
             <% } else { %>
                 <p>You haven't added any friends yet.</p>
@@ -630,15 +644,54 @@
                 <% for (Map<String, Object> convo : conversations) { %>
                     <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px;">
                         <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.get("friend_username") %></div>
-                        <div style="font-size: 0.9rem; color: #a5b4fc;"><%= convo.get("last_message") %></div>
+                        <div style="font-size: 0.9rem; color: #a5b4fc;">
+                        <% 
+                            String lastMessage = (String) convo.get("last_message");
+                            if (lastMessage != null && lastMessage.contains("Take the quiz here: quiz_summary.jsp?id=")) {
+                                int idx = lastMessage.indexOf("quiz_summary.jsp?id=");
+                                String before = lastMessage.substring(0, idx);
+                                String quizPart = lastMessage.substring(idx);
+                                int idStart = quizPart.indexOf("=") + 1;
+                                StringBuilder idStr = new StringBuilder();
+                                for (int i = idStart; i < quizPart.length(); i++) {
+                                    char c = quizPart.charAt(i);
+                                    if (Character.isDigit(c)) idStr.append(c);
+                                    else break;
+                                }
+                        %>
+                            <span><%= before %></span>
+                            <a href="take_quiz.jsp?id=<%= idStr.toString() %>" style="color:#3b82f6; text-decoration:underline;">Take the quiz here</a>
+                        <%  
+                            } else { 
+                        %>
+                            <%= lastMessage %>
+                        <%  } %>
+                        </div>
                     </div>
                 <% } %>
             <% } else { %>
                 <p>No messages yet. Send a note to a friend!</p>
             <% } %>
         </div>
-        <h3 style="margin-top: 2rem;">Send a Note</h3>
-        <form action="MessageServlet" method="post" style="margin-top: 1rem;">
+        <h3 style="margin-top: 2rem;">Send Message</h3>
+        
+        <!-- Message Type Selection -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message Type:</label>
+            <div style="display: flex; gap: 1rem;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="radio" name="messageType" value="note" checked onchange="toggleMessageForm()" style="margin-right: 0.5rem;">
+                    Note
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="radio" name="messageType" value="challenge" onchange="toggleMessageForm()" style="margin-right: 0.5rem;">
+                    Challenge
+                </label>
+            </div>
+        </div>
+
+        <!-- Note Form -->
+        <form id="noteForm" action="MessageServlet" method="post" style="margin-top: 1rem;">
             <input type="hidden" name="action" value="sendMessage">
             <div style="margin-bottom: 1rem;">
                 <label for="receiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To:</label>
@@ -652,7 +705,30 @@
                 <label for="messageText" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message:</label>
                 <textarea name="messageText" id="messageText" rows="3" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white; resize: vertical;"></textarea>
             </div>
-            <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Message</button>
+            <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Note</button>
+        </form>
+
+        <!-- Challenge Form -->
+        <form id="challengeForm" action="MessageServlet" method="post" style="margin-top: 1rem; display: none;">
+            <input type="hidden" name="action" value="sendChallenge">
+            <div style="margin-bottom: 1rem;">
+                <label for="challengeReceiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Challenge:</label>
+                <select name="receiverId" id="challengeReceiverId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
+                    <% for (Map<String, Object> friend : friends) { %>
+                        <option value="<%= friend.get("id") %>"><%= friend.get("username") %></option>
+                    <% } %>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="quizId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Quiz:</label>
+                <select name="quizId" id="quizId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
+                    <option value="">Select a quiz to challenge with</option>
+                    <% for (Map<String, Object> quiz : quizzes) { %>
+                        <option value="<%= quiz.get("id") %>"><%= quiz.get("title") %></option>
+                    <% } %>
+                </select>
+            </div>
+            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Challenge</button>
         </form>
     </div>
 </div>
@@ -796,6 +872,21 @@
             slideGroups[0].classList.add('active');
             // Hide indicators if there is only one slide
             document.getElementById('carouselIndicators').style.display = 'none';
+        }
+    }
+
+    // Function to toggle between note and challenge forms
+    function toggleMessageForm() {
+        const messageType = document.querySelector('input[name="messageType"]:checked').value;
+        const noteForm = document.getElementById('noteForm');
+        const challengeForm = document.getElementById('challengeForm');
+        
+        if (messageType === 'note') {
+            noteForm.style.display = 'block';
+            challengeForm.style.display = 'none';
+        } else {
+            noteForm.style.display = 'none';
+            challengeForm.style.display = 'block';
         }
     }
 </script>

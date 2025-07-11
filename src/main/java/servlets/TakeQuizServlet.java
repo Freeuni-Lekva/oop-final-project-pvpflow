@@ -41,6 +41,7 @@ public class TakeQuizServlet extends HttpServlet {
             quiz.put("title", quizRs.getString("title"));
             quiz.put("description", quizRs.getString("description"));
             quiz.put("question_count", quizRs.getInt("question_count"));
+            quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
             // Load questions
             PreparedStatement qStmt = conn.prepareStatement("SELECT * FROM questions WHERE quiz_id = ? ORDER BY question_order ASC");
             qStmt.setInt(1, quizId);

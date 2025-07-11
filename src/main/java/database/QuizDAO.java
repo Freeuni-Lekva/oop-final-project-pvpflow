@@ -222,6 +222,7 @@ public class QuizDAO {
                     quiz.put("id", quizRs.getInt("id"));
                     quiz.put("title", quizRs.getString("title"));
                     quiz.put("description", quizRs.getString("description"));
+                    quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
                     // Add other quiz properties if needed
                     
                     List<Map<String, Object>> questions = getQuestionsForQuiz(conn, quizId);
@@ -535,5 +536,29 @@ public class QuizDAO {
             }
         }
         return 0;
+    }
+
+    /**
+     * Gets all quizzes with attempt count for each
+     */
+    public static List<Map<String, Object>> getAllQuizzesWithStats() throws SQLException {
+        List<Map<String, Object>> quizzes = getAllQuizzes();
+        String attemptSql = "SELECT COUNT(*) FROM quiz_submissions WHERE quiz_id = ? AND completed_at IS NOT NULL";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(attemptSql)) {
+            for (Map<String, Object> quiz : quizzes) {
+                stmt.setInt(1, (Integer) quiz.get("id"));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        quiz.put("attempts", rs.getInt(1));
+                    } else {
+                        quiz.put("attempts", 0);
+                    }
+                }
+                // Rename creator_name to creator for consistency with JSP
+                quiz.put("creator", quiz.get("creator_name"));
+            }
+        }
+        return quizzes;
     }
 } 

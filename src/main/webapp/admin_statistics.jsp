@@ -39,12 +39,6 @@
                 <a href="AdminServlet?action=announcements" class="nav-btn">Announcements</a>
                 <a href="AdminServlet?action=users" class="nav-btn">Users</a>
                 <a href="AdminServlet?action=quizzes" class="nav-btn">Quizzes</a>
-                <span class="admin-badge">ADMIN</span>
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>! <span class="admin-badge">ADMIN</span>
             </div>
         </div>
     </div>

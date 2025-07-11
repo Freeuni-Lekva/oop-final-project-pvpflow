@@ -38,16 +38,11 @@
         <div class="header-content">
             <a href="admin_dashboard.jsp" class="logo">QuizApp Admin</a>
             <div class="nav-buttons">
-                <a href="AdminServlet?action=dashboard" class="nav-btn">Dashboard</a>
+                <a href="admin_dashboard.jsp" class="nav-btn">Dashboard</a>
                 <a href="AdminServlet?action=users" class="nav-btn">Users</a>
                 <a href="AdminServlet?action=quizzes" class="nav-btn">Quizzes</a>
                 <a href="AdminServlet?action=announcements" class="nav-btn">Announcements</a>
                 <a href="AdminServlet?action=statistics" class="nav-btn">Statistics</a>
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>! <span class="admin-badge">ADMIN</span>
             </div>
         </div>
     </div>
@@ -96,20 +91,21 @@
             </div>
         <% } else { %>
             <div class="announcements-list">
-                <% for (Map<String, Object> announcement : announcements) { %>
-                    <div class="announcement-card">
+                <% for (Map<String, Object> announcement : announcements) { 
+                    boolean isActive = (Boolean) announcement.get("is_active");
+                    String cardClass = isActive ? "announcement-card active" : "announcement-card inactive";
+                %>
+                    <div class="<%= cardClass %>">
                         <div class="announcement-header">
                             <div>
                                 <div class="announcement-title"><%= announcement.get("title") %></div>
                                 <div class="announcement-meta">
-                                    Status: <%
-                                        boolean isActive = (Boolean) announcement.get("is_active");
-                                        if (isActive) {
-                                            out.print("<span style='color: #4ade80;'>Active</span>");
-                                        } else {
-                                            out.print("<span style='color: #f87171;'>Inactive</span>");
-                                        }
-                                    %>
+                                    Status: 
+                                    <% if (isActive) { %>
+                                        <span style='color: #4ade80;'>Active</span>
+                                    <% } else { %>
+                                        <span style='color: #f87171;'>Inactive</span>
+                                    <% } %>
                                     | Created by <%= announcement.get("created_by_name") %> on <%= new java.text.SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm a").format(announcement.get("created_at")) %>
                                 </div>
                             </div>

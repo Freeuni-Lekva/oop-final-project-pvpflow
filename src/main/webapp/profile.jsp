@@ -39,9 +39,14 @@
             if (createdQuizzes != null && !createdQuizzes.isEmpty()) {
         %>
         <ul class="item-list">
-            <% for (Map<String, Object> quiz : createdQuizzes) { %>
+            <% Set<String> displayedTitles = new HashSet<>();
+               for (Map<String, Object> quiz : createdQuizzes) {
+                   String title = (String) quiz.get("title");
+                   if (displayedTitles.contains(title)) continue;
+                   displayedTitles.add(title);
+            %>
                 <li class="list-item">
-                    <span><a href="take_quiz.jsp?id=<%= quiz.get("id") %>"><%= quiz.get("title") %></a></span>
+                    <span><%= title %></span>
                     <span>Created on: <%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(quiz.get("created_at")) %></span>
                 </li>
             <% } %>

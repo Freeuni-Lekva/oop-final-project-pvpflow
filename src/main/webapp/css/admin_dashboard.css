@@ -123,19 +123,22 @@ body {
 }
 .admin-functions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 3rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+    margin-top: 2rem;
 }
 .function-card {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-    padding: 2rem;
-    border-radius: 16px;
+    padding: 1.1rem 1.1rem 1.3rem 1.1rem;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
+    min-width: 0;
+    max-width: 260px;
+    margin: 0 auto;
 }
 .function-card:hover {
     transform: translateY(-6px);
@@ -143,7 +146,29 @@ body {
     border-color: #00eaff;
 }
 .function-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.1rem;
+    margin-bottom: 0.7rem;
     display: block;
+}
+.function-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+.function-desc {
+    font-size: 0.97rem;
+    color: #a5b4fc;
+}
+@media (max-width: 900px) {
+    .admin-functions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .admin-functions {
+        grid-template-columns: 1fr;
+    }
+    .function-card {
+        max-width: 100%;
+    }
 } 

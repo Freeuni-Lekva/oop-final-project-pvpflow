@@ -50,28 +50,7 @@
     <div class="header">
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
-            <div class="nav-buttons">
-                <a href="create_quiz.jsp" class="nav-btn">Create Quiz</a>
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <button class="nav-btn" onclick="openPopup('achievementsPopup')">Achievements</button>
-                <div class="nav-btn-container">
-                    <button class="nav-btn" onclick="openPopup('requestsPopup')">Requests</button>
-                    <% if (!pendingRequests.isEmpty()) { %>
-                        <div class="notification-badge"><%= pendingRequests.size() %></div>
-                    <% } %>
-                </div>
-                <button class="nav-btn" onclick="openPopup('friendsPopup')">Friends</button>
-                <div class="nav-btn-container">
-                    <button class="nav-btn" onclick="openPopup('messagesPopup')">Messages</button>
-                    <% if (unreadMessageCount > 0) { %>
-                        <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
-                    <% } %>
-                </div>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, User!
-            </div>
+            <!-- Navigation buttons removed for create_quiz.jsp only -->
         </div>
     </div>
 
@@ -121,13 +100,6 @@
                     </label>
                 </div>
                 
-                <div class="form-group">
-                    <label for="isAdminGraded">Admin Graded?</label>
-                    <select id="isAdminGraded" name="isAdminGraded">
-                        <option value="false">No</option>
-                        <option value="true">Yes (e.g., essay questions)</option>
-                    </select>
-                </div>
                 <div class="questions-section" id="questionsSection"></div>
                 <button type="submit" class="submit-btn">Create Quiz</button>
             </form>
@@ -145,11 +117,7 @@
             { value: 'multiple_choice', label: 'Multiple Choice' },
             { value: 'picture_response', label: 'Picture-Response' },
             { value: 'multi_answer', label: 'Multi-Answer' },
-            { value: 'multi_choice_multi_answer', label: 'Multiple Choice (Multiple Answers)' },
-            { value: 'matching', label: 'Matching' },
-            { value: 'essay', label: 'Essay (Admin Graded)' },
-            { value: 'auto_generated', label: 'Auto-Generated' },
-            { value: 'timed', label: 'Timed' }
+            { value: 'multi_choice_multi_answer', label: 'Multiple Choice (Multiple Answers)' }
         ];
 
         function createQuestionBlock(idx) {
@@ -251,28 +219,9 @@
             } else if (type === 'multi_answer') {
                 for (let i = 0; i < 2; i++) answersList.innerHTML += createAnswerRow(idx, i, type);
                 orderGroup.style.display = '';
-            } else if (type === 'matching') {
-                matchingGroup.style.display = '';
-                const pairsDiv = matchingGroup.querySelector('.matching-pairs');
-                pairsDiv.innerHTML = '';
-                for (let i = 0; i < 2; i++) pairsDiv.innerHTML += createMatchingPair(idx, i);
-                matchingGroup.querySelector('.add-matching-btn').onclick = function() {
-                    const pairIdx = pairsDiv.querySelectorAll('.matching-pair-row').length;
-                    pairsDiv.innerHTML += createMatchingPair(idx, pairIdx);
-                    addRemoveMatchingListeners(qBlock);
-                };
-                addRemoveMatchingListeners(qBlock);
             } else if (type === 'picture_response') {
                 imgGroup.style.display = '';
                 pictureNote.style.display = '';
-                answersList.innerHTML += createAnswerRow(idx, 0, type);
-            } else if (type === 'essay') {
-                essayNote.style.display = '';
-                answersList.innerHTML += createAnswerRow(idx, 0, type);
-            } else if (type === 'auto_generated') {
-                autoNote.style.display = '';
-            } else if (type === 'timed') {
-                timeLimitGroup.style.display = '';
                 answersList.innerHTML += createAnswerRow(idx, 0, type);
             } else {
                 answersList.innerHTML += createAnswerRow(idx, 0, type);

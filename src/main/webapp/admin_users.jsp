@@ -39,12 +39,6 @@
                 <a href="AdminServlet?action=announcements" class="nav-btn">Announcements</a>
                 <a href="AdminServlet?action=quizzes" class="nav-btn">Quizzes</a>
                 <a href="AdminServlet?action=statistics" class="nav-btn">Statistics</a>
-                <span class="admin-badge">ADMIN</span>
-                <a href="homepage.jsp" class="nav-btn">Home</a>
-                <a href="LogoutServlet" class="nav-btn">Logout</a>
-            </div>
-            <div class="user-info">
-                Welcome, <%= username %>! <span class="admin-badge">ADMIN</span>
             </div>
         </div>
     </div>
@@ -72,13 +66,12 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number">
-                    <% 
-                        int adminCount = 0;
-                        for (Map<String, Object> user : users) {
-                            if ((Boolean) user.get("is_admin")) {
-                                adminCount++;
-                            }
-                        }
+                    <% int adminCount = 0;
+                       for (Map<String, Object> user : users) {
+                           if ((Boolean) user.get("is_admin")) {
+                               adminCount++;
+                           }
+                       }
                     %>
                     <%= adminCount %>
                 </div>
@@ -86,13 +79,12 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number">
-                    <% 
-                        int regularUserCount = 0;
-                        for (Map<String, Object> user : users) {
-                            if (!(Boolean) user.get("is_admin")) {
-                                regularUserCount++;
-                            }
-                        }
+                    <% int regularUserCount = 0;
+                       for (Map<String, Object> user : users) {
+                           if (!(Boolean) user.get("is_admin")) {
+                               regularUserCount++;
+                           }
+                       }
                     %>
                     <%= regularUserCount %>
                 </div>

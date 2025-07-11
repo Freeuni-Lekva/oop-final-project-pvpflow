@@ -15,21 +15,25 @@ body {
 }
 .header-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 .logo {
     font-size: 1.8rem;
     font-weight: 700;
     color: #00eaff;
     text-decoration: none;
+    margin-right: 2rem;
 }
 .nav-buttons {
     display: flex;
-    gap: 1rem;
+    justify-content: center;
     align-items: center;
+    gap: 1.2rem;
+    flex: 1;
 }
 .nav-btn {
     background: rgba(255, 255, 255, 0.1);

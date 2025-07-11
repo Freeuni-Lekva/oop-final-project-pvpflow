@@ -209,4 +209,19 @@ public class FriendDAO {
         }
         return friends;
     }
+
+    /**
+     * Removes a friend relationship between two users (both directions).
+     */
+    public void removeFriend(int userId, int friendId) throws SQLException {
+        String sql = "DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, friendId);
+            stmt.setInt(3, friendId);
+            stmt.setInt(4, userId);
+            stmt.executeUpdate();
+        }
+    }
 } 

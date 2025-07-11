@@ -38,6 +38,11 @@ public class FriendRequestServlet extends HttpServlet {
                     friendDAO.sendFriendRequest(currentUserId, requesteeId);
                     response.sendRedirect("homepage.jsp?success=Friend+request+sent+successfully");
                     break;
+                case "remove":
+                    int friendId = Integer.parseInt(request.getParameter("friendId"));
+                    friendDAO.removeFriend(currentUserId, friendId);
+                    response.sendRedirect("homepage.jsp?success=Friend+removed+successfully");
+                    break;
                 case "accept":
                     int requestId = Integer.parseInt(request.getParameter("requestId"));
                     System.out.println("FriendRequestServlet: User " + currentUserId + " attempting to accept friend request " + requestId);
