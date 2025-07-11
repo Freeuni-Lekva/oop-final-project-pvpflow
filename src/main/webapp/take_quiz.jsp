@@ -169,8 +169,8 @@ private String toJson(List<Map<String, Object>> questions) {
         </div>
     </div>
 
+    <% if (quiz != null && !isOnePage) { %>
     <script>
-        <% if (quiz != null && !isOnePage) { %>
         // Multi-page quiz functionality
         const questions = JSON.parse('<%= toJson(questions) %>');
         let currentIdx = 0;
@@ -184,27 +184,27 @@ private String toJson(List<Map<String, Object>> questions) {
             const questionId = q.id;
 
             if (qType === 'multiple_choice') {
-                const selected = document.querySelector(`input[name='q_${questionId}']:checked`);
-                userAnswers[`q_${questionId}`] = selected ? selected.value : '';
+                const selected = document.querySelector('input[name="q_' + questionId + '"]:checked');
+                userAnswers['q_' + questionId] = selected ? selected.value : '';
             } else if (qType === 'multi_choice_multi_answer') {
-                userAnswers[`q_${questionId}`] = [];
-                q.answers.forEach((a, idx) => {
-                    const cb = document.querySelector(`input[name='q_${questionId}_a_${a.id}']`);
-                    if (cb && cb.checked) userAnswers[`q_${questionId}`].push(a.id);
+                userAnswers['q_' + questionId] = [];
+                q.answers.forEach(function(a, idx) {
+                    const cb = document.querySelector('input[name="q_' + questionId + '_a_' + a.id + '"]');
+                    if (cb && cb.checked) userAnswers['q_' + questionId].push(a.id);
                 });
             } else if (qType === 'multi_answer') {
-                userAnswers[`q_${questionId}`] = [];
-                q.answers.forEach((a, idx) => {
-                    const inp = document.querySelector(`input[name='q_${questionId}_a_${idx}']`);
-                    userAnswers[`q_${questionId}`][idx] = inp ? inp.value : '';
+                userAnswers['q_' + questionId] = [];
+                q.answers.forEach(function(a, idx) {
+                    const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
+                    userAnswers['q_' + questionId][idx] = inp ? inp.value : '';
                 });
             } else {
                 const questionBlock = document.getElementById('questionBlock');
-                const inp = questionBlock ? questionBlock.querySelector(`input[name='q_${questionId}_text']`) : null;
-                userAnswers[`q_${questionId}_text`] = inp ? inp.value : '';
+                const inp = questionBlock ? questionBlock.querySelector('input[name="q_' + questionId + '_text"]') : null;
+                userAnswers['q_' + questionId + '_text'] = inp ? inp.value : '';
             }
             
-            console.log(`Saved answer for question ${questionId}:`, userAnswers);
+            console.log('Saved answer for question ' + questionId + ':', userAnswers);
         }
 
         function restoreCurrentAnswer() {
@@ -215,30 +215,30 @@ private String toJson(List<Map<String, Object>> questions) {
             const questionId = q.id;
             
             if (qType === 'multiple_choice') {
-                if (userAnswers[`q_${questionId}`]) {
-                    const val = userAnswers[`q_${questionId}`];
-                    const radio = document.querySelector(`input[name='q_${questionId}'][value='${val}']`);
+                if (userAnswers['q_' + questionId]) {
+                    const val = userAnswers['q_' + questionId];
+                    const radio = document.querySelector('input[name="q_' + questionId + '"][value="' + val + '"]');
                     if (radio) radio.checked = true;
                 }
             } else if (qType === 'multi_choice_multi_answer') {
-                if (userAnswers[`q_${questionId}`]) {
-                    userAnswers[`q_${questionId}`].forEach(val => {
-                        const cb = document.querySelector(`input[name='q_${questionId}_a_${val}']`);
+                if (userAnswers['q_' + questionId]) {
+                    userAnswers['q_' + questionId].forEach(function(val) {
+                        const cb = document.querySelector('input[name="q_' + questionId + '_a_' + val + '"]');
                         if (cb) cb.checked = true;
                     });
                 }
             } else if (qType === 'multi_answer') {
-                if (userAnswers[`q_${questionId}`]) {
-                    q.answers.forEach((a, idx) => {
-                        const inp = document.querySelector(`input[name='q_${questionId}_a_${idx}']`);
-                        if (inp) inp.value = userAnswers[`q_${questionId}`][idx] || '';
+                if (userAnswers['q_' + questionId]) {
+                    q.answers.forEach(function(a, idx) {
+                        const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
+                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
                     });
                 }
             } else {
-                if (userAnswers[`q_${questionId}_text`]) {
+                if (userAnswers['q_' + questionId + '_text']) {
                     const questionBlock = document.getElementById('questionBlock');
-                    const inp = questionBlock ? questionBlock.querySelector(`input[name='q_${questionId}_text']`) : null;
-                    if (inp) inp.value = userAnswers[`q_${questionId}_text`];
+                    const inp = questionBlock ? questionBlock.querySelector('input[name="q_' + questionId + '_text"]') : null;
+                    if (inp) inp.value = userAnswers['q_' + questionId + '_text'];
                 }
             }
         }
@@ -260,38 +260,38 @@ private String toJson(List<Map<String, Object>> questions) {
             console.log('Question type:', qType);
             console.log('Answers:', answers);
             
-            let html = '<div class=\'question-title\'>Q' + (idx+1) + ': ' + q.question_text + '</div>';
-            html += '<div class=\'question-type\'>Type: ' + qType.replace(/_/g, ' ').toUpperCase() + '</div>';
+            let html = '<div class="question-title">Q' + (idx+1) + ': ' + q.question_text + '</div>';
+            html += '<div class="question-type">Type: ' + qType.replace(/_/g, ' ').toUpperCase() + '</div>';
             
             if (q.image_url && q.image_url.length > 0) {
-                html += '<img src=\'' + q.image_url + '\' alt=\'Question Image\' class=\'question-image\' />';
+                html += '<img src="' + q.image_url + '" alt="Question Image" class="question-image" />';
             }
             
-            html += '<div class=\'answers-list\' id=\'answersList\'>';
+            html += '<div class="answers-list" id="answersList">';
             
             if (qType === 'multiple_choice') {
                 for (let a = 0; a < answers.length; a++) {
-                    html += '<div class=\'answer-row\'><input type=\'radio\' name=\'q_' + questionId + '\' value=\'' + answers[a].id + '\' id=\'q_' + questionId + '_a_' + a + '\' required /><label for=\'q_' + questionId + '_a_' + a + '\'>' + answers[a].answer_text + '</label></div>';
+                    html += '<div class="answer-row"><input type="radio" name="q_' + questionId + '" value="' + answers[a].id + '" id="q_' + questionId + '_a_' + a + '" required /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
                 }
                 html += '<div class="required-field">* Please select one answer</div>';
             } else if (qType === 'multi_choice_multi_answer') {
                 for (let a = 0; a < answers.length; a++) {
-                    html += '<div class=\'answer-row\'><input type=\'checkbox\' name=\'q_' + questionId + '_a_' + answers[a].id + '\' value=\'true\' id=\'q_' + questionId + '_a_' + a + '\' /><label for=\'q_' + questionId + '_a_' + a + '\'>' + answers[a].answer_text + '</label></div>';
+                    html += '<div class="answer-row"><input type="checkbox" name="q_' + questionId + '_a_' + answers[a].id + '" value="true" id="q_' + questionId + '_a_' + a + '" /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
                 }
                 html += '<div class="required-field">* Select all correct answers</div>';
             } else if (qType === 'multi_answer') {
                 for (let a = 0; a < answers.length; a++) {
-                    html += '<div class=\'answer-row\'><input type=\'text\' name=\'q_' + questionId + '_a_' + a + '\' placeholder=\'Your answer\' required /></div>';
+                    html += '<div class="answer-row"><input type="text" name="q_' + questionId + '_a_' + a + '" placeholder="Your answer" required /></div>';
                 }
                 html += '<div class="required-field">* All fields are required</div>';
             } else if (qType === 'question_response' || qType === 'fill_in_blank') {
-                html += '<input type=\'text\' name=\'q_' + questionId + '_text\' placeholder=\'Your answer\' required />';
+                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
                 html += '<div class="required-field">* This field is required</div>';
             } else if (qType === 'picture_response') {
-                html += '<input type=\'text\' name=\'q_' + questionId + '_text\' placeholder=\'Describe what you see in the image\' required />';
+                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Describe what you see in the image" required />';
                 html += '<div class="required-field">* This field is required</div>';
             } else {
-                html += '<input type=\'text\' name=\'q_' + questionId + '_text\' placeholder=\'Your answer\' required />';
+                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
                 html += '<div class="required-field">* This field is required</div>';
             }
             
@@ -305,7 +305,7 @@ private String toJson(List<Map<String, Object>> questions) {
             // Add event listeners to save answer on change/input
             if (questionBlock) {
                 const inputs = questionBlock.querySelectorAll('input');
-                inputs.forEach(input => {
+                inputs.forEach(function(input) {
                     input.addEventListener('change', saveCurrentAnswer);
                     input.addEventListener('input', saveCurrentAnswer);
                 });
@@ -370,96 +370,119 @@ private String toJson(List<Map<String, Object>> questions) {
             const form = document.getElementById('quizForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Prevent default submission
+                    
                     // Save the current answer before form submission
                     saveCurrentAnswer();
+                    
+                    console.log('Form submission - userAnswers:', userAnswers);
+                    
                     // Remove any previously injected hidden fields
-                    document.querySelectorAll('.multi-page-hidden').forEach(el => el.remove());
+                    document.querySelectorAll('.multi-page-hidden').forEach(function(el) {
+                        el.remove();
+                    });
+                    
                     // Inject hidden fields for all questions
-                    questions.forEach(q => {
+                    questions.forEach(function(q) {
                         const qType = q.question_type;
                         const questionId = q.id;
+                        
                         if (qType === 'multiple_choice') {
-                            let val = userAnswers[`q_${questionId}`] || '';
+                            let val = userAnswers['q_' + questionId] || '';
                             let input = document.createElement('input');
                             input.type = 'hidden';
                             input.className = 'multi-page-hidden';
-                            input.name = `q_${questionId}`;
+                            input.name = 'q_' + questionId;
                             input.value = val;
                             form.appendChild(input);
+                            console.log('Added hidden field: q_' + questionId + ' = ' + val);
                         } else if (qType === 'multi_choice_multi_answer') {
-                            let arr = userAnswers[`q_${questionId}`] || [];
-                            q.answers.forEach(a => {
+                            let arr = userAnswers['q_' + questionId] || [];
+                            q.answers.forEach(function(a) {
                                 let checked = arr.includes(a.id);
                                 let input = document.createElement('input');
                                 input.type = 'hidden';
                                 input.className = 'multi-page-hidden';
-                                input.name = `q_${questionId}_a_${a.id}`;
+                                input.name = 'q_' + questionId + '_a_' + a.id;
                                 input.value = checked ? 'true' : '';
                                 form.appendChild(input);
+                                console.log('Added hidden field: q_' + questionId + '_a_' + a.id + ' = ' + (checked ? 'true' : ''));
                             });
                         } else if (qType === 'multi_answer') {
-                            let arr = userAnswers[`q_${questionId}`] || [];
-                            q.answers.forEach((a, idx) => {
+                            let arr = userAnswers['q_' + questionId] || [];
+                            q.answers.forEach(function(a, idx) {
                                 let val = arr[idx] || '';
                                 let input = document.createElement('input');
                                 input.type = 'hidden';
                                 input.className = 'multi-page-hidden';
-                                input.name = `q_${questionId}_a_${idx}`;
+                                input.name = 'q_' + questionId + '_a_' + idx;
                                 input.value = val;
                                 form.appendChild(input);
+                                console.log('Added hidden field: q_' + questionId + '_a_' + idx + ' = ' + val);
                             });
                         } else {
-                            let val = userAnswers[`q_${questionId}_text`] || '';
+                            let val = userAnswers['q_' + questionId + '_text'] || '';
                             let input = document.createElement('input');
                             input.type = 'hidden';
                             input.className = 'multi-page-hidden';
-                            input.name = `q_${questionId}_text`;
+                            input.name = 'q_' + questionId + '_text';
                             input.value = val;
                             form.appendChild(input);
+                            console.log('Added hidden field: q_' + questionId + '_text = ' + val);
                         }
                     });
+                    
+                    // Now submit the form
+                    console.log('Submitting form with hidden fields...');
+                    form.submit();
                 });
             }
         });
-        <% } else { %>
-        // Single-page quiz validation
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('quizForm');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    const requiredFields = document.querySelectorAll('[required]');
-                    requiredFields.forEach(field => {
-                        if (!field.value.trim()) {
-                            field.style.borderColor = '#ef4444';
-                        } else {
-                            field.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                        }
-                    });
-                    const hasEmptyRequired = Array.from(requiredFields).some(field => !field.value.trim());
-                    if (hasEmptyRequired) {
-                        e.preventDefault();
-                        alert('Please fill in all required fields.');
-                        return;
+    </script>
+    <% } else { %>
+    <script>
+    // Single-page quiz validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('quizForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const requiredFields = document.querySelectorAll('[required]');
+                requiredFields.forEach(function(field) {
+                    if (!field.value.trim()) {
+                        field.style.borderColor = '#ef4444';
+                    } else {
+                        field.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                     }
                 });
-            }
-        });
-        <% } %>
+                const hasEmptyRequired = Array.from(requiredFields).some(function(field) {
+                    return !field.value.trim();
+                });
+                if (hasEmptyRequired) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+            });
+        }
+    });
+    </script>
+    <% } %>
 
-        // Timer functionality
-        let startTime = Date.now();
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('quizForm');
-            if (form) {
-                form.addEventListener('submit', function() {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    const timeTakenField = document.getElementById('timeTaken');
-                    if (timeTakenField) {
-                        timeTakenField.value = elapsed;
-                    }
-                });
-            }
-        });
+    <script>
+    // Timer functionality
+    let startTime = Date.now();
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('quizForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const timeTakenField = document.getElementById('timeTaken');
+                if (timeTakenField) {
+                    timeTakenField.value = elapsed;
+                }
+            });
+        }
+    });
     </script>
 </body>
 </html> 
