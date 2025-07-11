@@ -38,6 +38,26 @@
         document.documentElement.classList.remove('light-mode');
         document.body.classList.remove('light-mode');
       }
+
+      // Immediate Correction logic
+      const isOnePageCheckbox = document.querySelector('input[name="isOnePage"]');
+      const immediateCorrectionCheckbox = document.querySelector('input[name="immediateCorrection"]');
+      const immediateCorrectionLabel = immediateCorrectionCheckbox.closest('label');
+
+      function updateImmediateCorrectionState() {
+        if (isOnePageCheckbox.checked) {
+          immediateCorrectionCheckbox.checked = false;
+          immediateCorrectionCheckbox.disabled = true;
+          immediateCorrectionLabel.title = 'Immediate correction is only available for multiple pages quizzes.';
+          immediateCorrectionLabel.style.opacity = '0.6';
+        } else {
+          immediateCorrectionCheckbox.disabled = false;
+          immediateCorrectionLabel.title = '';
+          immediateCorrectionLabel.style.opacity = '1';
+        }
+      }
+      isOnePageCheckbox.addEventListener('change', updateImmediateCorrectionState);
+      updateImmediateCorrectionState();
     });
     </script>
     <meta charset="UTF-8">
