@@ -295,15 +295,14 @@
                     <% if (unreadMessageCount > 0) { %>
                         <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
                     <% } %>
-
-                    <% 
-                        // Check if user is admin and show admin link
-                        AdminDAO adminDAO = new AdminDAO();
-                        if (adminDAO.isAdmin(userId)) {
-                    %>
-                        <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Dashboard</a>
-                    <% } %>
                 </div>
+                <% 
+                    // Check if user is admin and show admin link
+                    AdminDAO adminDAO = new AdminDAO();
+                    if (adminDAO.isAdmin(userId)) {
+                %>
+                <a href="admin_dashboard.jsp" class="nav-btn" style="background: #dc2626; color: white;">Dashboard</a>
+                <% } %>
                 <div class="user-menu">
                     <span class="username-display"><%= username %></span>
                     <div class="dropdown-content">

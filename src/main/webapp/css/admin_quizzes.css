@@ -148,4 +148,66 @@ body {
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0, 234, 255, 0.3);
+}
+/* --- Admin Stats Section Improvements --- */
+.admin-stats-section {
+    margin-bottom: 2.5rem;
+}
+.admin-stats-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00eaff;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+}
+.admin-stats-cards {
+    display: flex;
+    gap: 2rem;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+.admin-stat-card {
+    background: linear-gradient(135deg, #23235b 0%, #312e81 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px 0 rgba(0, 234, 255, 0.07), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+    border: 1.5px solid #2d2e5e;
+    padding: 2rem 2.5rem;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.2s, border 0.2s, transform 0.15s;
+}
+.admin-stat-card:hover {
+    box-shadow: 0 8px 32px 0 rgba(0, 234, 255, 0.18), 0 2px 8px 0 rgba(0,0,0,0.18);
+    border: 1.5px solid #00eaff;
+    transform: translateY(-2px) scale(1.015);
+}
+.admin-stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.7rem;
+}
+.admin-stat-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #00eaff;
+    margin-bottom: 0.3rem;
+}
+.admin-stat-label {
+    color: #a5b4fc;
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-align: center;
+}
+@media (max-width: 900px) {
+    .admin-stats-cards {
+        flex-direction: column;
+        gap: 1.2rem;
+        align-items: flex-start;
+    }
+    .admin-stat-card {
+        min-width: 0;
+        width: 100%;
+    }
 } 

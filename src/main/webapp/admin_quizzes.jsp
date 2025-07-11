@@ -59,36 +59,42 @@
         <% } %>
 
         <!-- Quiz Statistics -->
-        <div class="stats-summary">
-            <div class="stat-card">
-                <div class="stat-number"><%= quizzes.size() %></div>
-                <div class="stat-label">Total Quizzes</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">
-                    <% 
-                        int totalSubmissions = 0;
-                        for (Map<String, Object> quiz : quizzes) {
-                            totalSubmissions += (Integer) quiz.get("submission_count");
-                        }
-                    %>
-                    <%= totalSubmissions %>
+        <div class="admin-stats-section">
+            <h2 class="admin-stats-title">Quiz Statistics</h2>
+            <div class="admin-stats-cards">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon">📚</div>
+                    <div class="admin-stat-number"><%= quizzes.size() %></div>
+                    <div class="admin-stat-label">Total Quizzes</div>
                 </div>
-                <div class="stat-label">Total Submissions</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">
-                    <% 
-                        int activeQuizzes = 0;
-                        for (Map<String, Object> quiz : quizzes) {
-                            if ((Integer) quiz.get("submission_count") > 0) {
-                                activeQuizzes++;
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon">📝</div>
+                    <div class="admin-stat-number">
+                        <% 
+                            int totalSubmissions = 0;
+                            for (Map<String, Object> quiz : quizzes) {
+                                totalSubmissions += (Integer) quiz.get("submission_count");
                             }
-                        }
-                    %>
-                    <%= activeQuizzes %>
+                        %>
+                        <%= totalSubmissions %>
+                    </div>
+                    <div class="admin-stat-label">Total Submissions</div>
                 </div>
-                <div class="stat-label">Active Quizzes</div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon">✅</div>
+                    <div class="admin-stat-number">
+                        <% 
+                            int activeQuizzes = 0;
+                            for (Map<String, Object> quiz : quizzes) {
+                                if ((Integer) quiz.get("submission_count") > 0) {
+                                    activeQuizzes++;
+                                }
+                            }
+                        %>
+                        <%= activeQuizzes %>
+                    </div>
+                    <div class="admin-stat-label">Active Quizzes</div>
+                </div>
             </div>
         </div>
 
