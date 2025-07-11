@@ -28,14 +28,14 @@ class PasswordUtilTest {
 
     String password = "testPassword123";
     String hashedPassword = PasswordUtil.hashPassword(password);
-    
+
 
     assertNotNull(hashedPassword, "Hashed password should not be null");
     assertFalse(hashedPassword.isEmpty(), "Hashed password should not be empty");
-    
+
 
     assertNotEquals(password, hashedPassword, "Hashed password should be different from plain password");
-    
+
 
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
     assertTrue(hashedPassword.matches("[0-9a-f]{64}"), "Hash should be a valid hex string");
@@ -45,7 +45,7 @@ class PasswordUtilTest {
   void testHashPassword_EmptyPassword() {
 
     String hashedPassword = PasswordUtil.hashPassword("");
-    
+
     assertNotNull(hashedPassword, "Hashed empty password should not be null");
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
     assertTrue(hashedPassword.matches("[0-9a-f]{64}"), "Hash should be a valid hex string");
@@ -58,7 +58,7 @@ class PasswordUtilTest {
 
     String password = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
     String hashedPassword = PasswordUtil.hashPassword(password);
-    
+
     assertNotNull(hashedPassword, "Hashed password with special chars should not be null");
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
     assertTrue(hashedPassword.matches("[0-9a-f]{64}"), "Hash should be a valid hex string");
@@ -69,7 +69,7 @@ class PasswordUtilTest {
 
     String password = "a".repeat(1000);
     String hashedPassword = PasswordUtil.hashPassword(password);
-    
+
     assertNotNull(hashedPassword, "Hashed long password should not be null");
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
     assertTrue(hashedPassword.matches("[0-9a-f]{64}"), "Hash should be a valid hex string");
@@ -80,7 +80,7 @@ class PasswordUtilTest {
 
     String password = "password\u00E9\u00F1\u00F6\u00E4";
     String hashedPassword = PasswordUtil.hashPassword(password);
-    
+
     assertNotNull(hashedPassword, "Hashed unicode password should not be null");
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
     assertTrue(hashedPassword.matches("[0-9a-f]{64}"), "Hash should be a valid hex string");
@@ -93,7 +93,7 @@ class PasswordUtilTest {
     String hash1 = PasswordUtil.hashPassword(password);
     String hash2 = PasswordUtil.hashPassword(password);
     String hash3 = PasswordUtil.hashPassword(password);
-    
+
     assertEquals(hash1, hash2, "Same password should produce same hash");
     assertEquals(hash2, hash3, "Same password should produce same hash");
     assertEquals(hash1, hash3, "Same password should produce same hash");
@@ -105,11 +105,11 @@ class PasswordUtilTest {
     String password1 = "password1";
     String password2 = "password2";
     String password3 = "Password1";
-    
+
     String hash1 = PasswordUtil.hashPassword(password1);
     String hash2 = PasswordUtil.hashPassword(password2);
     String hash3 = PasswordUtil.hashPassword(password3);
-    
+
     assertNotEquals(hash1, hash2, "Different passwords should produce different hashes");
     assertNotEquals(hash1, hash3, "Different passwords should produce different hashes");
     assertNotEquals(hash2, hash3, "Different passwords should produce different hashes");
@@ -120,9 +120,9 @@ class PasswordUtilTest {
 
     String plainPassword = "testPassword123";
     String hashedPassword = PasswordUtil.hashPassword(plainPassword);
-    
+
     boolean result = PasswordUtil.checkPassword(plainPassword, hashedPassword);
-    
+
     assertTrue(result, "Password verification should succeed for correct password");
   }
 
@@ -132,9 +132,9 @@ class PasswordUtilTest {
     String plainPassword = "testPassword123";
     String hashedPassword = PasswordUtil.hashPassword(plainPassword);
     String wrongPassword = "wrongPassword";
-    
+
     boolean result = PasswordUtil.checkPassword(wrongPassword, hashedPassword);
-    
+
     assertFalse(result, "Password verification should fail for wrong password");
   }
 
@@ -142,10 +142,10 @@ class PasswordUtilTest {
   void testCheckPassword_EmptyPassword() {
 
     String hashedPassword = PasswordUtil.hashPassword("");
-    
+
     boolean result = PasswordUtil.checkPassword("", hashedPassword);
     assertTrue(result, "Empty password verification should succeed");
-    
+
     result = PasswordUtil.checkPassword("wrong", hashedPassword);
     assertFalse(result, "Wrong password verification should fail");
   }
@@ -157,10 +157,10 @@ class PasswordUtilTest {
 
     String plainPassword = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
     String hashedPassword = PasswordUtil.hashPassword(plainPassword);
-    
+
     boolean result = PasswordUtil.checkPassword(plainPassword, hashedPassword);
     assertTrue(result, "Special characters password verification should succeed");
-    
+
     result = PasswordUtil.checkPassword("wrong", hashedPassword);
     assertFalse(result, "Wrong password verification should fail");
   }
@@ -170,10 +170,10 @@ class PasswordUtilTest {
 
     String plainPassword = "TestPassword";
     String hashedPassword = PasswordUtil.hashPassword(plainPassword);
-    
+
     boolean result = PasswordUtil.checkPassword("testpassword", hashedPassword);
     assertFalse(result, "Password verification should be case sensitive");
-    
+
     result = PasswordUtil.checkPassword("TestPassword", hashedPassword);
     assertTrue(result, "Correct case password verification should succeed");
   }
@@ -183,10 +183,10 @@ class PasswordUtilTest {
 
     String plainPassword = "  testPassword  ";
     String hashedPassword = PasswordUtil.hashPassword(plainPassword);
-    
+
     boolean result = PasswordUtil.checkPassword("  testPassword  ", hashedPassword);
     assertTrue(result, "Password with whitespace verification should succeed");
-    
+
     result = PasswordUtil.checkPassword("testPassword", hashedPassword);
     assertFalse(result, "Password without whitespace should fail");
   }
@@ -195,15 +195,15 @@ class PasswordUtilTest {
   void testPasswordWorkflow_HashAndVerify() {
 
     String originalPassword = "mySecurePassword123";
-    
+
 
     String hashedPassword = PasswordUtil.hashPassword(originalPassword);
     assertNotNull(hashedPassword, "Hashed password should not be null");
-    
+
 
     boolean isValid = PasswordUtil.checkPassword(originalPassword, hashedPassword);
     assertTrue(isValid, "Password verification should succeed");
-    
+
 
     boolean isInvalid = PasswordUtil.checkPassword("wrongPassword", hashedPassword);
     assertFalse(isInvalid, "Wrong password verification should fail");
@@ -215,7 +215,7 @@ class PasswordUtilTest {
   void testHashPassword_ZeroLength() {
 
     String hashedPassword = PasswordUtil.hashPassword("");
-    
+
     assertNotNull(hashedPassword, "Hashed empty password should not be null");
     assertEquals(64, hashedPassword.length(), "SHA-256 hash should be 64 characters long");
   }
@@ -225,7 +225,7 @@ class PasswordUtilTest {
 
     String plainPassword = "testPassword";
     String invalidHash = "invalidHash";
-    
+
     boolean result = PasswordUtil.checkPassword(plainPassword, invalidHash);
     assertFalse(result, "Password verification should fail with invalid hash");
   }
@@ -235,7 +235,7 @@ class PasswordUtilTest {
 
     String plainPassword = "testPassword";
     String shortHash = "abc123";
-    
+
     boolean result = PasswordUtil.checkPassword(plainPassword, shortHash);
     assertFalse(result, "Password verification should fail with short hash");
   }
@@ -245,7 +245,7 @@ class PasswordUtilTest {
 
     String plainPassword = "testPassword";
     String nonHexHash = "g".repeat(64);
-    
+
     boolean result = PasswordUtil.checkPassword(plainPassword, nonHexHash);
     assertFalse(result, "Password verification should fail with non-hex hash");
   }
@@ -254,13 +254,13 @@ class PasswordUtilTest {
   void testHashPassword_Performance() {
 
     String password = "testPassword";
-    
+
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < 1000; i++) {
       PasswordUtil.hashPassword(password);
     }
     long endTime = System.currentTimeMillis();
-    
+
     long duration = endTime - startTime;
     assertTrue(duration < 1000, "Hashing 1000 passwords should take less than 1 second, took: " + duration + "ms");
   }
@@ -270,13 +270,13 @@ class PasswordUtilTest {
 
     String password = "testPassword";
     String hashedPassword = PasswordUtil.hashPassword(password);
-    
+
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < 1000; i++) {
       PasswordUtil.checkPassword(password, hashedPassword);
     }
     long endTime = System.currentTimeMillis();
-    
+
     long duration = endTime - startTime;
     assertTrue(duration < 1000, "Checking 1000 passwords should take less than 1 second, took: " + duration + "ms");
   }
@@ -287,7 +287,7 @@ class PasswordUtilTest {
     String password = "testPassword";
     String hash1 = PasswordUtil.hashPassword(password);
     String hash2 = PasswordUtil.hashPassword(password);
-    
+
     assertEquals(hash1, hash2, "Hash should be deterministic");
   }
 
@@ -296,12 +296,12 @@ class PasswordUtilTest {
 
     String password1 = "password";
     String password2 = "password1";
-    
+
     String hash1 = PasswordUtil.hashPassword(password1);
     String hash2 = PasswordUtil.hashPassword(password2);
-    
+
     assertNotEquals(hash1, hash2, "Different passwords should produce different hashes");
-    
+
 
     int differences = 0;
     for (int i = 0; i < hash1.length(); i++) {
@@ -309,7 +309,7 @@ class PasswordUtilTest {
         differences++;
       }
     }
-    
+
 
     assertTrue(differences > 20, "Small input changes should cause significant output changes");
   }
