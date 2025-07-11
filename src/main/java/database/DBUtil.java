@@ -9,7 +9,7 @@ import java.sql.SQLException;
 public class DBUtil {
     private static final String URL = "jdbc:mysql://localhost:3306/quizapp";
     private static final String USER = "root";
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = "lukalodia";
 
     public static Connection getConnection() throws SQLException {
         System.out.println("DBUtil: Attempting to connect to database at " + URL);
