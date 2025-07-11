@@ -100,7 +100,7 @@ public class AdminDAO {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quizId);
-            return ps.executeUpdate() >= 0; // Return true even if no submissions exist
+            return ps.executeUpdate() >= 0;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -191,7 +191,7 @@ public class AdminDAO {
     public Map<String, Object> getSiteStatistics() {
         Map<String, Object> stats = new HashMap<>();
         try (Connection conn = DBUtil.getConnection()) {
-            // Total users
+
             String userSql = "SELECT COUNT(*) as total_users FROM users";
             try (PreparedStatement ps = conn.prepareStatement(userSql);
                  ResultSet rs = ps.executeQuery()) {
@@ -200,7 +200,7 @@ public class AdminDAO {
                 }
             }
             
-            // Total quizzes
+
             String quizSql = "SELECT COUNT(*) as total_quizzes FROM quizzes";
             try (PreparedStatement ps = conn.prepareStatement(quizSql);
                  ResultSet rs = ps.executeQuery()) {
@@ -209,7 +209,7 @@ public class AdminDAO {
                 }
             }
             
-            // Total quiz submissions
+
             String submissionSql = "SELECT COUNT(*) as total_submissions FROM quiz_submissions";
             try (PreparedStatement ps = conn.prepareStatement(submissionSql);
                  ResultSet rs = ps.executeQuery()) {
@@ -218,7 +218,7 @@ public class AdminDAO {
                 }
             }
             
-            // Active announcements
+
             String announcementSql = "SELECT COUNT(*) as active_announcements FROM announcements WHERE is_active = TRUE";
             try (PreparedStatement ps = conn.prepareStatement(announcementSql);
                  ResultSet rs = ps.executeQuery()) {
@@ -227,7 +227,7 @@ public class AdminDAO {
                 }
             }
             
-            // Admin users
+
             String adminSql = "SELECT COUNT(*) as admin_users FROM users WHERE is_admin = TRUE";
             try (PreparedStatement ps = conn.prepareStatement(adminSql);
                  ResultSet rs = ps.executeQuery()) {

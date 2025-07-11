@@ -43,9 +43,6 @@ public class MessageDAO {
      */
     public List<Map<String, Object>> getConversations(int userId) throws SQLException {
         List<Map<String, Object>> conversations = new ArrayList<>();
-        // This query finds the most recent message for each person the user has communicated with.
-        // It partitions messages by the pair of users involved, orders them by time,
-        // and picks the top one for each pair.
         String sql = "WITH LatestMessages AS (" +
                      "    SELECT " +
                      "        m.id, " +

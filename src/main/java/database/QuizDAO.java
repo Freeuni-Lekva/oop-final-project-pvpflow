@@ -223,7 +223,6 @@ public class QuizDAO {
                     quiz.put("title", quizRs.getString("title"));
                     quiz.put("description", quizRs.getString("description"));
                     quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
-                    // Add other quiz properties if needed
                     
                     List<Map<String, Object>> questions = getQuestionsForQuiz(conn, quizId);
                     quiz.put("questions", questions);
@@ -239,7 +238,6 @@ public class QuizDAO {
     private List<Map<String, Object>> getQuestionsForQuiz(Connection conn, int quizId) throws SQLException {
         List<Map<String, Object>> questions = new ArrayList<>();
         
-        // Check if the quiz should be randomized
         PreparedStatement checkRandomStmt = conn.prepareStatement("SELECT is_randomized FROM quizzes WHERE id = ?");
         checkRandomStmt.setInt(1, quizId);
         ResultSet rsRandom = checkRandomStmt.executeQuery();
@@ -555,7 +553,6 @@ public class QuizDAO {
                         quiz.put("attempts", 0);
                     }
                 }
-                // Rename creator_name to creator for consistency with JSP
                 quiz.put("creator", quiz.get("creator_name"));
             }
         }

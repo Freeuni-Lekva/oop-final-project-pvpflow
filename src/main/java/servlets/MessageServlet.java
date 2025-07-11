@@ -37,16 +37,12 @@ public class MessageServlet extends HttpServlet {
                 }
             } catch (SQLException | NumberFormatException e) {
                 e.printStackTrace();
-                // Optionally, add error handling to the redirect
-                // response.sendRedirect("homepage.jsp?error=Failed+to+send+message");
-                // For now, we'll just redirect silently on failure.
             }
         } else if ("sendChallenge".equals(action)) {
             try {
                 int receiverId = Integer.parseInt(request.getParameter("receiverId"));
                 int quizId = Integer.parseInt(request.getParameter("quizId"));
                 
-                // Get quiz details and challenger's score
                 QuizDAO quizDAO = new QuizDAO();
                 Map<String, Object> quizDetails = quizDAO.getQuizDetails(quizId);
                 Map<String, Object> bestScore = quizDAO.getUsersHighestScore(senderId, quizId);

@@ -70,12 +70,10 @@ public class FriendDAO {
 
             conn.commit();
         } catch (SQLException e) {
-            // Rollback the transaction on error
             if (conn != null && !conn.getAutoCommit()) {
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackEx) {
-                    // Log rollback error but throw the original exception
                     System.err.println("Error during rollback: " + rollbackEx.getMessage());
                 }
             }

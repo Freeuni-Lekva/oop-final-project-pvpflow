@@ -85,7 +85,6 @@ public class FriendRequestServlet extends HttpServlet {
             e.printStackTrace();
             System.err.println("Database error in FriendRequestServlet: " + e.getMessage());
             
-            // Provide more specific error messages based on the error
             String errorMessage = "Database+error.+Please+try+again.";
             if (e.getMessage() != null && e.getMessage().contains("not found")) {
                 errorMessage = "Friend+request+not+found+or+already+processed.";

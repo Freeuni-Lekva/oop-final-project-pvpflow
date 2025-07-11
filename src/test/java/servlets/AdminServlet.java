@@ -48,13 +48,13 @@ class AdminServletTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Use reflection to inject the mock AdminDAO
+
         Field adminDAOField = AdminServlet.class.getDeclaredField("adminDAO");
         adminDAOField.setAccessible(true);
         adminDAOField.set(servlet, adminDAO);
     }
 
-    // ========== Authentication Tests ==========
+
 
     @Test
     void testDoGet_NoSession_RedirectsToLogin() throws ServletException, IOException {
@@ -100,7 +100,7 @@ class AdminServletTest {
         verify(response).sendRedirect("login.jsp");
     }
 
-    // ========== GET Action Tests ==========
+
 
     @Test
     void testDoGet_DashboardAction() throws ServletException, IOException {
@@ -153,7 +153,7 @@ class AdminServletTest {
         when(request.getParameter("action")).thenReturn("announcements");
         when(request.getRequestDispatcher("admin_announcements.jsp")).thenReturn(dispatcher);
 
-        // Test with session messages
+
         when(session.getAttribute("message")).thenReturn("Test message");
         when(session.getAttribute("error")).thenReturn("Test error");
 
@@ -176,7 +176,7 @@ class AdminServletTest {
         when(request.getParameter("action")).thenReturn("announcements");
         when(request.getRequestDispatcher("admin_announcements.jsp")).thenReturn(dispatcher);
 
-        // Test without session messages
+
         when(session.getAttribute("message")).thenReturn(null);
         when(session.getAttribute("error")).thenReturn(null);
 
@@ -226,7 +226,7 @@ class AdminServletTest {
         verify(response).sendRedirect("admin_dashboard.jsp");
     }
 
-    // ========== POST Action Tests ==========
+
 
     @Test
     void testDoPost_CreateAnnouncement_Success() throws ServletException, IOException {
@@ -591,7 +591,7 @@ class AdminServletTest {
         verify(response).sendRedirect("admin_dashboard.jsp");
     }
 
-    // ========== Helper Methods ==========
+
 
     private void setupAdminUser() {
         when(request.getSession()).thenReturn(session);

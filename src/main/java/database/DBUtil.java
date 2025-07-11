@@ -37,7 +37,6 @@ public class DBUtil {
         }
     }
     
-    // Test method to verify the constants
     public static void printConnectionInfo() {
         System.out.println("DBUtil Connection Info:");
         System.out.println("URL: " + URL);
@@ -53,7 +52,6 @@ public class DBUtil {
         try (Connection conn = getConnection()) {
             System.out.println("✓ Database connection successful");
             
-            // Test if quizzes table exists
             try (PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM quizzes")) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -65,7 +63,6 @@ public class DBUtil {
                 System.err.println("✗ Quizzes table test failed: " + e.getMessage());
             }
             
-            // Test if users table exists
             try (PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM users")) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -77,7 +74,6 @@ public class DBUtil {
                 System.err.println("✗ Users table test failed: " + e.getMessage());
             }
             
-            // Show recent quizzes
             try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT q.id, q.title, q.creator_id, u.username FROM quizzes q " +
                 "JOIN users u ON q.creator_id = u.id " +
