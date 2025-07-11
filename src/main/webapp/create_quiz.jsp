@@ -38,6 +38,26 @@
         document.documentElement.classList.remove('light-mode');
         document.body.classList.remove('light-mode');
       }
+
+      // Immediate Correction logic
+      const isOnePageCheckbox = document.querySelector('input[name="isOnePage"]');
+      const immediateCorrectionCheckbox = document.querySelector('input[name="immediateCorrection"]');
+      const immediateCorrectionLabel = immediateCorrectionCheckbox.closest('label');
+
+      function updateImmediateCorrectionState() {
+        if (isOnePageCheckbox.checked) {
+          immediateCorrectionCheckbox.checked = false;
+          immediateCorrectionCheckbox.disabled = true;
+          immediateCorrectionLabel.title = 'Immediate correction is only available for multiple pages quizzes.';
+          immediateCorrectionLabel.style.opacity = '0.6';
+        } else {
+          immediateCorrectionCheckbox.disabled = false;
+          immediateCorrectionLabel.title = '';
+          immediateCorrectionLabel.style.opacity = '1';
+        }
+      }
+      isOnePageCheckbox.addEventListener('change', updateImmediateCorrectionState);
+      updateImmediateCorrectionState();
     });
     </script>
     <meta charset="UTF-8">
@@ -130,6 +150,7 @@
                     '<label>Question Text</label>' +
                     '<input type="text" name="questionText_' + idx + '" required />' +
                 '</div>' +
+                '<div class="fib-instruction" style="display:none; background-color:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:12px; margin-bottom:1em; color:#dc2626; font-weight:700; font-size:14px; box-shadow:0 2px 4px rgba(239,68,68,0.2);"><strong>⚠️ IMPORTANT:</strong> To create a fill-in-the-blank question, use five underscores (<code style="background:#fecaca; padding:2px 4px; border-radius:3px; font-weight:bold;">_____</code>) in your question text where you want the blank to appear.<br><br><strong>Example:</strong> <em>"The capital of Georgia is _____."</em></div>' +
                 '<div class="form-group image-url-group" style="display:none;">' +
                     '<label>Image URL (for Picture-Response)</label>' +
                     '<input type="text" name="imageUrl_' + idx + '" placeholder="https://example.com/image.jpg" />' +
@@ -204,6 +225,7 @@
             const pictureNote = qBlock.querySelector('.picture-note');
             const imgGroup = qBlock.querySelector('.image-url-group');
             const timeLimitGroup = qBlock.querySelector('.time-limit-group');
+            const fibInstruction = qBlock.querySelector('.fib-instruction');
             answersList.innerHTML = '';
             matchingGroup.style.display = 'none';
             orderGroup.style.display = 'none';
@@ -212,6 +234,7 @@
             pictureNote.style.display = 'none';
             imgGroup.style.display = 'none';
             timeLimitGroup.style.display = 'none';
+            fibInstruction.style.display = 'none';
             if (type === 'multiple_choice') {
                 for (let i = 0; i < 4; i++) answersList.innerHTML += createAnswerRow(idx, i, type);
             } else if (type === 'multi_choice_multi_answer') {
@@ -222,6 +245,9 @@
             } else if (type === 'picture_response') {
                 imgGroup.style.display = '';
                 pictureNote.style.display = '';
+                answersList.innerHTML += createAnswerRow(idx, 0, type);
+            } else if (type === 'fill_in_blank') {
+                fibInstruction.style.display = '';
                 answersList.innerHTML += createAnswerRow(idx, 0, type);
             } else {
                 answersList.innerHTML += createAnswerRow(idx, 0, type);
@@ -338,6 +364,21 @@
                         new URL(field.value);
                     } catch (e) {
                         alert('Please enter a valid image URL for the picture-response question.');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+            
+            // Validate fill-in-the-blank questions have "_____" in the question text
+            const questionBlocks = document.querySelectorAll('.question-block');
+            for (let block of questionBlocks) {
+                const typeSelect = block.querySelector('.question-type-select');
+                const questionText = block.querySelector('input[name^="questionText_"]');
+                
+                if (typeSelect.value === 'fill_in_blank' && questionText.value.trim() !== '') {
+                    if (!questionText.value.includes('_____')) {
+                        alert('Fill-in-the-blank questions must contain "_____" (five underscores) in the question text to indicate where the blank should appear.');
                         e.preventDefault();
                         return;
                     }

@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 @WebServlet("/GradeQuizServlet")
 public class GradeQuizServlet extends HttpServlet {
-    // Add GradingResult as a static inner class
     private static class GradingResult {
         boolean isCorrect;
         String userAnswerText;
@@ -28,7 +27,6 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
-    // Add this normalization helper at the top of the class (after class declaration)
     private String normalize(String s) {
         return s == null ? "" : s.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
     }
@@ -39,7 +37,6 @@ public class GradeQuizServlet extends HttpServlet {
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
 
-        // Debug: Log all received parameters
         System.out.println("=== GradeQuizServlet: Received Parameters ===");
         request.getParameterMap().forEach((k, v) -> System.out.println(k + " = " + Arrays.toString(v)));
         System.out.println("===========================================");
@@ -54,7 +51,6 @@ public class GradeQuizServlet extends HttpServlet {
         try {
             timeTaken = Integer.parseInt(request.getParameter("timeTaken"));
         } catch (Exception e) {
-            // fallback to 0 if missing or invalid
         }
 
         try {
@@ -89,7 +85,6 @@ public class GradeQuizServlet extends HttpServlet {
                         .collect(Collectors.joining(", "));
                 boolean isCorrect = false;
 
-                // New: Use a holder object to get both isCorrect and userAnswerText
                 GradingResult result = null;
                 switch (questionType) {
                     case "multiple_choice":
@@ -102,8 +97,10 @@ public class GradeQuizServlet extends HttpServlet {
                         Boolean isOrdered = (question.containsKey("is_ordered") && question.get("is_ordered") != null) ? (Boolean) question.get("is_ordered") : false;
                         result = gradeMultiAnswer(request, questionId, answers, isOrdered);
                         break;
-                    case "question_response":
                     case "fill_in_blank":
+                        result = gradeFillInBlank(request, questionId, answers, questionText);
+                        break;
+                    case "question_response":
                     case "picture_response":
                         result = gradeTextResponse(request, questionId, correctAnswerText);
                         break;
@@ -115,7 +112,6 @@ public class GradeQuizServlet extends HttpServlet {
                     isCorrect = result.isCorrect;
                     userAnswerText = result.userAnswerText;
                 }
-                // Debug: Log user answer for this question
                 System.out.println("Question ID: " + questionId + ", Type: " + questionType + ", User Answer: '" + userAnswerText + "', Correct: '" + correctAnswerText + "', isCorrect: " + isCorrect);
                 if (isCorrect) {
                     score++;
@@ -132,7 +128,6 @@ public class GradeQuizServlet extends HttpServlet {
             int totalPossibleScore = questions.size();
             double percentage = (totalPossibleScore > 0) ? ((double) score / totalPossibleScore) * 100 : 0;
 
-            // Save submission to database
             try (Connection conn = DBUtil.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
@@ -144,21 +139,17 @@ public class GradeQuizServlet extends HttpServlet {
                                                    (boolean) reviewItem.get("isCorrect"));
                     }
                     
-                    // Check and award achievements after quiz completion
                     AchievementDAO achievementDAO = new AchievementDAO();
                     List<Map<String, Object>> newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
                     
-                    // Create system messages for newly earned achievements
                     for (Map<String, Object> achievement : newlyEarnedAchievements) {
                         achievementDAO.createAchievementMessage(conn, userId, (String) achievement.get("name"));
                     }
                     
                     conn.commit();
                     
-                    // Add newly earned achievements to session for display
                     if (!newlyEarnedAchievements.isEmpty()) {
                         session.setAttribute("newlyEarnedAchievements", newlyEarnedAchievements);
-                        // --- Unseen Achievements Badge Logic ---
                         Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
                         if (unseenAchievements == null) unseenAchievements = new HashSet<>();
                         for (Map<String, Object> achievement : newlyEarnedAchievements) {
@@ -194,7 +185,6 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
-    // New helper methods to return both isCorrect and userAnswerText
     private GradingResult gradeMultipleChoice(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
         String userAnswerIdStr = request.getParameter("q_" + questionId);
         String userAnswerText = "";
@@ -210,7 +200,6 @@ public class GradeQuizServlet extends HttpServlet {
                     }
                 }
             } catch (NumberFormatException e) {
-                // Invalid answer ID
             }
         }
         return new GradingResult(isCorrect, userAnswerText);
@@ -273,5 +262,38 @@ public class GradeQuizServlet extends HttpServlet {
         String normalizedCorrect = normalize(correctAnswerText);
         boolean isCorrect = !normalizedUser.isEmpty() && normalizedUser.equals(normalizedCorrect);
         return new GradingResult(isCorrect, userAnswerText != null ? userAnswerText.trim() : "");
+    }
+
+    private GradingResult gradeFillInBlank(HttpServletRequest request, int questionId, List<Map<String, Object>> answers, String questionText) {
+        // Count blanks by counting _____ in the question text
+        int blankCount = questionText.split("_____", -1).length - 1;
+        List<String> userBlanks = new ArrayList<>();
+        List<String> correctBlanks = new ArrayList<>();
+        boolean isCorrect = true;
+
+        for (int b = 0; b < blankCount; b++) {
+            String userInput = request.getParameter("q_" + questionId + "_blank_" + b);
+            userInput = userInput != null ? userInput.trim() : "";
+            userBlanks.add(userInput);
+
+            // Find all legal answers for this blank (answers with is_correct == true and matching blank index)
+            // If you store all legal answers for all blanks in order, just use answers.get(b)
+            // If you allow multiple legal answers per blank, split by comma
+            String correctAnswerRaw = (String) answers.get(b).get("answer_text");
+            correctBlanks.add(correctAnswerRaw);
+
+            boolean blankCorrect = false;
+            for (String legal : correctAnswerRaw.split(",")) {
+                if (normalize(userInput).equals(normalize(legal))) {
+                    blankCorrect = true;
+                    break;
+                }
+            }
+            if (!blankCorrect) isCorrect = false;
+        }
+
+        String userAnswerText = String.join(" | ", userBlanks);
+        String correctAnswerText = String.join(" | ", correctBlanks);
+        return new GradingResult(isCorrect, userAnswerText);
     }
 } 

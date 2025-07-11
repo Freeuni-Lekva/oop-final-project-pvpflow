@@ -11,9 +11,7 @@ import java.util.Map;
 
 public class AchievementDAO {
 
-    /**
-     * Get all achievements earned by a user
-     */
+
     public List<Map<String, Object>> getAchievementsByUserId(int userId) throws SQLException {
         List<Map<String, Object>> achievements = new ArrayList<>();
         String sql = "SELECT a.id, a.name, a.description, a.icon_url, ua.earned_at " +
@@ -39,9 +37,7 @@ public class AchievementDAO {
         return achievements;
     }
 
-    /**
-     * Get all available achievements with user's progress
-     */
+
     public List<Map<String, Object>> getAllAchievementsWithProgress(int userId) throws SQLException {
         List<Map<String, Object>> achievements = new ArrayList<>();
         String sql = "SELECT a.id, a.name, a.description, a.icon_url, " +
@@ -74,16 +70,12 @@ public class AchievementDAO {
         return achievements;
     }
 
-    /**
-     * Check and award achievements for a user
-     */
+
     public List<Map<String, Object>> checkAndAwardAchievements(int userId) throws SQLException {
         List<Map<String, Object>> newlyEarned = new ArrayList<>();
         try (Connection conn = DBUtil.getConnection()) {
-            // Get user statistics
             Map<String, Object> userStats = getUserStats(conn, userId);
             
-            // Get all achievements
             List<Map<String, Object>> allAchievements = getAllAchievementsWithProgress(userId);
             for (Map<String, Object> achievement : allAchievements) {
                 int achievementId = (int) achievement.get("id");
@@ -103,9 +95,7 @@ public class AchievementDAO {
         return newlyEarned;
     }
 
-    /**
-     * Check if an achievement should be awarded based on user stats
-     */
+
     private boolean shouldAwardAchievement(Map<String, Object> achievement, Map<String, Object> userStats) {
         String name = (String) achievement.get("name");
         int quizzesTaken = (int) userStats.get("quizzes_taken");
@@ -132,9 +122,7 @@ public class AchievementDAO {
         }
     }
 
-    /**
-     * Award an achievement to a user
-     */
+
     private void awardAchievement(Connection conn, int userId, int achievementId) throws SQLException {
         String sql = "INSERT IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -149,13 +137,10 @@ public class AchievementDAO {
         }
     }
 
-    /**
-     * Get comprehensive user statistics for achievement checking
-     */
+
     public Map<String, Object> getUserStats(Connection conn, int userId) throws SQLException {
         Map<String, Object> stats = new HashMap<>();
         
-        // Quizzes taken count
         String quizzesTakenSql = "SELECT COUNT(DISTINCT quiz_id) FROM quiz_submissions WHERE user_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(quizzesTakenSql)) {
             stmt.setInt(1, userId);
@@ -166,7 +151,6 @@ public class AchievementDAO {
             }
         }
         
-        // Quizzes created count
         String quizzesCreatedSql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(quizzesCreatedSql)) {
             stmt.setInt(1, userId);
@@ -177,7 +161,6 @@ public class AchievementDAO {
             }
         }
         
-        // Perfect scores count
         String perfectScoresSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
         try (PreparedStatement stmt = conn.prepareStatement(perfectScoresSql)) {
             stmt.setInt(1, userId);
@@ -188,7 +171,6 @@ public class AchievementDAO {
             }
         }
         
-        // Check for highest score
         String highestScoreSql = "SELECT COUNT(*) FROM quiz_submissions s1 " +
                                 "WHERE s1.user_id = ? AND s1.score = (" +
                                 "SELECT MAX(s2.score) FROM quiz_submissions s2 " +
@@ -202,7 +184,6 @@ public class AchievementDAO {
             }
         }
         
-        // Check for practice mode quiz
         String practiceQuizSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND is_practice_mode = TRUE";
         try (PreparedStatement stmt = conn.prepareStatement(practiceQuizSql)) {
             stmt.setInt(1, userId);
@@ -213,14 +194,11 @@ public class AchievementDAO {
             }
         }
         
-        // Removed speed demon and any other achievement logic not in the specified list
 
         return stats;
     }
 
-    /**
-     * Get achievement progress for display
-     */
+
     public Map<String, Object> getAchievementProgress(int userId) throws SQLException {
         Map<String, Object> progress = new HashMap<>();
         
@@ -233,7 +211,7 @@ public class AchievementDAO {
             boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
             boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
 
-            // Calculate progress percentages
+
             progress.put("amateur_author_progress", Math.min(100.0, (double) quizzesCreated * 100));
             progress.put("prolific_author_progress", Math.min(100.0, (double) quizzesCreated / 5 * 100));
             progress.put("prodigious_author_progress", Math.min(100.0, (double) quizzesCreated / 10 * 100));
@@ -242,7 +220,7 @@ public class AchievementDAO {
             progress.put("practice_makes_perfect_progress", hasTakenPracticeQuiz ? 100.0 : 0.0);
             progress.put("consistent_performer_progress", Math.min(100.0, (double) perfectScores / 3 * 100));
             
-            // Add raw stats
+
             progress.put("quizzes_taken", quizzesTaken);
             progress.put("quizzes_created", quizzesCreated);
             progress.put("perfect_scores", perfectScores);
@@ -253,9 +231,7 @@ public class AchievementDAO {
         return progress;
     }
 
-    /**
-     * Create a system message for newly earned achievements
-     */
+
     public void createAchievementMessage(Connection conn, int userId, String achievementName) throws SQLException {
         String sql = "INSERT INTO messages (sender_id, recipient_id, message_type, subject, content) " +
                      "VALUES (NULL, ?, 'achievement', 'Achievement Unlocked!', ?)";

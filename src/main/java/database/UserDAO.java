@@ -44,7 +44,6 @@ public class UserDAO {
                     return false; // user already exists
                 }
             }
-            // user with this username or email does not exist, so we should create one
             String insertSql = "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
             try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                 insertStmt.setString(1, username);

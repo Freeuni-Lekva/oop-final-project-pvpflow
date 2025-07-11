@@ -13,7 +13,7 @@ private String toJson(List<Map<String, Object>> questions) {
         List<Map<String, Object>> answers = (List<Map<String, Object>>)q.get("answers");
         for (int j = 0; j < answers.size(); j++) {
             Map<String, Object> a = answers.get(j);
-            sb.append("{\"id\":" + a.get("id") + ",\"answer_text\":\"" + ((String)a.get("answer_text")).replace("\"", "\\\"") + "\"}");
+            sb.append("{\"id\":" + a.get("id") + ",\"answer_text\":\"" + ((String)a.get("answer_text")).replace("\"", "\\\"") + "\",\"is_correct\":" + a.get("is_correct") + "}");
             if (j < answers.size() - 1) sb.append(",");
         }
         sb.append("]}");
@@ -111,7 +111,27 @@ private String toJson(List<Map<String, Object>> questions) {
                             int questionId = (int) q.get("id");
                         %>
                         <div class="question-block">
-                            <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
+                            <% if ("fill_in_blank".equals(qType)) { %>
+                                <div class="fib-question-text">
+                                    <%= q.get("question_text") %>
+                                </div>
+                                <div class="fib-inputs">
+                                <% 
+                                    String text = (String) q.get("question_text");
+                                    String[] parts = text.split("_____");
+                                    int blankCount = parts.length - 1;
+                                    for (int b = 0; b < blankCount; b++) {
+                                %>
+                                    <div class="fib-input-group">
+                                        <label>Blank <%= (b+1) %>:</label>
+                                        <input type="text" name="q_<%=questionId%>_blank_<%=b%>" class="fib-blank" required placeholder="Enter your answer" />
+                                    </div>
+                                <% } %>
+                                </div>
+                                <div class="required-field">* Fill in all blanks</div>
+                            <% } else { %>
+                                <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
+                            <% } %>
                             <div class="question-type">Type: <%= qType.replace("_", " ").toUpperCase() %></div>
                             <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
                                 <img src="<%= q.get("image_url") %>" alt="Question Image" class="question-image" />
@@ -140,7 +160,7 @@ private String toJson(List<Map<String, Object>> questions) {
                                         </div>
                                     <% } %>
                                     <div class="required-field">* All fields are required</div>
-                                <% } else if ("question_response".equals(qType) || "fill_in_blank".equals(qType)) { %>
+                                <% } else if ("question_response".equals(qType)) { %>
                                     <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
                                     <div class="required-field">* This field is required</div>
                                 <% } else if ("picture_response".equals(qType)) { %>
@@ -175,6 +195,209 @@ private String toJson(List<Map<String, Object>> questions) {
         const questions = JSON.parse('<%= toJson(questions) %>');
         let currentIdx = 0;
         let userAnswers = {};
+        let answeredQuestions = {}; // Track which questions have been answered
+
+        function checkAnswer() {
+            if (questions.length === 0) return null;
+
+            const q = questions[currentIdx];
+            const qType = q.question_type;
+            const questionId = q.id;
+            let isCorrect = false;
+            let userAnswerText = '';
+            let correctAnswerText = '';
+
+
+
+            if (qType === 'multiple_choice') {
+                const selected = document.querySelector('input[name="q_' + questionId + '"]:checked');
+                if (selected) {
+                    const selectedAnswer = q.answers.find(a => a.id == selected.value);
+                    if (selectedAnswer) {
+                        userAnswerText = selectedAnswer.answer_text;
+                        isCorrect = selectedAnswer.is_correct;
+                    }
+                }
+                // Get correct answer text
+                const correctAnswer = q.answers.find(a => a.is_correct);
+                if (correctAnswer) {
+                    correctAnswerText = correctAnswer.answer_text;
+                }
+            } else if (qType === 'multi_choice_multi_answer') {
+                const selectedAnswers = [];
+                q.answers.forEach(function(a) {
+                    const cb = document.querySelector('input[name="q_' + questionId + '_a_' + a.id + '"]');
+                    if (cb && cb.checked) {
+                        selectedAnswers.push(a);
+                    }
+                });
+                userAnswerText = selectedAnswers.map(a => a.answer_text).join(', ');
+                
+                const correctAnswers = q.answers.filter(a => a.is_correct);
+                correctAnswerText = correctAnswers.map(a => a.answer_text).join(', ');
+                
+                // Check if all correct answers are selected and no incorrect ones
+                const selectedIds = selectedAnswers.map(a => a.id);
+                const correctIds = correctAnswers.map(a => a.id);
+                isCorrect = selectedIds.length === correctIds.length && 
+                           selectedIds.every(id => correctIds.includes(id));
+            } else if (qType === 'multi_answer') {
+                const userAnswers = [];
+                q.answers.forEach(function(a, idx) {
+                    const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
+                    if (inp && inp.value.trim()) {
+                        userAnswers.push(inp.value.trim());
+                    }
+                });
+                userAnswerText = userAnswers.join(', ');
+                
+                const correctAnswers = q.answers.filter(a => a.is_correct).map(a => a.answer_text.trim());
+                correctAnswerText = correctAnswers.join(', ');
+                
+                // Check if answers match (case insensitive)
+                if (userAnswers.length === correctAnswers.length) {
+                    const userSorted = userAnswers.map(a => a.toLowerCase()).sort();
+                    const correctSorted = correctAnswers.map(a => a.toLowerCase()).sort();
+                    isCorrect = JSON.stringify(userSorted) === JSON.stringify(correctSorted);
+                }
+            } else if (qType === 'fill_in_blank') {
+                const userAnswers = [];
+                q.answers.forEach(function(a, idx) {
+                    const inp = document.querySelector('input[name="q_' + questionId + '_blank_' + idx + '"]');
+                    if (inp && inp.value.trim()) {
+                        userAnswers.push(inp.value.trim());
+                    }
+                });
+                userAnswerText = userAnswers.join(', ');
+                
+                const correctAnswers = q.answers.filter(a => a.is_correct).map(a => a.answer_text.trim());
+                correctAnswerText = correctAnswers.join(', ');
+                
+                // Check if answers match (case insensitive)
+                if (userAnswers.length === correctAnswers.length) {
+                    const userSorted = userAnswers.map(a => a.toLowerCase().replace(/[^a-z0-9]/g, '')).sort();
+                    const correctSorted = correctAnswers.map(a => a.toLowerCase().replace(/[^a-z0-9]/g, '')).sort();
+                    isCorrect = JSON.stringify(userSorted) === JSON.stringify(correctSorted);
+                }
+            } else {
+                const questionBlock = document.getElementById('questionBlock');
+                const inp = questionBlock ? questionBlock.querySelector('input[name="q_' + questionId + '_text"]') : null;
+                if (inp && inp.value.trim()) {
+                    userAnswerText = inp.value.trim();
+                    // For text responses, we'll need to normalize and compare
+                    const correctAnswers = q.answers.filter(a => a.is_correct).map(a => a.answer_text.trim());
+                    
+                    if (correctAnswers.length > 0) {
+                        correctAnswerText = correctAnswers[0];
+                        // Simple normalization for comparison
+                        const normalizedUser = userAnswerText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const normalizedCorrect = correctAnswerText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        isCorrect = normalizedUser === normalizedCorrect;
+                    }
+                }
+            }
+
+            return {
+                isCorrect: isCorrect,
+                userAnswerText: userAnswerText,
+                correctAnswerText: correctAnswerText
+            };
+        }
+
+        function showImmediateFeedback(result) {
+            const questionBlock = document.getElementById('questionBlock');
+            if (!questionBlock) return;
+
+            // Remove any existing feedback
+            const existingFeedback = questionBlock.querySelector('.immediate-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+
+            if (result && result.userAnswerText) {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'immediate-feedback';
+                
+                if (result.isCorrect) {
+                    feedbackDiv.innerHTML = '<div class="feedback-correct">✓ Correct!</div>';
+                    feedbackDiv.style.color = '#10b981';
+                    feedbackDiv.style.fontWeight = 'bold';
+                    feedbackDiv.style.marginTop = '10px';
+                    feedbackDiv.style.padding = '8px';
+                    feedbackDiv.style.backgroundColor = '#d1fae5';
+                    feedbackDiv.style.borderRadius = '4px';
+                    feedbackDiv.style.border = '1px solid #10b981';
+                } else {
+                    feedbackDiv.innerHTML = '<div class="feedback-incorrect">✗ Incorrect</div><div class="correct-answer">Correct answer: ' + result.correctAnswerText + '</div>';
+                    feedbackDiv.style.color = '#ef4444';
+                    feedbackDiv.style.fontWeight = 'bold';
+                    feedbackDiv.style.marginTop = '10px';
+                    feedbackDiv.style.padding = '8px';
+                    feedbackDiv.style.backgroundColor = '#fee2e2';
+                    feedbackDiv.style.borderRadius = '4px';
+                    feedbackDiv.style.border = '1px solid #ef4444';
+                }
+
+                questionBlock.appendChild(feedbackDiv);
+                
+                // Disable all input fields for this question after feedback is shown
+                disableQuestionInputs();
+            }
+        }
+
+        function disableQuestionInputs() {
+            const questionBlock = document.getElementById('questionBlock');
+            if (!questionBlock) return;
+
+            // Disable all input fields in the current question
+            const inputs = questionBlock.querySelectorAll('input');
+            inputs.forEach(function(input) {
+                input.disabled = true;
+                input.style.opacity = '0.6';
+                input.style.cursor = 'not-allowed';
+            });
+
+            // Disable labels to prevent clicking
+            const labels = questionBlock.querySelectorAll('label');
+            labels.forEach(function(label) {
+                label.style.cursor = 'not-allowed';
+                label.style.opacity = '0.6';
+            });
+
+            // Disable answer rows
+            const answerRows = questionBlock.querySelectorAll('.answer-row');
+            answerRows.forEach(function(row) {
+                row.style.cursor = 'not-allowed';
+                row.style.opacity = '0.6';
+            });
+        }
+
+        function enableQuestionInputs() {
+            const questionBlock = document.getElementById('questionBlock');
+            if (!questionBlock) return;
+
+            // Re-enable all input fields in the current question
+            const inputs = questionBlock.querySelectorAll('input');
+            inputs.forEach(function(input) {
+                input.disabled = false;
+                input.style.opacity = '1';
+                input.style.cursor = 'auto';
+            });
+
+            // Re-enable labels
+            const labels = questionBlock.querySelectorAll('label');
+            labels.forEach(function(label) {
+                label.style.cursor = 'pointer';
+                label.style.opacity = '1';
+            });
+
+            // Re-enable answer rows
+            const answerRows = questionBlock.querySelectorAll('.answer-row');
+            answerRows.forEach(function(row) {
+                row.style.cursor = 'pointer';
+                row.style.opacity = '1';
+            });
+        }
 
         function saveCurrentAnswer() {
             if (questions.length === 0) return;
@@ -196,6 +419,12 @@ private String toJson(List<Map<String, Object>> questions) {
                 userAnswers['q_' + questionId] = [];
                 q.answers.forEach(function(a, idx) {
                     const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
+                    userAnswers['q_' + questionId][idx] = inp ? inp.value : '';
+                });
+            } else if (qType === 'fill_in_blank') {
+                userAnswers['q_' + questionId] = [];
+                q.answers.forEach(function(a, idx) {
+                    const inp = document.querySelector('input[name="q_' + questionId + '_blank_' + idx + '"]');
                     userAnswers['q_' + questionId][idx] = inp ? inp.value : '';
                 });
             } else {
@@ -234,6 +463,13 @@ private String toJson(List<Map<String, Object>> questions) {
                         if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
                     });
                 }
+            } else if (qType === 'fill_in_blank') {
+                if (userAnswers['q_' + questionId]) {
+                    q.answers.forEach(function(a, idx) {
+                        const inp = document.querySelector('input[name="q_' + questionId + '_blank_' + idx + '"]');
+                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
+                    });
+                }
             } else {
                 if (userAnswers['q_' + questionId + '_text']) {
                     const questionBlock = document.getElementById('questionBlock');
@@ -260,54 +496,82 @@ private String toJson(List<Map<String, Object>> questions) {
             console.log('Question type:', qType);
             console.log('Answers:', answers);
             
-            let html = '<div class="question-title">Q' + (idx+1) + ': ' + q.question_text + '</div>';
-            html += '<div class="question-type">Type: ' + qType.replace(/_/g, ' ').toUpperCase() + '</div>';
-            
-            if (q.image_url && q.image_url.length > 0) {
-                html += '<img src="' + q.image_url + '" alt="Question Image" class="question-image" />';
-            }
-            
-            html += '<div class="answers-list" id="answersList">';
-            
-            if (qType === 'multiple_choice') {
-                for (let a = 0; a < answers.length; a++) {
-                    html += '<div class="answer-row"><input type="radio" name="q_' + questionId + '" value="' + answers[a].id + '" id="q_' + questionId + '_a_' + a + '" required /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
+            let html = '';
+            if (qType === 'fill_in_blank') {
+                // Render fill-in-the-blank with separate inputs below
+                let text = q.question_text;
+                let parts = text.split('_____');
+                let blankCount = parts.length - 1;
+                html += '<div class="question-title">Q' + (idx+1) + ': ' + q.question_text + '</div>';
+                html += '<div class="question-type">Type: ' + qType.replace(/_/g, ' ').toUpperCase() + '</div>';
+                if (q.image_url && q.image_url.length > 0) {
+                    html += '<img src="' + q.image_url + '" alt="Question Image" class="question-image" />';
                 }
-                html += '<div class="required-field">* Please select one answer</div>';
-            } else if (qType === 'multi_choice_multi_answer') {
-                for (let a = 0; a < answers.length; a++) {
-                    html += '<div class="answer-row"><input type="checkbox" name="q_' + questionId + '_a_' + answers[a].id + '" value="true" id="q_' + questionId + '_a_' + a + '" /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
+                html += '<div class="fib-inputs">';
+                for (let b = 0; b < blankCount; b++) {
+                    html += '<div class="fib-input-group"><label>Blank ' + (b+1) + ':</label><input type="text" name="q_' + questionId + '_blank_' + b + '" class="fib-blank" required placeholder="Enter your answer" /></div>';
                 }
-                html += '<div class="required-field">* Select all correct answers</div>';
-            } else if (qType === 'multi_answer') {
-                for (let a = 0; a < answers.length; a++) {
-                    html += '<div class="answer-row"><input type="text" name="q_' + questionId + '_a_' + a + '" placeholder="Your answer" required /></div>';
-                }
-                html += '<div class="required-field">* All fields are required</div>';
-            } else if (qType === 'question_response' || qType === 'fill_in_blank') {
-                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
-                html += '<div class="required-field">* This field is required</div>';
-            } else if (qType === 'picture_response') {
-                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Describe what you see in the image" required />';
-                html += '<div class="required-field">* This field is required</div>';
+                html += '</div>';
+                html += '<div class="required-field">* Fill in all blanks</div>';
+                html += '<div class="answers-list" id="answersList"></div>';
             } else {
-                html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
-                html += '<div class="required-field">* This field is required</div>';
+                html = '<div class="question-title">Q' + (idx+1) + ': ' + q.question_text + '</div>';
+                html += '<div class="question-type">Type: ' + qType.replace(/_/g, ' ').toUpperCase() + '</div>';
+                if (q.image_url && q.image_url.length > 0) {
+                    html += '<img src="' + q.image_url + '" alt="Question Image" class="question-image" />';
+                }
+                html += '<div class="answers-list" id="answersList">';
+                if (qType === 'multiple_choice') {
+                    for (let a = 0; a < answers.length; a++) {
+                        html += '<div class="answer-row"><input type="radio" name="q_' + questionId + '" value="' + answers[a].id + '" id="q_' + questionId + '_a_' + a + '" required /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
+                    }
+                    html += '<div class="required-field">* Please select one answer</div>';
+                } else if (qType === 'multi_choice_multi_answer') {
+                    for (let a = 0; a < answers.length; a++) {
+                        html += '<div class="answer-row"><input type="checkbox" name="q_' + questionId + '_a_' + answers[a].id + '" value="true" id="q_' + questionId + '_a_' + a + '" /><label for="q_' + questionId + '_a_' + a + '">' + answers[a].answer_text + '</label></div>';
+                    }
+                    html += '<div class="required-field">* Select all correct answers</div>';
+                } else if (qType === 'multi_answer') {
+                    for (let a = 0; a < answers.length; a++) {
+                        html += '<div class="answer-row"><input type="text" name="q_' + questionId + '_a_' + a + '" placeholder="Your answer" required /></div>';
+                    }
+                    html += '<div class="required-field">* All fields are required</div>';
+                } else if (qType === 'question_response') {
+                    html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
+                    html += '<div class="required-field">* This field is required</div>';
+                } else if (qType === 'picture_response') {
+                    html += '<input type="text" name="q_' + questionId + '_text" placeholder="Describe what you see in the image" required />';
+                    html += '<div class="required-field">* This field is required</div>';
+                } else {
+                    html += '<input type="text" name="q_' + questionId + '_text" placeholder="Your answer" required />';
+                    html += '<div class="required-field">* This field is required</div>';
+                }
+                html += '</div>';
             }
-            
-            html += '</div>';
             
             const questionBlock = document.getElementById('questionBlock');
             if (questionBlock) {
                 questionBlock.innerHTML = html;
             }
 
-            // Add event listeners to save answer on change/input
+            // Add event listeners to save answer on change/input and show immediate feedback
             if (questionBlock) {
                 const inputs = questionBlock.querySelectorAll('input');
                 inputs.forEach(function(input) {
-                    input.addEventListener('change', saveCurrentAnswer);
-                    input.addEventListener('input', saveCurrentAnswer);
+                    input.addEventListener('change', function() {
+                        saveCurrentAnswer();
+                        const result = checkAnswer();
+                        showImmediateFeedback(result);
+                    });
+                    input.addEventListener('input', function() {
+                        saveCurrentAnswer();
+                        // For text inputs, add a small delay to avoid too frequent checking
+                        clearTimeout(input.feedbackTimeout);
+                        input.feedbackTimeout = setTimeout(function() {
+                            const result = checkAnswer();
+                            showImmediateFeedback(result);
+                        }, 500);
+                    });
                 });
             }
             
@@ -321,6 +585,15 @@ private String toJson(List<Map<String, Object>> questions) {
             if (submitBtn) submitBtn.style.display = idx === questions.length - 1 ? 'inline-block' : 'none';
             
             restoreCurrentAnswer();
+            
+            // Check if this question has already been answered and show feedback
+            const result = checkAnswer();
+            if (result && result.userAnswerText) {
+                showImmediateFeedback(result);
+            } else {
+                // Re-enable inputs for unanswered questions
+                enableQuestionInputs();
+            }
         }
 
         // Initialize multi-page quiz
@@ -339,6 +612,10 @@ private String toJson(List<Map<String, Object>> questions) {
             if (nextBtn) {
                 nextBtn.onclick = function() {
                     saveCurrentAnswer();
+                    // Show feedback for current question before moving
+                    const result = checkAnswer();
+                    showImmediateFeedback(result);
+                    
                     console.log('Next button clicked, current index:', currentIdx);
                     if (currentIdx < questions.length - 1) {
                         currentIdx++;
@@ -351,6 +628,10 @@ private String toJson(List<Map<String, Object>> questions) {
             if (prevBtn) {
                 prevBtn.onclick = function() {
                     saveCurrentAnswer();
+                    // Show feedback for current question before moving
+                    const result = checkAnswer();
+                    showImmediateFeedback(result);
+                    
                     console.log('Prev button clicked, current index:', currentIdx);
                     if (currentIdx > 0) {
                         currentIdx--;
@@ -419,6 +700,18 @@ private String toJson(List<Map<String, Object>> questions) {
                                 input.value = val;
                                 form.appendChild(input);
                                 console.log('Added hidden field: q_' + questionId + '_a_' + idx + ' = ' + val);
+                            });
+                        } else if (qType === 'fill_in_blank') {
+                            let arr = userAnswers['q_' + questionId] || [];
+                            q.answers.forEach(function(a, idx) {
+                                let val = arr[idx] || '';
+                                let input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.className = 'multi-page-hidden';
+                                input.name = 'q_' + questionId + '_blank_' + idx;
+                                input.value = val;
+                                form.appendChild(input);
+                                console.log('Added hidden field: q_' + questionId + '_blank_' + idx + ' = ' + val);
                             });
                         } else {
                             let val = userAnswers['q_' + questionId + '_text'] || '';

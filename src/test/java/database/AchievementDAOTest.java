@@ -37,16 +37,11 @@ class AchievementDAOTest {
         achievementDAO = new AchievementDAO();
     }
 
-    // ========== getAchievementsByUserId Tests ==========
-
     @Test
     void testGetAchievementsByUserId_Success() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, false);
-        
-        // Mock first achievement
         when(mockResultSet.getInt("id")).thenReturn(1, 2);
         when(mockResultSet.getString("name")).thenReturn("Amateur Author", "Quiz Machine");
         when(mockResultSet.getString("description")).thenReturn("Create your first quiz", "Take 10 quizzes");
@@ -55,44 +50,30 @@ class AchievementDAOTest {
             Timestamp.valueOf("2023-01-01 10:00:00"), 
             Timestamp.valueOf("2023-01-02 10:00:00")
         );
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.getAchievementsByUserId(1);
-
-            // Verify
             assertEquals(2, result.size());
-            
             Map<String, Object> firstAchievement = result.get(0);
             assertEquals(1, firstAchievement.get("id"));
             assertEquals("Amateur Author", firstAchievement.get("name"));
             assertEquals("Create your first quiz", firstAchievement.get("description"));
             assertEquals("icon1.png", firstAchievement.get("icon_url"));
-            
             Map<String, Object> secondAchievement = result.get(1);
             assertEquals(2, secondAchievement.get("id"));
             assertEquals("Quiz Machine", secondAchievement.get("name"));
-            
             verify(mockPreparedStatement).setInt(1, 1);
         }
     }
 
     @Test
     void testGetAchievementsByUserId_NoAchievements() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(false);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.getAchievementsByUserId(1);
-
-            // Verify
             assertTrue(result.isEmpty());
             verify(mockPreparedStatement).setInt(1, 1);
         }
@@ -100,27 +81,18 @@ class AchievementDAOTest {
 
     @Test
     void testGetAchievementsByUserId_SQLException() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute & Verify
             assertThrows(SQLException.class, () -> achievementDAO.getAchievementsByUserId(1));
         }
     }
 
-    // ========== getAllAchievementsWithProgress Tests ==========
-
     @Test
     void testGetAllAchievementsWithProgress_Success() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, false);
-        
-        // Mock first achievement (earned)
         when(mockResultSet.getInt("id")).thenReturn(1, 2);
         when(mockResultSet.getString("name")).thenReturn("Amateur Author", "Quiz Machine");
         when(mockResultSet.getString("description")).thenReturn("Create your first quiz", "Take 10 quizzes");
@@ -133,62 +105,43 @@ class AchievementDAOTest {
             Timestamp.valueOf("2023-01-01 10:00:00"), 
             null
         );
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.getAllAchievementsWithProgress(1);
-
-            // Verify
             assertEquals(2, result.size());
-            
             Map<String, Object> firstAchievement = result.get(0);
             assertEquals(1, firstAchievement.get("id"));
             assertEquals("Amateur Author", firstAchievement.get("name"));
             assertTrue((Boolean) firstAchievement.get("is_earned"));
             assertNotNull(firstAchievement.get("earned_at"));
-            
             Map<String, Object> secondAchievement = result.get(1);
             assertEquals(2, secondAchievement.get("id"));
             assertEquals("Quiz Machine", secondAchievement.get("name"));
             assertFalse((Boolean) secondAchievement.get("is_earned"));
             assertNull(secondAchievement.get("earned_at"));
-            
             verify(mockPreparedStatement).setInt(1, 1);
         }
     }
 
     @Test
     void testGetAllAchievementsWithProgress_EmptyResult() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(false);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.getAllAchievementsWithProgress(1);
-
-            // Verify
             assertTrue(result.isEmpty());
         }
     }
 
-    // ========== checkAndAwardAchievements Tests ==========
-
     @Test
     void testCheckAndAwardAchievements_NewAchievementEarned() throws SQLException {
-        // Separate mocks for achievements and user stats
         PreparedStatement achievementsStmt = mock(PreparedStatement.class);
         ResultSet achievementsRs = mock(ResultSet.class);
         PreparedStatement statsStmt = mock(PreparedStatement.class);
         ResultSet statsRs = mock(ResultSet.class);
         PreparedStatement insertStmt = mock(PreparedStatement.class);
-
-        // Achievements query
         when(mockConnection.prepareStatement(contains("SELECT a.id, a.name"))).thenReturn(achievementsStmt);
         when(achievementsStmt.executeQuery()).thenReturn(achievementsRs);
         when(achievementsRs.next()).thenReturn(true, false);
@@ -201,8 +154,6 @@ class AchievementDAOTest {
         when(achievementsRs.getInt("perfect_scores_required")).thenReturn(0);
         when(achievementsRs.getBoolean("is_earned")).thenReturn(false);
         when(achievementsRs.getTimestamp("earned_at")).thenReturn(null);
-
-        // User stats queries
         when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(statsStmt);
         when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(statsStmt);
         when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(statsStmt);
@@ -211,18 +162,11 @@ class AchievementDAOTest {
         when(statsStmt.executeQuery()).thenReturn(statsRs);
         when(statsRs.next()).thenReturn(true, true, true, true, true, false);
         when(statsRs.getInt(1)).thenReturn(5, 1, 0, 0, 0);
-
-        // Insert for awarding achievement
         when(mockConnection.prepareStatement(contains("INSERT IGNORE"))).thenReturn(insertStmt);
         when(insertStmt.executeUpdate()).thenReturn(1);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.checkAndAwardAchievements(1);
-
-            // Verify
             assertEquals(1, result.size());
             Map<String, Object> earnedAchievement = result.get(0);
             assertEquals("Amateur Author", earnedAchievement.get("name"));
@@ -232,11 +176,9 @@ class AchievementDAOTest {
 
     @Test
     void testCheckAndAwardAchievements_NoNewAchievements() throws SQLException {
-        // Setup for getAllAchievementsWithProgress
         when(mockConnection.prepareStatement(contains("SELECT a.id, a.name"))).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, false);
-        
         when(mockResultSet.getInt("id")).thenReturn(1);
         when(mockResultSet.getString("name")).thenReturn("Amateur Author");
         when(mockResultSet.getString("description")).thenReturn("Create your first quiz");
@@ -244,10 +186,8 @@ class AchievementDAOTest {
         when(mockResultSet.getInt("quizzes_taken_required")).thenReturn(0);
         when(mockResultSet.getInt("quizzes_created_required")).thenReturn(1);
         when(mockResultSet.getInt("perfect_scores_required")).thenReturn(0);
-        when(mockResultSet.getBoolean("is_earned")).thenReturn(true); // Already earned
+        when(mockResultSet.getBoolean("is_earned")).thenReturn(true);
         when(mockResultSet.getTimestamp("earned_at")).thenReturn(Timestamp.valueOf("2023-01-01 10:00:00"));
-
-        // Only stub the queries that are actually called
         lenient().when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(mockPreparedStatement);
         lenient().when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(mockPreparedStatement);
         lenient().when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(mockPreparedStatement);
@@ -256,14 +196,9 @@ class AchievementDAOTest {
         lenient().when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         lenient().when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
         lenient().when(mockResultSet.getInt(1)).thenReturn(5, 1, 0, 0, 0);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.checkAndAwardAchievements(1);
-
-            // Verify
             assertTrue(result.isEmpty());
             verify(mockPreparedStatement, never()).executeUpdate();
         }
@@ -271,11 +206,9 @@ class AchievementDAOTest {
 
     @Test
     void testCheckAndAwardAchievements_NotQualified() throws SQLException {
-        // Setup for getAllAchievementsWithProgress
         when(mockConnection.prepareStatement(contains("SELECT a.id, a.name"))).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, false);
-        
         when(mockResultSet.getInt("id")).thenReturn(1);
         when(mockResultSet.getString("name")).thenReturn("Amateur Author");
         when(mockResultSet.getString("description")).thenReturn("Create your first quiz");
@@ -283,10 +216,8 @@ class AchievementDAOTest {
         when(mockResultSet.getInt("quizzes_taken_required")).thenReturn(0);
         when(mockResultSet.getInt("quizzes_created_required")).thenReturn(1);
         when(mockResultSet.getInt("perfect_scores_required")).thenReturn(0);
-        when(mockResultSet.getBoolean("is_earned")).thenReturn(false); // Not earned yet
+        when(mockResultSet.getBoolean("is_earned")).thenReturn(false);
         when(mockResultSet.getTimestamp("earned_at")).thenReturn(null);
-
-        // Only stub the queries that are actually called
         lenient().when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(mockPreparedStatement);
         lenient().when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(mockPreparedStatement);
         lenient().when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(mockPreparedStatement);
@@ -295,59 +226,40 @@ class AchievementDAOTest {
         lenient().when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         lenient().when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
         lenient().when(mockResultSet.getInt(1)).thenReturn(5, 0, 0, 0, 0);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.checkAndAwardAchievements(1);
-
-            // Verify
             assertTrue(result.isEmpty());
             verify(mockPreparedStatement, never()).executeUpdate();
         }
     }
 
-    // ========== getUserStats Tests ==========
-
     @Test
     void testGetUserStats_Success() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("MAX(s2.score)"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("is_practice_mode = TRUE"))).thenReturn(mockPreparedStatement);
-        
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
-        when(mockResultSet.getInt(1)).thenReturn(15, 3, 2, 1, 1); // quizzes_taken=15, quizzes_created=3, perfect_scores=2, has_highest_score=1, has_practice=1
-
-        // Execute
+        when(mockResultSet.getInt(1)).thenReturn(15, 3, 2, 1, 1);
         Map<String, Object> result = achievementDAO.getUserStats(mockConnection, 1);
-
-        // Verify
         assertEquals(15, result.get("quizzes_taken"));
         assertEquals(3, result.get("quizzes_created"));
         assertEquals(2, result.get("perfect_scores"));
         assertTrue((Boolean) result.get("has_highest_score"));
         assertTrue((Boolean) result.get("has_taken_practice_quiz"));
-        
         verify(mockPreparedStatement, times(5)).setInt(1, 1);
     }
 
     @Test
     void testGetUserStats_ZeroStats() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
         when(mockResultSet.getInt(1)).thenReturn(0, 0, 0, 0, 0);
-
-        // Execute
         Map<String, Object> result = achievementDAO.getUserStats(mockConnection, 1);
-
-        // Verify
         assertEquals(0, result.get("quizzes_taken"));
         assertEquals(0, result.get("quizzes_created"));
         assertEquals(0, result.get("perfect_scores"));
@@ -355,36 +267,26 @@ class AchievementDAOTest {
         assertFalse((Boolean) result.get("has_taken_practice_quiz"));
     }
 
-    // ========== getAchievementProgress Tests ==========
-
     @Test
     void testGetAchievementProgress_Success() throws SQLException {
-        // Setup for getUserStats
         when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("MAX(s2.score)"))).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(contains("is_practice_mode = TRUE"))).thenReturn(mockPreparedStatement);
-        
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
-        when(mockResultSet.getInt(1)).thenReturn(15, 3, 2, 1, 1); // quizzes_taken=15, quizzes_created=3, perfect_scores=2, has_highest_score=1, has_practice=1
-
+        when(mockResultSet.getInt(1)).thenReturn(15, 3, 2, 1, 1);
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             Map<String, Object> result = achievementDAO.getAchievementProgress(1);
-
-            // Verify
-            assertEquals(100.0, result.get("amateur_author_progress")); // 3 quizzes created >= 1
-            assertEquals(60.0, result.get("prolific_author_progress")); // 3/5 * 100
-            assertEquals(30.0, result.get("prodigious_author_progress")); // 3/10 * 100
-            assertEquals(100.0, result.get("quiz_machine_progress")); // 15 quizzes taken >= 10
-            assertEquals(100.0, result.get("i_am_the_greatest_progress")); // has highest score
-            assertEquals(100.0, result.get("practice_makes_perfect_progress")); // has practice quiz
-            assertEquals(66.67, (Double) result.get("consistent_performer_progress"), 0.01); // 2/3 * 100
-            
+            assertEquals(100.0, result.get("amateur_author_progress"));
+            assertEquals(60.0, result.get("prolific_author_progress"));
+            assertEquals(30.0, result.get("prodigious_author_progress"));
+            assertEquals(100.0, result.get("quiz_machine_progress"));
+            assertEquals(100.0, result.get("i_am_the_greatest_progress"));
+            assertEquals(100.0, result.get("practice_makes_perfect_progress"));
+            assertEquals(66.67, (Double) result.get("consistent_performer_progress"), 0.01);
             assertEquals(15, result.get("quizzes_taken"));
             assertEquals(3, result.get("quizzes_created"));
             assertEquals(2, result.get("perfect_scores"));
@@ -395,19 +297,13 @@ class AchievementDAOTest {
 
     @Test
     void testGetAchievementProgress_ZeroProgress() throws SQLException {
-        // Setup for getUserStats
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
         when(mockResultSet.getInt(1)).thenReturn(0, 0, 0, 0, 0);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             Map<String, Object> result = achievementDAO.getAchievementProgress(1);
-
-            // Verify
             assertEquals(0.0, result.get("amateur_author_progress"));
             assertEquals(0.0, result.get("prolific_author_progress"));
             assertEquals(0.0, result.get("prodigious_author_progress"));
@@ -420,19 +316,13 @@ class AchievementDAOTest {
 
     @Test
     void testGetAchievementProgress_CappedProgress() throws SQLException {
-        // Setup for getUserStats - high values to test capping
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true, true, true, true, true, false);
-        when(mockResultSet.getInt(1)).thenReturn(50, 20, 10, 1, 1); // quizzes_taken=50, quizzes_created=20, perfect_scores=10, has_highest_score=1, has_practice=1
-
+        when(mockResultSet.getInt(1)).thenReturn(50, 20, 10, 1, 1);
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             Map<String, Object> result = achievementDAO.getAchievementProgress(1);
-
-            // Verify progress is capped at 100%
             assertEquals(100.0, result.get("amateur_author_progress"));
             assertEquals(100.0, result.get("prolific_author_progress"));
             assertEquals(100.0, result.get("prodigious_author_progress"));
@@ -443,18 +333,11 @@ class AchievementDAOTest {
         }
     }
 
-    // ========== createAchievementMessage Tests ==========
-
     @Test
     void testCreateAchievementMessage_Success() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(contains("INSERT INTO messages"))).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
-
-        // Execute
         achievementDAO.createAchievementMessage(mockConnection, 1, "Amateur Author");
-
-        // Verify
         verify(mockPreparedStatement).setInt(1, 1);
         verify(mockPreparedStatement).setString(2, "Congratulations! You've earned the 'Amateur Author' achievement!");
         verify(mockPreparedStatement).executeUpdate();
@@ -462,60 +345,41 @@ class AchievementDAOTest {
 
     @Test
     void testCreateAchievementMessage_SQLException() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
-
-        // Execute & Verify
         assertThrows(SQLException.class, () -> achievementDAO.createAchievementMessage(mockConnection, 1, "Amateur Author"));
     }
 
-    // ========== Edge Cases and Error Handling ==========
-
     @Test
     void testGetUserStats_SQLException() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
-
-        // Execute & Verify
         assertThrows(SQLException.class, () -> achievementDAO.getUserStats(mockConnection, 1));
     }
 
     @Test
     void testGetAchievementProgress_SQLException() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute & Verify
             assertThrows(SQLException.class, () -> achievementDAO.getAchievementProgress(1));
         }
     }
 
     @Test
     void testCheckAndAwardAchievements_SQLException() throws SQLException {
-        // Setup
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute & Verify
             assertThrows(SQLException.class, () -> achievementDAO.checkAndAwardAchievements(1));
         }
     }
 
     @Test
     void testAwardAchievement_AlreadyExists() throws SQLException {
-        // Separate mocks for achievements and user stats
         PreparedStatement achievementsStmt = mock(PreparedStatement.class);
         ResultSet achievementsRs = mock(ResultSet.class);
         PreparedStatement statsStmt = mock(PreparedStatement.class);
         ResultSet statsRs = mock(ResultSet.class);
         PreparedStatement insertStmt = mock(PreparedStatement.class);
-
-        // Achievements query
         when(mockConnection.prepareStatement(contains("SELECT a.id, a.name"))).thenReturn(achievementsStmt);
         when(achievementsStmt.executeQuery()).thenReturn(achievementsRs);
         when(achievementsRs.next()).thenReturn(true, false);
@@ -528,8 +392,6 @@ class AchievementDAOTest {
         when(achievementsRs.getInt("perfect_scores_required")).thenReturn(0);
         when(achievementsRs.getBoolean("is_earned")).thenReturn(false);
         when(achievementsRs.getTimestamp("earned_at")).thenReturn(null);
-
-        // User stats queries
         when(mockConnection.prepareStatement(contains("COUNT(DISTINCT quiz_id)"))).thenReturn(statsStmt);
         when(mockConnection.prepareStatement(contains("COUNT(*) FROM quizzes"))).thenReturn(statsStmt);
         when(mockConnection.prepareStatement(contains("percentage_score = 100"))).thenReturn(statsStmt);
@@ -538,28 +400,18 @@ class AchievementDAOTest {
         when(statsStmt.executeQuery()).thenReturn(statsRs);
         when(statsRs.next()).thenReturn(true, true, true, true, true, false);
         when(statsRs.getInt(1)).thenReturn(5, 1, 0, 0, 0);
-
-        // Insert for awarding achievement (already exists)
         when(mockConnection.prepareStatement(contains("INSERT IGNORE"))).thenReturn(insertStmt);
         when(insertStmt.executeUpdate()).thenReturn(0);
-
         try (MockedStatic<DBUtil> mockedDBUtil = mockStatic(DBUtil.class)) {
             mockedDBUtil.when(DBUtil::getConnection).thenReturn(mockConnection);
-
-            // Execute
             List<Map<String, Object>> result = achievementDAO.checkAndAwardAchievements(1);
-
-            // Verify
-            assertEquals(1, result.size()); // Should still return the achievement
+            assertEquals(1, result.size());
             verify(insertStmt, atLeastOnce()).executeUpdate();
         }
     }
 
-    // ========== Achievement Logic Tests ==========
-
     @Test
     void testShouldAwardAchievement_AllAchievements() throws SQLException {
-        // Test all achievement types with qualifying stats
         Map<String, Object> userStats = Map.of(
             "quizzes_taken", 15,
             "quizzes_created", 12,
@@ -567,8 +419,6 @@ class AchievementDAOTest {
             "has_highest_score", true,
             "has_taken_practice_quiz", true
         );
-
-        // Test each achievement type
         Map<String, Object> amateurAuthor = Map.of("name", "Amateur Author");
         Map<String, Object> prolificAuthor = Map.of("name", "Prolific Author");
         Map<String, Object> prodigiousAuthor = Map.of("name", "Prodigious Author");
@@ -576,12 +426,9 @@ class AchievementDAOTest {
         Map<String, Object> iAmTheGreatest = Map.of("name", "I am the Greatest");
         Map<String, Object> practiceMakesPerfect = Map.of("name", "Practice Makes Perfect");
         Map<String, Object> unknownAchievement = Map.of("name", "Unknown Achievement");
-
-        // Use reflection to test private method
         try {
             java.lang.reflect.Method shouldAwardMethod = AchievementDAO.class.getDeclaredMethod("shouldAwardAchievement", Map.class, Map.class);
             shouldAwardMethod.setAccessible(true);
-
             assertTrue((Boolean) shouldAwardMethod.invoke(achievementDAO, amateurAuthor, userStats));
             assertTrue((Boolean) shouldAwardMethod.invoke(achievementDAO, prolificAuthor, userStats));
             assertTrue((Boolean) shouldAwardMethod.invoke(achievementDAO, prodigiousAuthor, userStats));
@@ -596,7 +443,6 @@ class AchievementDAOTest {
 
     @Test
     void testShouldAwardAchievement_NotQualifying() throws SQLException {
-        // Test with stats that don't qualify for any achievements
         Map<String, Object> userStats = Map.of(
             "quizzes_taken", 5,
             "quizzes_created", 0,
@@ -604,18 +450,15 @@ class AchievementDAOTest {
             "has_highest_score", false,
             "has_taken_practice_quiz", false
         );
-
         Map<String, Object> amateurAuthor = Map.of("name", "Amateur Author");
         Map<String, Object> prolificAuthor = Map.of("name", "Prolific Author");
         Map<String, Object> prodigiousAuthor = Map.of("name", "Prodigious Author");
         Map<String, Object> quizMachine = Map.of("name", "Quiz Machine");
         Map<String, Object> iAmTheGreatest = Map.of("name", "I am the Greatest");
         Map<String, Object> practiceMakesPerfect = Map.of("name", "Practice Makes Perfect");
-
         try {
             java.lang.reflect.Method shouldAwardMethod = AchievementDAO.class.getDeclaredMethod("shouldAwardAchievement", Map.class, Map.class);
             shouldAwardMethod.setAccessible(true);
-
             assertFalse((Boolean) shouldAwardMethod.invoke(achievementDAO, amateurAuthor, userStats));
             assertFalse((Boolean) shouldAwardMethod.invoke(achievementDAO, prolificAuthor, userStats));
             assertFalse((Boolean) shouldAwardMethod.invoke(achievementDAO, prodigiousAuthor, userStats));

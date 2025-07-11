@@ -108,7 +108,7 @@ public class AdminServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         
-        // Pass messages from session to request
+
         if (session.getAttribute("message") != null) {
             request.setAttribute("message", session.getAttribute("message"));
             session.removeAttribute("message");
