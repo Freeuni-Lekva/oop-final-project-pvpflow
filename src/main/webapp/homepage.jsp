@@ -40,6 +40,8 @@
     int unreadMessageCount = 0;
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
+    // --- Achievements Messages Variable (moved to top-level scope) ---
+    List<Map<String, Object>> achievementMessages = new ArrayList<>();
     
     // --- Achievements Variables ---
     final int QUIZ_MASTER_GOAL = 50;
@@ -188,7 +190,31 @@
 
         // Fetch message data
         conversations = messageDAO.getConversations(userId);
-        unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
+        // Fetch achievement messages for the achievements popup
+        String achievementMsgSql = "SELECT subject, content, created_at, is_read FROM messages WHERE recipient_id = ? AND message_type = 'achievement' ORDER BY created_at DESC";
+        try (PreparedStatement ps = conn.prepareStatement(achievementMsgSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> msg = new HashMap<>();
+                    msg.put("subject", rs.getString("subject"));
+                    msg.put("content", rs.getString("content"));
+                    msg.put("created_at", rs.getTimestamp("created_at"));
+                    msg.put("is_read", rs.getBoolean("is_read"));
+                    achievementMessages.add(msg);
+                }
+            }
+        }
+        // Only count unread general/challenge messages for the badge
+        String unreadMsgSql = "SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = FALSE AND message_type IN ('general', 'challenge')";
+        try (PreparedStatement ps = conn.prepareStatement(unreadMsgSql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    unreadMessageCount = rs.getInt(1);
+                }
+            }
+        }
         
         // --- Achievements Data Calculation ---
         String perfectScoreSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
@@ -559,6 +585,22 @@
                     <div class="progress-bar" data-progress="<%= practiceMakesPerfectProgress %>"></div>
                 </div>
             </div>
+        </div>
+        <div style="margin-top: 2.5rem;">
+            <h4 style="color:#00eaff; margin-bottom:1rem;">Achievement Notifications</h4>
+            <% if (!achievementMessages.isEmpty()) { %>
+                <div style="max-height: 200px; overflow-y: auto;">
+                <% for (Map<String, Object> msg : achievementMessages) { %>
+                    <div style="background:#23235b; border-radius:8px; margin-bottom:1rem; padding:1rem; border-left:4px solid #10b981;">
+                        <div style="font-weight:600; color:#10b981; margin-bottom:0.3rem;"><%= msg.get("subject") %></div>
+                        <div style="color:#e0e7ff; margin-bottom:0.3rem;"><%= msg.get("content") %></div>
+                        <div style="font-size:0.85rem; color:#a5b4fc;">Received: <%= msg.get("created_at") %></div>
+                    </div>
+                <% } %>
+                </div>
+            <% } else { %>
+                <div class="empty-message">No achievement notifications yet.</div>
+            <% } %>
         </div>
     </div>
 </div>
