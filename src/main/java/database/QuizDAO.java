@@ -9,6 +9,10 @@ import java.util.Map;
 
 import java.util.*;
 
+import beans.Quiz;
+import beans.Question;
+import beans.Answer;
+
 
 public class QuizDAO {
     
@@ -163,18 +167,18 @@ public class QuizDAO {
         }
     }
 
-    public static List<Map<String, Object>> getQuizzesByCreatorId(int creatorId) throws SQLException {
-        List<Map<String, Object>> quizzes = new ArrayList<>();
+    public List<Quiz> getQuizzesByCreatorId(int creatorId) throws SQLException {
+        List<Quiz> quizzes = new ArrayList<>();
         String sql = "SELECT id, title, created_at FROM quizzes WHERE creator_id = ? ORDER BY created_at DESC";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, creatorId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> quiz = new HashMap<>();
-                    quiz.put("id", rs.getInt("id"));
-                    quiz.put("title", rs.getString("title"));
-                    quiz.put("created_at", rs.getTimestamp("created_at"));
+                    Quiz quiz = new Quiz();
+                    quiz.setId(rs.getInt("id"));
+                    quiz.setTitle(rs.getString("title"));
+                    quiz.setCreatedAt(rs.getTimestamp("created_at"));
                     quizzes.add(quiz);
                 }
             }
@@ -182,7 +186,7 @@ public class QuizDAO {
         return quizzes;
     }
 
-    public static List<Map<String, Object>> getQuizHistoryByUserId(int userId) throws SQLException {
+    public List<Map<String, Object>> getQuizHistoryByUserId(int userId) throws SQLException {
         List<Map<String, Object>> history = new ArrayList<>();
         String sql = "SELECT q.title, qs.percentage_score, qs.completed_at " +
                      "FROM quiz_submissions qs " +
@@ -208,25 +212,29 @@ public class QuizDAO {
     /**
      * Retrieves a complete quiz, including its questions and answers.
      */
-    public Map<String, Object> getQuizById(int quizId) throws SQLException {
-        Map<String, Object> quiz = null;
+    public Quiz getQuizById(int quizId) throws SQLException {
+        Quiz quiz = null;
         String quizSql = "SELECT * FROM quizzes WHERE id = ?";
-        
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement quizStmt = conn.prepareStatement(quizSql)) {
-            
             quizStmt.setInt(1, quizId);
             try (ResultSet quizRs = quizStmt.executeQuery()) {
                 if (quizRs.next()) {
-                    quiz = new HashMap<>();
-                    quiz.put("id", quizRs.getInt("id"));
-                    quiz.put("title", quizRs.getString("title"));
-                    quiz.put("description", quizRs.getString("description"));
-                    quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
-                    // Add other quiz properties if needed
-                    
-                    List<Map<String, Object>> questions = getQuestionsForQuiz(conn, quizId);
-                    quiz.put("questions", questions);
+                    quiz = new Quiz();
+                    quiz.setId(quizRs.getInt("id"));
+                    quiz.setCreatorId(quizRs.getInt("creator_id"));
+                    quiz.setTitle(quizRs.getString("title"));
+                    quiz.setDescription(quizRs.getString("description"));
+                    quiz.setQuestionCount(quizRs.getInt("question_count"));
+                    quiz.setRandomized(quizRs.getBoolean("is_randomized"));
+                    quiz.setOnePage(quizRs.getBoolean("is_one_page"));
+                    quiz.setImmediateCorrection(quizRs.getBoolean("immediate_correction"));
+                    quiz.setPracticeModeEnabled(quizRs.getBoolean("practice_mode_enabled"));
+                    quiz.setCreatedAt(quizRs.getTimestamp("created_at"));
+                    quiz.setUpdatedAt(quizRs.getTimestamp("updated_at"));
+                    // Set questions
+                    List<Question> questions = getQuestionsForQuiz(conn, quizId);
+                    quiz.setQuestions(questions);
                 }
             }
         }
@@ -236,10 +244,8 @@ public class QuizDAO {
     /**
      * Retrieves all questions for a given quiz, including their answers.
      */
-    private List<Map<String, Object>> getQuestionsForQuiz(Connection conn, int quizId) throws SQLException {
-        List<Map<String, Object>> questions = new ArrayList<>();
-        
-        // Check if the quiz should be randomized
+    private List<Question> getQuestionsForQuiz(Connection conn, int quizId) throws SQLException {
+        List<Question> questions = new ArrayList<>();
         PreparedStatement checkRandomStmt = conn.prepareStatement("SELECT is_randomized FROM quizzes WHERE id = ?");
         checkRandomStmt.setInt(1, quizId);
         ResultSet rsRandom = checkRandomStmt.executeQuery();
@@ -247,22 +253,23 @@ public class QuizDAO {
         if (rsRandom.next()) {
             isRandomized = rsRandom.getBoolean("is_randomized");
         }
-
         String questionsSql = "SELECT * FROM questions WHERE quiz_id = ? ORDER BY " + (isRandomized ? "RAND()" : "question_order");
-        
         try (PreparedStatement questionsStmt = conn.prepareStatement(questionsSql)) {
             questionsStmt.setInt(1, quizId);
             try (ResultSet questionsRs = questionsStmt.executeQuery()) {
                 while (questionsRs.next()) {
-                    Map<String, Object> question = new HashMap<>();
+                    Question question = new Question();
                     int questionId = questionsRs.getInt("id");
-                    question.put("id", questionId);
-                    question.put("question_text", questionsRs.getString("question_text"));
-                    question.put("question_type", questionsRs.getString("question_type"));
-                    question.put("image_url", questionsRs.getString("image_url"));
-                    
-                    List<Map<String, Object>> answers = getAnswersForQuestion(conn, questionId);
-                    question.put("answers", answers);
+                    question.setId(questionId);
+                    question.setQuizId(quizId);
+                    question.setQuestionType(questionsRs.getString("question_type"));
+                    question.setQuestionText(questionsRs.getString("question_text"));
+                    question.setImageUrl(questionsRs.getString("image_url"));
+                    question.setQuestionOrder(questionsRs.getInt("question_order"));
+                    question.setOrdered(questionsRs.getBoolean("is_ordered"));
+                    // Set answers
+                    List<Answer> answers = getAnswersForQuestion(conn, questionId);
+                    question.setAnswers(answers);
                     questions.add(question);
                 }
             }
@@ -273,18 +280,19 @@ public class QuizDAO {
     /**
      * Retrieves all answers for a given question.
      */
-    private List<Map<String, Object>> getAnswersForQuestion(Connection conn, int questionId) throws SQLException {
-        List<Map<String, Object>> answers = new ArrayList<>();
+    private List<Answer> getAnswersForQuestion(Connection conn, int questionId) throws SQLException {
+        List<Answer> answers = new ArrayList<>();
         String answersSql = "SELECT * FROM answers WHERE question_id = ? ORDER BY answer_order";
-        
         try (PreparedStatement answersStmt = conn.prepareStatement(answersSql)) {
             answersStmt.setInt(1, questionId);
             try (ResultSet answersRs = answersStmt.executeQuery()) {
                 while (answersRs.next()) {
-                    Map<String, Object> answer = new HashMap<>();
-                    answer.put("id", answersRs.getInt("id"));
-                    answer.put("answer_text", answersRs.getString("answer_text"));
-                    answer.put("is_correct", answersRs.getBoolean("is_correct"));
+                    Answer answer = new Answer();
+                    answer.setId(answersRs.getInt("id"));
+                    answer.setQuestionId(questionId);
+                    answer.setAnswerText(answersRs.getString("answer_text"));
+                    answer.setCorrect(answersRs.getBoolean("is_correct"));
+                    answer.setAnswerOrder(answersRs.getInt("answer_order"));
                     answers.add(answer);
                 }
             }
@@ -494,8 +502,8 @@ public class QuizDAO {
     /**
      * Gets all quizzes for debugging purposes
      */
-    public static List<Map<String, Object>> getAllQuizzes() throws SQLException {
-        List<Map<String, Object>> quizzes = new ArrayList<>();
+    public static List<Quiz> getAllQuizzes() throws SQLException {
+        List<Quiz> quizzes = new ArrayList<>();
         String sql = "SELECT q.id, q.title, q.description, q.question_count, q.created_at, u.username as creator_name " +
                     "FROM quizzes q " +
                     "JOIN users u ON q.creator_id = u.id " +
@@ -506,13 +514,13 @@ public class QuizDAO {
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                Map<String, Object> quiz = new HashMap<>();
-                quiz.put("id", rs.getInt("id"));
-                quiz.put("title", rs.getString("title"));
-                quiz.put("description", rs.getString("description"));
-                quiz.put("question_count", rs.getInt("question_count"));
-                quiz.put("created_at", rs.getTimestamp("created_at"));
-                quiz.put("creator_name", rs.getString("creator_name"));
+                Quiz quiz = new Quiz();
+                quiz.setId(rs.getInt("id"));
+                quiz.setTitle(rs.getString("title"));
+                quiz.setDescription(rs.getString("description"));
+                quiz.setQuestionCount(rs.getInt("question_count"));
+                quiz.setCreatedAt(rs.getTimestamp("created_at"));
+                quiz.setCreatorName(rs.getString("creator_name"));
                 quizzes.add(quiz);
             }
         }
@@ -541,22 +549,20 @@ public class QuizDAO {
     /**
      * Gets all quizzes with attempt count for each
      */
-    public static List<Map<String, Object>> getAllQuizzesWithStats() throws SQLException {
-        List<Map<String, Object>> quizzes = getAllQuizzes();
+    public static List<Quiz> getAllQuizzesWithStats() throws SQLException {
+        List<Quiz> quizzes = getAllQuizzes();
         String attemptSql = "SELECT COUNT(*) FROM quiz_submissions WHERE quiz_id = ? AND completed_at IS NOT NULL";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(attemptSql)) {
-            for (Map<String, Object> quiz : quizzes) {
-                stmt.setInt(1, (Integer) quiz.get("id"));
+            for (Quiz quiz : quizzes) {
+                stmt.setInt(1, quiz.getId());
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        quiz.put("attempts", rs.getInt(1));
+                        quiz.setAttempts(rs.getInt(1));
                     } else {
-                        quiz.put("attempts", 0);
+                        quiz.setAttempts(0);
                     }
                 }
-                // Rename creator_name to creator for consistency with JSP
-                quiz.put("creator", quiz.get("creator_name"));
             }
         }
         return quizzes;

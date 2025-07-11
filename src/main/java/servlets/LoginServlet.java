@@ -3,6 +3,7 @@ package servlets;
 import database.DBUtil;
 import database.PasswordUtil;
 import database.UserDAO;
+import beans.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,7 +16,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 @WebServlet("/LoginServlet")
 public class LoginServlet extends HttpServlet {
@@ -25,14 +25,14 @@ public class LoginServlet extends HttpServlet {
         String password = request.getParameter("password");
         UserDAO userDAO = new UserDAO();
         try {
-            Map<String, Object> user = userDAO.authenticateUser(usernameOrEmail, password);
+            User user = userDAO.authenticateUser(usernameOrEmail, password);
             if (user != null) {
                 HttpSession session = request.getSession();
-                session.setAttribute("userId", user.get("id"));
-                session.setAttribute("user", user.get("username"));
-                session.setAttribute("email", user.get("email"));
+                session.setAttribute("userId", user.getId());
+                session.setAttribute("user", user.getUsername());
+                session.setAttribute("email", user.getEmail());
                 // Update last_login timestamp
-                userDAO.updateLastLogin((Integer) user.get("id"));
+                userDAO.updateLastLogin(user.getId());
                 response.sendRedirect("homepage.jsp");
             } else {
                 response.sendRedirect("login.jsp");

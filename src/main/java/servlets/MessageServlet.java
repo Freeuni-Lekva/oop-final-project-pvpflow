@@ -2,6 +2,7 @@ package servlets;
 
 import database.MessageDAO;
 import database.QuizDAO;
+import beans.Quiz;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

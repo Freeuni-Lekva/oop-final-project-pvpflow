@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
+<%@ page import="beans.Friend" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -14,7 +15,7 @@
     // Fetch notification data
     FriendDAO friendDAO = new FriendDAO();
     MessageDAO messageDAO = new MessageDAO();
-    List<Map<String, Object>> pendingRequests = new ArrayList<>();
+    List<Friend> pendingRequests = new ArrayList<>();
     int unreadMessageCount = 0;
     
     try {

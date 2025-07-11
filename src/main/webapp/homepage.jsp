@@ -8,6 +8,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.QuizDAO" %>
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.AdminDAO, database.QuizDAO" %>
+<%@ page import="beans.Friend, beans.User, beans.Message, beans.Quiz" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -30,13 +31,13 @@
     
     // DAO for fetching friend-related data
     FriendDAO friendDAO = new FriendDAO();
-    List<Map<String, Object>> friends = new ArrayList<>();
-    List<Map<String, Object>> pendingRequests = new ArrayList<>();
-    List<Map<String, Object>> potentialFriends = new ArrayList<>();
+    List<Friend> friends = new ArrayList<>();
+    List<Friend> pendingRequests = new ArrayList<>();
+    List<User> potentialFriends = new ArrayList<>();
 
     // DAO for fetching message data
     MessageDAO messageDAO = new MessageDAO();
-    List<Map<String, Object>> conversations = new ArrayList<>();
+    List<Message> conversations = new ArrayList<>();
     int unreadMessageCount = 0;
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
@@ -271,14 +272,14 @@
 
         // Debug: Show all quizzes in database
         try {
-            List<Map<String, Object>> allQuizzesDebug = QuizDAO.getAllQuizzes();
+            List<Quiz> allQuizzesDebug = QuizDAO.getAllQuizzes();
             System.out.println("Homepage: === ALL QUIZZES IN DATABASE ===");
             System.out.println("Homepage: Total quizzes in database: " + allQuizzesDebug.size());
-            for (Map<String, Object> quiz : allQuizzesDebug) {
-                System.out.println("Homepage: Quiz - ID: " + quiz.get("id") + 
-                                 ", Title: " + quiz.get("title") + 
-                                 ", Creator: " + quiz.get("creator_name") + 
-                                 ", Created: " + quiz.get("created_at"));
+            for (Quiz quiz : allQuizzesDebug) {
+                System.out.println("Homepage: Quiz - ID: " + quiz.getId() + 
+                                 ", Title: " + quiz.getTitle() + 
+                                 ", Creator: " + quiz.getCreatorName() + 
+                                 ", Created: " + quiz.getCreatedAt());
             }
         } catch (Exception e) {
             System.err.println("Homepage: Error getting all quizzes for debug: " + e.getMessage());
@@ -611,18 +612,18 @@
         <button class="close-btn" onclick="closePopup('requestsPopup')">&times;</button>
         <h3>Friend Requests</h3>
         <% if (!pendingRequests.isEmpty()) { %>
-            <% for (Map<String, Object> friendReq : pendingRequests) { %>
+            <% for (Friend friendReq : pendingRequests) { %>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
-                    <span style="font-weight: 600;"><%= friendReq.get("username") %></span>
+                    <span style="font-weight: 600;"><%= friendReq.getUsername() %></span>
                     <div>
-                        <form action="FriendRequestServlet" method="post" style="display: inline;">
-                            <input type="hidden" name="action" value="accept">
-                            <input type="hidden" name="requestId" value="<%= friendReq.get("request_id") %>">
-                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Accept</button>
-                        </form>
-                        <form action="FriendRequestServlet" method="post" style="display: inline;">
-                            <input type="hidden" name="action" value="reject">
-                            <input type="hidden" name="requestId" value="<%= friendReq.get("request_id") %>">
+                                                 <form action="FriendRequestServlet" method="post" style="display: inline;">
+                             <input type="hidden" name="action" value="accept">
+                             <input type="hidden" name="requestId" value="<%= friendReq.getId() %>">
+                             <button type="submit" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Accept</button>
+                         </form>
+                         <form action="FriendRequestServlet" method="post" style="display: inline;">
+                             <input type="hidden" name="action" value="reject">
+                             <input type="hidden" name="requestId" value="<%= friendReq.getId() %>">
                             <button type="submit" style="background: #e11d48; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Reject</button>
                         </form>
                     </div>
@@ -641,12 +642,12 @@
         <h3>Your Friends</h3>
         <div style="margin-top: 1rem;">
             <% if (!friends.isEmpty()) { %>
-                <% for (Map<String, Object> friend : friends) { %>
+                <% for (Friend friend : friends) { %>
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
-                        <span style="font-weight: 600;"><%= friend.get("username") %></span>
+                        <span style="font-weight: 600;"><%= friend.getUsername() %></span>
                         <form action="FriendRequestServlet" method="post" style="display: inline; margin: 0;">
                             <input type="hidden" name="action" value="remove">
-                            <input type="hidden" name="friendId" value="<%= friend.get("id") %>">
+                            <input type="hidden" name="friendId" value="<%= friend.getId() %>">
                             <button type="submit" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Remove</button>
                         </form>
                     </div>
@@ -658,12 +659,12 @@
         <h3 style="margin-top: 2rem;">Find New Friends</h3>
         <div style="margin-top: 1rem;">
         <% if (!potentialFriends.isEmpty()) { %>
-            <% for (Map<String, Object> pFriend : potentialFriends) { %>
+            <% for (User pFriend : potentialFriends) { %>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid #3a3a5a;">
-                    <span style="font-weight: 600;"><%= pFriend.get("username") %></span>
+                    <span style="font-weight: 600;"><%= pFriend.getUsername() %></span>
                     <form action="FriendRequestServlet" method="post" style="display: inline;">
                         <input type="hidden" name="action" value="send">
-                        <input type="hidden" name="requesteeId" value="<%= pFriend.get("id") %>">
+                        <input type="hidden" name="requesteeId" value="<%= pFriend.getId() %>">
                         <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Add Friend</button>
                     </form>
                 </div>
@@ -682,13 +683,13 @@
         <h3>Recent Messages</h3>
         <div style="margin-top: 1rem; max-height: 300px; overflow-y: auto;">
             <% if (!conversations.isEmpty()) { %>
-                <% for (Map<String, Object> convo : conversations) { %>
+                <% for (Message convo : conversations) { %>
                     <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.get("friend_username") %></div>
+                                                 <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.getRecipientUsername() %></div>
                         <div style="font-size: 0.9rem; color: #a5b4fc;">
                         <% 
-                            String lastMessage = (String) convo.get("last_message");
-                            if (lastMessage != null && lastMessage.contains("Take the quiz here: quiz_summary.jsp?id=")) {
+                            String lastMessage = convo.getContent();
+                            if (lastMessage.contains("Take the quiz here: quiz_summary.jsp?id=")) {
                                 int idx = lastMessage.indexOf("quiz_summary.jsp?id=");
                                 String before = lastMessage.substring(0, idx);
                                 String quizPart = lastMessage.substring(idx);
@@ -737,8 +738,8 @@
             <div style="margin-bottom: 1rem;">
                 <label for="receiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To:</label>
                 <select name="receiverId" id="receiverId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
-                    <% for (Map<String, Object> friend : friends) { %>
-                        <option value="<%= friend.get("id") %>"><%= friend.get("username") %></option>
+                    <% for (Friend friend : friends) { %>
+                        <option value="<%= friend.getId() %>"><%= friend.getUsername() %></option>
                     <% } %>
                 </select>
             </div>
@@ -755,8 +756,8 @@
             <div style="margin-bottom: 1rem;">
                 <label for="challengeReceiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Challenge:</label>
                 <select name="receiverId" id="challengeReceiverId" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #3a3a5a; background: #1a1a3a; color: white;">
-                    <% for (Map<String, Object> friend : friends) { %>
-                        <option value="<%= friend.get("id") %>"><%= friend.get("username") %></option>
+                    <% for (Friend friend : friends) { %>
+                        <option value="<%= friend.getId() %>"><%= friend.getUsername() %></option>
                     <% } %>
                 </select>
             </div>

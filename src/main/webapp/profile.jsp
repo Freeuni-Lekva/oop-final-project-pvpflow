@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*" %>
+<%@ page import="beans.User, beans.Quiz" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,9 +19,9 @@
 <main class="main-content">
     
     <%
-        Map<String, Object> user = (Map<String, Object>) request.getAttribute("user");
-        String username = (user != null) ? (String) user.get("username") : "User";
-        String email = (user != null) ? (String) user.get("email") : "no-email@provided.com";
+        User user = (User) request.getAttribute("user");
+        String username = (user != null) ? user.getUsername() : "User";
+        String email = (user != null) ? user.getEmail() : "no-email@provided.com";
         String avatarLetter = (username != null && !username.isEmpty()) ? username.substring(0, 1).toUpperCase() : "U";
     %>
 
@@ -35,19 +36,19 @@
     <section class="profile-section">
         <h2>Quizzes Created</h2>
         <%
-            List<Map<String, Object>> createdQuizzes = (List<Map<String, Object>>) request.getAttribute("createdQuizzes");
+            List<Quiz> createdQuizzes = (List<Quiz>) request.getAttribute("createdQuizzes");
             if (createdQuizzes != null && !createdQuizzes.isEmpty()) {
         %>
         <ul class="item-list">
             <% Set<String> displayedTitles = new HashSet<>();
-               for (Map<String, Object> quiz : createdQuizzes) {
-                   String title = (String) quiz.get("title");
+               for (Quiz quiz : createdQuizzes) {
+                   String title = quiz.getTitle();
                    if (displayedTitles.contains(title)) continue;
                    displayedTitles.add(title);
             %>
                 <li class="list-item">
                     <span><%= title %></span>
-                    <span>Created on: <%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(quiz.get("created_at")) %></span>
+                    <span>Created on: <%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(quiz.getCreatedAt()) %></span>
                 </li>
             <% } %>
         </ul>
@@ -82,12 +83,12 @@
     <section class="profile-section">
         <h2>Friends</h2>
         <%
-            List<Map<String, Object>> friends = (List<Map<String, Object>>) request.getAttribute("friends");
+            List<beans.Friend> friends = (List<beans.Friend>) request.getAttribute("friends");
             if (friends != null && !friends.isEmpty()) {
         %>
         <ul class="item-list">
-            <% for (Map<String, Object> friend : friends) { %>
-                <li class="list-item"><%= friend.get("username") %></li>
+            <% for (beans.Friend friend : friends) { %>
+                <li class="list-item"><%= friend.getUsername() %></li>
             <% } %>
         </ul>
         <% } else { %>

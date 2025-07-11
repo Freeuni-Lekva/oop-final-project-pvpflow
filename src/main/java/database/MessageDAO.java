@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import beans.Message;
 
 public class MessageDAO {
 
@@ -41,8 +42,8 @@ public class MessageDAO {
     /**
      * Gets a list of conversations for a user, showing only the last message for each.
      */
-    public List<Map<String, Object>> getConversations(int userId) throws SQLException {
-        List<Map<String, Object>> conversations = new ArrayList<>();
+    public List<Message> getConversations(int userId) throws SQLException {
+        List<Message> conversations = new ArrayList<>();
         // This query finds the most recent message for each person the user has communicated with.
         // It partitions messages by the pair of users involved, orders them by time,
         // and picks the top one for each pair.
@@ -59,11 +60,7 @@ public class MessageDAO {
                      "    WHERE m.sender_id = ? OR m.recipient_id = ? " +
                      ") " +
                      "SELECT " +
-                     "    lm.content, " +
-                     "    lm.created_at, " +
-                     "    lm.is_read, " +
-                     "    u.id as friend_id, " +
-                     "    u.username as friend_username " +
+                     "    lm.id, lm.content, lm.created_at, lm.is_read, lm.sender_id, lm.recipient_id, u.username as friend_username " +
                      "FROM LatestMessages lm " +
                      "JOIN users u ON u.id = IF(lm.sender_id = ?, lm.recipient_id, lm.sender_id) " +
                      "WHERE lm.rn = 1 " +
@@ -76,13 +73,15 @@ public class MessageDAO {
             stmt.setInt(3, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> convo = new HashMap<>();
-                    convo.put("friend_id", rs.getInt("friend_id"));
-                    convo.put("friend_username", rs.getString("friend_username"));
-                    convo.put("last_message", rs.getString("content"));
-                    convo.put("sent_at", rs.getTimestamp("created_at"));
-                    convo.put("is_read", rs.getBoolean("is_read"));
-                    conversations.add(convo);
+                    Message message = new Message();
+                    message.setId(rs.getInt("id"));
+                    message.setContent(rs.getString("content"));
+                    message.setCreatedAt(rs.getTimestamp("created_at"));
+                    message.setRead(rs.getBoolean("is_read"));
+                    message.setSenderId(rs.getInt("sender_id"));
+                    message.setRecipientId(rs.getInt("recipient_id"));
+                    message.setRecipientUsername(rs.getString("friend_username"));
+                    conversations.add(message);
                 }
             }
         }

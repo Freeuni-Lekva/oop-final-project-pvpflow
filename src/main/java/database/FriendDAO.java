@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import beans.Friend;
+import beans.User;
 
 public class FriendDAO {
 
@@ -107,8 +109,8 @@ public class FriendDAO {
      * Gets a list of all users, excluding the current user and users with pending/accepted requests.
      * Users with 'rejected' or 'blocked' status can appear as potential friends (so requests can be sent again after rejection).
      */
-    public List<Map<String, Object>> findPotentialFriends(int currentUserId) throws SQLException {
-        List<Map<String, Object>> users = new ArrayList<>();
+    public List<User> findPotentialFriends(int currentUserId) throws SQLException {
+        List<User> users = new ArrayList<>();
         String sql = "SELECT id, username FROM users u " +
                      "WHERE u.id != ? " +
                      "AND NOT EXISTS (SELECT 1 FROM friends f WHERE " +
@@ -123,9 +125,9 @@ public class FriendDAO {
             stmt.setInt(3, currentUserId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> user = new HashMap<>();
-                    user.put("id", rs.getInt("id"));
-                    user.put("username", rs.getString("username"));
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setUsername(rs.getString("username"));
                     users.add(user);
                 }
             }
@@ -136,18 +138,24 @@ public class FriendDAO {
     /**
      * Gets all incoming friend requests for a user.
      */
-    public List<Map<String, Object>> getPendingRequests(int userId) throws SQLException {
-        List<Map<String, Object>> requests = new ArrayList<>();
-        String sql = "SELECT f.id, u.username FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'pending'";
+    public List<Friend> getPendingRequests(int userId) throws SQLException {
+        List<Friend> requests = new ArrayList<>();
+        String sql = "SELECT f.id, f.user_id, f.friend_id, f.status, f.created_at, f.updated_at, u.username as username " +
+                     "FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> request = new HashMap<>();
-                    request.put("request_id", rs.getInt("id"));
-                    request.put("username", rs.getString("username"));
-                    requests.add(request);
+                    Friend friend = new Friend();
+                    friend.setId(rs.getInt("id"));
+                    friend.setUserId(rs.getInt("user_id"));
+                    friend.setFriendId(rs.getInt("friend_id"));
+                    friend.setStatus(rs.getString("status"));
+                    friend.setCreatedAt(rs.getTimestamp("created_at"));
+                    friend.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    friend.setUsername(rs.getString("username"));
+                    requests.add(friend);
                 }
             }
         }
@@ -192,17 +200,23 @@ public class FriendDAO {
     /**
      * Gets a list of friends for a user.
      */
-    public List<Map<String, Object>> getFriends(int userId) throws SQLException {
-        List<Map<String, Object>> friends = new ArrayList<>();
-        String sql = "SELECT u.id, u.username FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = 'accepted'";
+    public List<Friend> getFriends(int userId) throws SQLException {
+        List<Friend> friends = new ArrayList<>();
+        String sql = "SELECT f.id, f.user_id, f.friend_id, f.status, f.created_at, f.updated_at, u.username as friend_username " +
+                     "FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = 'accepted'";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> friend = new HashMap<>();
-                    friend.put("id", rs.getInt("id"));
-                    friend.put("username", rs.getString("username"));
+                    Friend friend = new Friend();
+                    friend.setId(rs.getInt("id"));
+                    friend.setUserId(rs.getInt("user_id"));
+                    friend.setFriendId(rs.getInt("friend_id"));
+                    friend.setStatus(rs.getString("status"));
+                    friend.setCreatedAt(rs.getTimestamp("created_at"));
+                    friend.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    friend.setFriendUsername(rs.getString("friend_username"));
                     friends.add(friend);
                 }
             }

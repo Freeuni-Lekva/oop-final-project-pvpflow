@@ -4,6 +4,9 @@ import database.AchievementDAO;
 import database.FriendDAO;
 import database.QuizDAO;
 import database.UserDAO;
+import beans.User;
+import beans.Friend;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -22,6 +25,7 @@ public class ProfileServlet extends HttpServlet {
     private final FriendDAO friendDAO = new FriendDAO();
     private final UserDAO userDAO = new UserDAO();
     private final AchievementDAO achievementDAO = new AchievementDAO();
+    private final QuizDAO quizDAO = new QuizDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -47,9 +51,9 @@ public class ProfileServlet extends HttpServlet {
             }
         }
 
-        List<Map<String, Object>> friends = new ArrayList<>();
-        Map<String, Object> user = null;
-        List<Map<String, Object>> createdQuizzes = new ArrayList<>();
+        List<Friend> friends = new ArrayList<>();
+        User user = null;
+        List<beans.Quiz> createdQuizzes = new ArrayList<>();
         List<Map<String, Object>> quizHistory = new ArrayList<>();
         List<Map<String, Object>> achievements = new ArrayList<>();
 
@@ -66,8 +70,8 @@ public class ProfileServlet extends HttpServlet {
                 achievements = achievementDAO.getAchievementsByUserId(targetUserId);
             }
             
-            createdQuizzes = QuizDAO.getQuizzesByCreatorId(targetUserId);
-            quizHistory = QuizDAO.getQuizHistoryByUserId(targetUserId);
+            createdQuizzes = quizDAO.getQuizzesByCreatorId(targetUserId);
+            quizHistory = quizDAO.getQuizHistoryByUserId(targetUserId);
         } catch (SQLException e) {
             throw new ServletException("Database error while fetching profile data", e);
         }

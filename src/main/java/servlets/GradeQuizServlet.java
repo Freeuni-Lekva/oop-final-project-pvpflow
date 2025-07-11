@@ -3,6 +3,9 @@ package servlets;
 import database.AchievementDAO;
 import database.DBUtil;
 import database.QuizDAO;
+import beans.Quiz;
+import beans.Question;
+import beans.Answer;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -60,14 +63,14 @@ public class GradeQuizServlet extends HttpServlet {
         try {
             int quizId = Integer.parseInt(request.getParameter("quizId"));
             QuizDAO quizDAO = new QuizDAO();
-            Map<String, Object> quiz = quizDAO.getQuizById(quizId);
+            Quiz quiz = quizDAO.getQuizById(quizId);
             
             if (quiz == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Quiz not found");
                 return;
             }
             
-            List<Map<String, Object>> questions = (List<Map<String, Object>>) quiz.get("questions");
+            List<Question> questions = quiz.getQuestions();
             if (questions == null || questions.isEmpty()) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Quiz has no questions");
                 return;
@@ -76,16 +79,16 @@ public class GradeQuizServlet extends HttpServlet {
             int score = 0;
             List<Map<String, Object>> userAnswersReview = new ArrayList<>();
 
-            for (Map<String, Object> question : questions) {
-                int questionId = (int) question.get("id");
-                String questionType = (String) question.get("question_type");
-                String questionText = (String) question.get("question_text");
-                List<Map<String, Object>> answers = (List<Map<String, Object>>) question.get("answers");
+            for (Question question : questions) {
+                int questionId = question.getId();
+                String questionType = question.getQuestionType();
+                String questionText = question.getQuestionText();
+                List<Answer> answers = question.getAnswers();
 
                 String userAnswerText = "";
                 String correctAnswerText = answers.stream()
-                        .filter(a -> (boolean) a.get("is_correct"))
-                        .map(a -> (String) a.get("answer_text"))
+                        .filter(Answer::isCorrect)
+                        .map(Answer::getAnswerText)
                         .collect(Collectors.joining(", "));
                 boolean isCorrect = false;
 
@@ -99,7 +102,7 @@ public class GradeQuizServlet extends HttpServlet {
                         result = gradeMultiChoiceMultiAnswer(request, questionId, answers);
                         break;
                     case "multi_answer":
-                        Boolean isOrdered = (question.containsKey("is_ordered") && question.get("is_ordered") != null) ? (Boolean) question.get("is_ordered") : false;
+                        Boolean isOrdered = question.isOrdered();
                         result = gradeMultiAnswer(request, questionId, answers, isOrdered);
                         break;
                     case "question_response":
@@ -139,7 +142,7 @@ public class GradeQuizServlet extends HttpServlet {
                     int submissionId = quizDAO.saveSubmission(conn, quizId, userId.intValue(), score, totalPossibleScore, percentage, isPractice, timeTaken);
                     for (int i = 0; i < userAnswersReview.size(); i++) {
                         Map<String, Object> reviewItem = userAnswersReview.get(i);
-                        quizDAO.saveSubmissionAnswer(conn, submissionId, (int) questions.get(i).get("id"), 
+                        quizDAO.saveSubmissionAnswer(conn, submissionId, questions.get(i).getId(), 
                                                    (String) reviewItem.get("userAnswerText"), 
                                                    (boolean) reviewItem.get("isCorrect"));
                     }
@@ -173,7 +176,7 @@ public class GradeQuizServlet extends HttpServlet {
             result.put("totalPossibleScore", totalPossibleScore);
             result.put("percentage", percentage);
             result.put("userAnswers", userAnswersReview);
-            result.put("quizTitle", quiz.get("title"));
+            result.put("quizTitle", quiz.getTitle());
             result.put("isPractice", isPractice);
 
             request.setAttribute("result", result);
@@ -188,17 +191,17 @@ public class GradeQuizServlet extends HttpServlet {
     }
 
     // New helper methods to return both isCorrect and userAnswerText
-    private GradingResult gradeMultipleChoice(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
+    private GradingResult gradeMultipleChoice(HttpServletRequest request, int questionId, List<Answer> answers) {
         String userAnswerIdStr = request.getParameter("q_" + questionId);
         String userAnswerText = "";
         boolean isCorrect = false;
         if (userAnswerIdStr != null && !userAnswerIdStr.trim().isEmpty()) {
             try {
                 int userAnswerId = Integer.parseInt(userAnswerIdStr);
-                for (Map<String, Object> answer : answers) {
-                    if ((int) answer.get("id") == userAnswerId) {
-                        userAnswerText = (String) answer.get("answer_text");
-                        isCorrect = (boolean) answer.get("is_correct");
+                for (Answer answer : answers) {
+                    if (answer.getId() == userAnswerId) {
+                        userAnswerText = answer.getAnswerText();
+                        isCorrect = answer.isCorrect();
                         break;
                     }
                 }
@@ -208,29 +211,31 @@ public class GradeQuizServlet extends HttpServlet {
         }
         return new GradingResult(isCorrect, userAnswerText);
     }
-    private GradingResult gradeMultiChoiceMultiAnswer(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
+    
+    private GradingResult gradeMultiChoiceMultiAnswer(HttpServletRequest request, int questionId, List<Answer> answers) {
         List<String> userAnswerIds = new ArrayList<>();
         List<String> userAnswerTexts = new ArrayList<>();
-        for (Map<String, Object> answer : answers) {
-            int answerId = (int) answer.get("id");
+        for (Answer answer : answers) {
+            int answerId = answer.getId();
             if (request.getParameter("q_" + questionId + "_a_" + answerId) != null) {
                 userAnswerIds.add(String.valueOf(answerId));
-                userAnswerTexts.add((String) answer.get("answer_text"));
+                userAnswerTexts.add(answer.getAnswerText());
             }
         }
         String userAnswerText = String.join(", ", userAnswerTexts);
         Set<String> correctAnswerIds = answers.stream()
-            .filter(a -> (boolean) a.get("is_correct"))
-            .map(a -> String.valueOf(a.get("id")))
+            .filter(Answer::isCorrect)
+            .map(a -> String.valueOf(a.getId()))
             .collect(Collectors.toSet());
         boolean isCorrect = new HashSet<>(userAnswerIds).equals(correctAnswerIds);
         return new GradingResult(isCorrect, userAnswerText);
     }
-    private GradingResult gradeMultiAnswer(HttpServletRequest request, int questionId, List<Map<String, Object>> answers, boolean isOrdered) {
+    
+    private GradingResult gradeMultiAnswer(HttpServletRequest request, int questionId, List<Answer> answers, boolean isOrdered) {
         List<String> userAnswers = new ArrayList<>();
         List<String> correctAnswers = answers.stream()
-            .filter(a -> (boolean) a.get("is_correct"))
-            .map(a -> ((String) a.get("answer_text")).trim())
+            .filter(Answer::isCorrect)
+            .map(a -> a.getAnswerText().trim())
             .collect(Collectors.toList());
         int correctCount = correctAnswers.size();
         for (int i = 0; i < correctCount; i++) {
@@ -251,20 +256,19 @@ public class GradeQuizServlet extends HttpServlet {
                     }
                 }
             } else {
-                List<String> userCopy = new ArrayList<>(userAnswers);
-                List<String> correctCopy = new ArrayList<>(correctAnswers);
-                Collections.sort(userCopy, String.CASE_INSENSITIVE_ORDER);
-                Collections.sort(correctCopy, String.CASE_INSENSITIVE_ORDER);
-                isCorrect = userCopy.equals(correctCopy);
+                // For unordered multi-answer, check if all correct answers are provided
+                Set<String> userAnswerSet = new HashSet<>(userAnswers);
+                Set<String> correctAnswerSet = new HashSet<>(correctAnswers);
+                isCorrect = userAnswerSet.equals(correctAnswerSet);
             }
         }
         return new GradingResult(isCorrect, userAnswerText);
     }
+    
     private GradingResult gradeTextResponse(HttpServletRequest request, int questionId, String correctAnswerText) {
-        String userAnswerText = request.getParameter("q_" + questionId + "_text");
-        String normalizedUser = normalize(userAnswerText);
-        String normalizedCorrect = normalize(correctAnswerText);
-        boolean isCorrect = !normalizedUser.isEmpty() && normalizedUser.equals(normalizedCorrect);
-        return new GradingResult(isCorrect, userAnswerText != null ? userAnswerText.trim() : "");
+        String userAnswer = request.getParameter("q_" + questionId);
+        String userAnswerText = userAnswer != null ? userAnswer.trim() : "";
+        boolean isCorrect = normalize(userAnswerText).equals(normalize(correctAnswerText));
+        return new GradingResult(isCorrect, userAnswerText);
     }
 } 

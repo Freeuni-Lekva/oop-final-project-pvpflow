@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.QuizDAO" %>
+<%@ page import="beans.Quiz" %>
 <%
     // Get user information from session
     String username = (String) session.getAttribute("user");
@@ -10,7 +11,7 @@
     }
     // Fetch all quizzes
     QuizDAO quizDAO = new QuizDAO();
-    List<Map<String, Object>> quizzes = quizDAO.getAllQuizzesWithStats(); // You may need to implement this method
+    List<Quiz> quizzes = quizDAO.getAllQuizzesWithStats(); // You may need to implement this method
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,12 +41,12 @@
                 </tr>
             </thead>
             <tbody>
-            <% for (Map<String, Object> quiz : quizzes) { %>
+            <% for (Quiz quiz : quizzes) { %>
                 <tr>
-                    <td><a class="quiz-link" href="take_quiz.jsp?id=<%= quiz.get("id") %>"><%= quiz.get("title") %></a></td>
-                    <td><%= quiz.get("creator") %></td>
-                    <td><%= quiz.get("created_at") %></td>
-                    <td><%= quiz.get("attempts") %></td>
+                    <td><a class="quiz-link" href="take_quiz.jsp?id=<%= quiz.getId() %>"><%= quiz.getTitle() %></a></td>
+                    <td><%= quiz.getCreatorName() %></td>
+                    <td><%= quiz.getCreatedAt() %></td>
+                    <td><%= quiz.getAttempts() %></td>
                 </tr>
             <% } %>
             </tbody>

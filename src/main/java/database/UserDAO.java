@@ -1,5 +1,6 @@
 package database;
 
+import beans.User;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 public class UserDAO {
 
-    public Map<String, Object> authenticateUser(String usernameOrEmail, String password) throws SQLException {
+    public User authenticateUser(String usernameOrEmail, String password) throws SQLException {
         String sql = "SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?";
         try (Connection conn = DBUtil.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -19,10 +20,10 @@ public class UserDAO {
                 if (rs.next()) {
                     String storedHash = rs.getString("password_hash");
                     if (PasswordUtil.checkPassword(password, storedHash)) {
-                        Map<String, Object> user = new HashMap<>();
-                        user.put("id", rs.getInt("id"));
-                        user.put("username", rs.getString("username"));
-                        user.put("email", rs.getString("email"));
+                        User user = new User();
+                        user.setId(rs.getInt("id"));
+                        user.setUsername(rs.getString("username"));
+                        user.setEmail(rs.getString("email"));
                         return user;
                     }
                 }
@@ -57,16 +58,17 @@ public class UserDAO {
     }
 
 
-    public Map<String, Object> getUserById(int userId) throws SQLException {
-        String sql = "SELECT username, email FROM users WHERE id = ?";
+    public User getUserById(int userId) throws SQLException {
+        String sql = "SELECT id, username, email FROM users WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    Map<String, Object> user = new HashMap<>();
-                    user.put("username", rs.getString("username"));
-                    user.put("email", rs.getString("email"));
+                    User user = new User();
+                    user.setId(userId);
+                    user.setUsername(rs.getString("username"));
+                    user.setEmail(rs.getString("email"));
                     return user;
                 }
             }
