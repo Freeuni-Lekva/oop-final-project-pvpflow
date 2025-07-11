@@ -1,6 +1,8 @@
 -- Resets the database by dropping all tables except for the 'users' table.
 -- WARNING: This will delete all existing quiz, announcement, and submission data.
 
+DROP DATABASE IF EXISTS quizapp;
+CREATE DATABASE quizapp;
 USE quizapp;
 
 -- Drop existing tables in the correct order to avoid foreign key constraint issues.
