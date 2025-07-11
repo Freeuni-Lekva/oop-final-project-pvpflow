@@ -102,8 +102,10 @@ public class GradeQuizServlet extends HttpServlet {
                         Boolean isOrdered = (question.containsKey("is_ordered") && question.get("is_ordered") != null) ? (Boolean) question.get("is_ordered") : false;
                         result = gradeMultiAnswer(request, questionId, answers, isOrdered);
                         break;
-                    case "question_response":
                     case "fill_in_blank":
+                        result = gradeFillInBlank(request, questionId, answers, questionText);
+                        break;
+                    case "question_response":
                     case "picture_response":
                         result = gradeTextResponse(request, questionId, correctAnswerText);
                         break;
@@ -266,5 +268,38 @@ public class GradeQuizServlet extends HttpServlet {
         String normalizedCorrect = normalize(correctAnswerText);
         boolean isCorrect = !normalizedUser.isEmpty() && normalizedUser.equals(normalizedCorrect);
         return new GradingResult(isCorrect, userAnswerText != null ? userAnswerText.trim() : "");
+    }
+
+    private GradingResult gradeFillInBlank(HttpServletRequest request, int questionId, List<Map<String, Object>> answers, String questionText) {
+        // Count blanks by counting _____ in the question text
+        int blankCount = questionText.split("_____", -1).length - 1;
+        List<String> userBlanks = new ArrayList<>();
+        List<String> correctBlanks = new ArrayList<>();
+        boolean isCorrect = true;
+
+        for (int b = 0; b < blankCount; b++) {
+            String userInput = request.getParameter("q_" + questionId + "_blank_" + b);
+            userInput = userInput != null ? userInput.trim() : "";
+            userBlanks.add(userInput);
+
+            // Find all legal answers for this blank (answers with is_correct == true and matching blank index)
+            // If you store all legal answers for all blanks in order, just use answers.get(b)
+            // If you allow multiple legal answers per blank, split by comma
+            String correctAnswerRaw = (String) answers.get(b).get("answer_text");
+            correctBlanks.add(correctAnswerRaw);
+
+            boolean blankCorrect = false;
+            for (String legal : correctAnswerRaw.split(",")) {
+                if (normalize(userInput).equals(normalize(legal))) {
+                    blankCorrect = true;
+                    break;
+                }
+            }
+            if (!blankCorrect) isCorrect = false;
+        }
+
+        String userAnswerText = String.join(" | ", userBlanks);
+        String correctAnswerText = String.join(" | ", correctBlanks);
+        return new GradingResult(isCorrect, userAnswerText);
     }
 } 
