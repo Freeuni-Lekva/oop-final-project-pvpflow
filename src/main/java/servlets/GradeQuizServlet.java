@@ -158,6 +158,13 @@ public class GradeQuizServlet extends HttpServlet {
                     // Add newly earned achievements to session for display
                     if (!newlyEarnedAchievements.isEmpty()) {
                         session.setAttribute("newlyEarnedAchievements", newlyEarnedAchievements);
+                        // --- Unseen Achievements Badge Logic ---
+                        Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
+                        if (unseenAchievements == null) unseenAchievements = new HashSet<>();
+                        for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                            unseenAchievements.add((String) achievement.get("name"));
+                        }
+                        session.setAttribute("unseenAchievements", unseenAchievements);
                     }
                     
                 } catch (SQLException e) {

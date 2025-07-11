@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 @WebServlet("/CreateQuizServlet")
 public class CreateQuizServlet extends HttpServlet {
@@ -187,6 +189,13 @@ public class CreateQuizServlet extends HttpServlet {
                     for (Map<String, Object> achievement : newlyEarnedAchievements) {
                         System.out.println("Awarded: " + achievement.get("name"));
                     }
+                    // --- Unseen Achievements Badge Logic ---
+                    Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
+                    if (unseenAchievements == null) unseenAchievements = new HashSet<>();
+                    for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                        unseenAchievements.add((String) achievement.get("name"));
+                    }
+                    session.setAttribute("unseenAchievements", unseenAchievements);
                 }
             } catch (Exception e) {
                 System.err.println("Error checking achievements: " + e.getMessage());

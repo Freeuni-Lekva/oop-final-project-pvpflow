@@ -79,25 +79,27 @@ public class AchievementDAO {
      */
     public List<Map<String, Object>> checkAndAwardAchievements(int userId) throws SQLException {
         List<Map<String, Object>> newlyEarned = new ArrayList<>();
-        
         try (Connection conn = DBUtil.getConnection()) {
             // Get user statistics
             Map<String, Object> userStats = getUserStats(conn, userId);
             
             // Get all achievements
             List<Map<String, Object>> allAchievements = getAllAchievementsWithProgress(userId);
-            
             for (Map<String, Object> achievement : allAchievements) {
                 int achievementId = (int) achievement.get("id");
                 boolean isEarned = (boolean) achievement.get("is_earned");
-                
+                String name = (String) achievement.get("name");
                 if (!isEarned && shouldAwardAchievement(achievement, userStats)) {
+                    System.out.println("Awarding achievement: " + name + " (id=" + achievementId + ") to user " + userId);
                     awardAchievement(conn, userId, achievementId);
                     newlyEarned.add(achievement);
+                } else if (isEarned) {
+                    System.out.println("Achievement already earned: " + name + " (id=" + achievementId + ") for user " + userId);
+                } else {
+                    System.out.println("Achievement not yet earned: " + name + " (id=" + achievementId + ") for user " + userId);
                 }
             }
         }
-        
         return newlyEarned;
     }
 
@@ -113,20 +115,6 @@ public class AchievementDAO {
         boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
 
         switch (name) {
-            case "First Quiz":
-                return quizzesTaken >= 1;
-            case "Quiz Creator":
-                return quizzesCreated >= 1;
-            case "Perfect Score":
-                return perfectScores >= 1;
-            case "Quiz Master":
-                return quizzesTaken >= 10;
-            case "Quiz Designer":
-                return quizzesCreated >= 5;
-            case "Speed Demon":
-                return (boolean) userStats.get("has_speed_demon");
-            case "Consistent Performer":
-                return perfectScores >= 3;
             case "Amateur Author":
                 return quizzesCreated >= 1;
             case "Prolific Author":
@@ -152,7 +140,12 @@ public class AchievementDAO {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setInt(2, achievementId);
-            stmt.executeUpdate();
+            int rows = stmt.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Inserted achievement (id=" + achievementId + ") for user " + userId);
+            } else {
+                System.out.println("Achievement (id=" + achievementId + ") for user " + userId + " already exists (no insert performed)");
+            }
         }
     }
 
@@ -220,18 +213,8 @@ public class AchievementDAO {
             }
         }
         
-        // Check for speed demon (quiz completed in under 2 minutes)
-        String speedDemonSql = "SELECT COUNT(*) FROM quiz_submissions " +
-                              "WHERE user_id = ? AND total_time_seconds IS NOT NULL AND total_time_seconds < 120";
-        try (PreparedStatement stmt = conn.prepareStatement(speedDemonSql)) {
-            stmt.setInt(1, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    stats.put("has_speed_demon", rs.getInt(1) > 0);
-                }
-            }
-        }
-        
+        // Removed speed demon and any other achievement logic not in the specified list
+
         return stats;
     }
 
@@ -249,7 +232,7 @@ public class AchievementDAO {
             int perfectScores = (int) userStats.get("perfect_scores");
             boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
             boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
-            
+
             // Calculate progress percentages
             progress.put("amateur_author_progress", Math.min(100.0, (double) quizzesCreated * 100));
             progress.put("prolific_author_progress", Math.min(100.0, (double) quizzesCreated / 5 * 100));
