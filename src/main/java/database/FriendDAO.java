@@ -11,10 +11,6 @@ import java.util.Map;
 
 public class FriendDAO {
 
-    /**
-     * Sends a friend request by creating a 'pending' entry in the friends table.
-     * If a previous request was rejected, it updates the existing record.
-     */
     public void sendFriendRequest(int requesterId, int requesteeId) throws SQLException {
         String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending') " +
                      "ON DUPLICATE KEY UPDATE status = 'pending', updated_at = CURRENT_TIMESTAMP";
@@ -26,9 +22,7 @@ public class FriendDAO {
         }
     }
 
-    /**
-     * Accepts a friend request by updating the status and creating a reciprocal relationship.
-     */
+
     public void acceptFriendRequest(int friendshipId) throws SQLException {
         String updateSql = "UPDATE friends SET status = 'accepted' WHERE id = ?";
         String selectSql = "SELECT user_id, friend_id FROM friends WHERE id = ?";
@@ -88,10 +82,7 @@ public class FriendDAO {
             }
         }
     }
-    
-    /**
-     * Rejects a friend request by updating the status to 'rejected'.
-     */
+
     public void rejectFriendRequest(int friendshipId) throws SQLException {
         String sql = "UPDATE friends SET status = 'rejected' WHERE id = ? AND status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
@@ -101,10 +92,7 @@ public class FriendDAO {
         }
     }
 
-    /**
-     * Gets a list of all users, excluding the current user and users with pending/accepted requests.
-     * Users with 'rejected' or 'blocked' status can appear as potential friends (so requests can be sent again after rejection).
-     */
+
     public List<Map<String, Object>> findPotentialFriends(int currentUserId) throws SQLException {
         List<Map<String, Object>> users = new ArrayList<>();
         String sql = "SELECT id, username FROM users u " +
@@ -131,9 +119,7 @@ public class FriendDAO {
         return users;
     }
 
-    /**
-     * Gets all incoming friend requests for a user.
-     */
+
     public List<Map<String, Object>> getPendingRequests(int userId) throws SQLException {
         List<Map<String, Object>> requests = new ArrayList<>();
         String sql = "SELECT f.id, u.username FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'pending'";
@@ -152,9 +138,7 @@ public class FriendDAO {
         return requests;
     }
 
-    /**
-     * Checks if a friend request exists and is in pending status.
-     */
+
     public boolean isPendingRequest(int friendshipId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM friends WHERE id = ? AND status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
@@ -169,9 +153,7 @@ public class FriendDAO {
         return false;
     }
 
-    /**
-     * Checks if a user has permission to accept/reject a specific friend request.
-     */
+
     public boolean canUserProcessRequest(int userId, int friendshipId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM friends WHERE id = ? AND friend_id = ? AND status = 'pending'";
         try (Connection conn = DBUtil.getConnection();
@@ -187,9 +169,7 @@ public class FriendDAO {
         return false;
     }
 
-    /**
-     * Gets a list of friends for a user.
-     */
+
     public List<Map<String, Object>> getFriends(int userId) throws SQLException {
         List<Map<String, Object>> friends = new ArrayList<>();
         String sql = "SELECT u.id, u.username FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = 'accepted'";
@@ -208,9 +188,7 @@ public class FriendDAO {
         return friends;
     }
 
-    /**
-     * Removes a friend relationship between two users (both directions).
-     */
+
     public void removeFriend(int userId, int friendId) throws SQLException {
         String sql = "DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
         try (Connection conn = DBUtil.getConnection();

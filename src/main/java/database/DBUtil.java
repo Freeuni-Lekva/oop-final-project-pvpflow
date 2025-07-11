@@ -43,10 +43,7 @@ public class DBUtil {
         System.out.println("USER: " + USER);
         System.out.println("PASSWORD: " + PASSWORD);
     }
-    
-    /**
-     * Test method to verify database connectivity and check quizzes table
-     */
+
     public static void testDatabaseConnection() {
         System.out.println("=== DATABASE CONNECTION TEST ===");
         try (Connection conn = getConnection()) {
