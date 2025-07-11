@@ -167,13 +167,16 @@ button:hover, .submit-btn:hover, input[type="submit"]:hover {
 } 
 
 .question-image {
-  width: 300px !important;
-  height: 200px !important;
-  object-fit: cover !important;
-  display: block !important;
-  margin: 16px auto !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+  max-width: 350px;
+  max-height: 220px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 16px auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: #181848;
 }
 
 /* Fill-in-the-blank specific styles */
