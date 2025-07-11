@@ -236,4 +236,42 @@ button:hover, .submit-btn:hover, input[type="submit"]:hover {
     margin-bottom: 2rem;
     text-align: center;
     font-weight: 600;
+}
+
+/* Immediate feedback styles */
+.immediate-feedback {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.feedback-correct {
+    color: #10b981;
+    font-size: 1.1rem;
+}
+
+.feedback-incorrect {
+    color: #ef4444;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.correct-answer {
+    color: #f59e0b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 } 
