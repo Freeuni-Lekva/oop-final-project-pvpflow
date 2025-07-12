@@ -1,17 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Fetch notification data
     FriendDAO friendDAO = new FriendDAO();
     MessageDAO messageDAO = new MessageDAO();
     List<Map<String, Object>> pendingRequests = new ArrayList<>();
@@ -21,7 +18,6 @@
         pendingRequests = friendDAO.getPendingRequests(userId);
         unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
     } catch (Exception e) {
-        // Silently handle errors for notifications
         e.printStackTrace();
     }
 %>
@@ -39,7 +35,6 @@
         document.body.classList.remove('light-mode');
       }
 
-      // Immediate Correction logic
       const isOnePageCheckbox = document.querySelector('input[name="isOnePage"]');
       const immediateCorrectionCheckbox = document.querySelector('input[name="immediateCorrection"]');
       const immediateCorrectionLabel = immediateCorrectionCheckbox.closest('label');
@@ -90,8 +85,7 @@
                     <label for="questionCount">Number of Questions</label>
                     <input type="number" id="questionCount" name="questionCount" min="1" max="100" required placeholder="Enter number of questions" />
                 </div>
-                
-                <!-- Quiz Properties Section -->
+
                 <div class="form-group">
                     <label style="font-weight: 700; color: #00eaff; margin-bottom: 1rem;">Quiz Properties</label>
                 </div>
@@ -125,9 +119,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Popup placeholders -->
-    <!-- Friend Requests popup removed -->
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -331,13 +322,11 @@
             });
             updateQuestionNumbers();
         });
-        
-        // Trigger the change event immediately to create the first question
+
         console.log('Triggering initial question creation');
         const evt = new Event('change');
         document.getElementById('questionCount').dispatchEvent(evt);
-        
-        // Add form submission debugging
+
         document.getElementById('quizForm').addEventListener('submit', function(e) {
             console.log('Form submitted!');
             console.log('Form data:');
@@ -345,8 +334,7 @@
             for (let [key, value] of formData.entries()) {
                 console.log(key + ': ' + value);
             }
-            
-            // Also log all form elements
+
             console.log('All form elements:');
             const formElements = this.elements;
             for (let i = 0; i < formElements.length; i++) {
@@ -355,8 +343,7 @@
                     console.log(element.name + ': ' + element.value);
                 }
             }
-            
-            // Validate image URLs for picture_response questions
+
             const imageUrlFields = document.querySelectorAll('input[name^="imageUrl_"]');
             for (let field of imageUrlFields) {
                 if (field.value.trim() !== '') {
@@ -370,7 +357,7 @@
                 }
             }
             
-            // Validate fill-in-the-blank questions have "_____" in the question text
+
             const questionBlocks = document.querySelectorAll('.question-block');
             for (let block of questionBlocks) {
                 const typeSelect = block.querySelector('.question-type-select');

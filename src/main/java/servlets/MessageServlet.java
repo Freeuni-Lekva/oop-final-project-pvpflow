@@ -15,59 +15,120 @@ import java.util.Map;
 
 @WebServlet("/MessageServlet")
 public class MessageServlet extends HttpServlet {
-    private final MessageDAO messageDAO = new MessageDAO();
+    private MessageDAO messageDAO;
+    private QuizDAO quizDAO;
+
+    @Override
+    public void init() throws ServletException {
+        messageDAO = new MessageDAO();
+        quizDAO = new QuizDAO();
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        Integer senderId = (session != null) ? (Integer) session.getAttribute("userId") : null;
-        if (senderId == null) {
+        if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect("login.jsp");
             return;
         }
 
+        int userId = (Integer) session.getAttribute("userId");
         String action = request.getParameter("action");
-        if ("sendMessage".equals(action)) {
-            try {
-                int receiverId = Integer.parseInt(request.getParameter("receiverId"));
-                String messageText = request.getParameter("messageText");
 
-                if (messageText != null && !messageText.trim().isEmpty()) {
-                    messageDAO.sendMessage(senderId, receiverId, messageText);
-                }
-            } catch (SQLException | NumberFormatException e) {
-                e.printStackTrace();
-                // Optionally, add error handling to the redirect
-                // response.sendRedirect("homepage.jsp?error=Failed+to+send+message");
-                // For now, we'll just redirect silently on failure.
+        try {
+            if (action == null) {
+                response.sendRedirect("homepage.jsp");
+                return;
             }
-        } else if ("sendChallenge".equals(action)) {
-            try {
-                int receiverId = Integer.parseInt(request.getParameter("receiverId"));
-                int quizId = Integer.parseInt(request.getParameter("quizId"));
-                
-                // Get quiz details and challenger's score
-                QuizDAO quizDAO = new QuizDAO();
-                Map<String, Object> quizDetails = quizDAO.getQuizDetails(quizId);
-                Map<String, Object> bestScore = quizDAO.getUsersHighestScore(senderId, quizId);
-                
-                double challengerScore = 0.0;
-                if (bestScore != null) {
-                    challengerScore = ((Number) bestScore.get("score")).doubleValue();
-                }
-                
-                String quizTitle = (String) quizDetails.get("title");
-                messageDAO.sendChallengeMessage(senderId, receiverId, quizId, quizTitle, challengerScore);
-            } catch (SQLException | NumberFormatException e) {
-                e.printStackTrace();
+            
+            switch (action) {
+                case "sendMessage":
+                    handleSendMessage(request, response, userId);
+                    break;
+                case "sendChallenge":
+                    handleSendChallenge(request, response, userId);
+                    break;
+                case "markAsRead":
+                    handleMarkAsRead(request, response, userId);
+                    break;
+                default:
+                    response.sendRedirect("homepage.jsp");
+                    break;
             }
-        } else if ("markAsRead".equals(action)) {
-            try {
-                messageDAO.markMessagesAsRead(senderId);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("homepage.jsp?error=message_error");
         }
-        response.sendRedirect("homepage.jsp");
+    }
+
+    private void handleSendMessage(HttpServletRequest request, HttpServletResponse response, int userId) throws SQLException, IOException {
+        String receiverIdStr = request.getParameter("receiverId");
+        String messageText = request.getParameter("messageText");
+
+        System.out.println("MessageServlet: Sending message from user " + userId + " to " + receiverIdStr + ": " + messageText);
+
+        if (receiverIdStr == null || messageText == null || messageText.trim().isEmpty()) {
+            System.out.println("MessageServlet: Invalid message parameters");
+            response.sendRedirect("homepage.jsp?error=invalid_message");
+            return;
+        }
+
+        try {
+            int receiverId = Integer.parseInt(receiverIdStr);
+            messageDAO.sendMessage(userId, receiverId, messageText.trim());
+            System.out.println("MessageServlet: Message sent successfully");
+            response.sendRedirect("homepage.jsp?success=message_sent");
+        } catch (NumberFormatException e) {
+            System.out.println("MessageServlet: Invalid receiver ID: " + receiverIdStr);
+            response.sendRedirect("homepage.jsp?error=invalid_receiver");
+        }
+    }
+
+    private void handleSendChallenge(HttpServletRequest request, HttpServletResponse response, int userId) throws SQLException, IOException {
+        String receiverIdStr = request.getParameter("receiverId");
+        String quizIdStr = request.getParameter("quizId");
+
+        System.out.println("MessageServlet: Sending challenge from user " + userId + " to " + receiverIdStr + " for quiz " + quizIdStr);
+
+        if (receiverIdStr == null || quizIdStr == null) {
+            System.out.println("MessageServlet: Invalid challenge parameters");
+            response.sendRedirect("homepage.jsp?error=invalid_challenge");
+            return;
+        }
+
+        try {
+            int receiverId = Integer.parseInt(receiverIdStr);
+            int quizId = Integer.parseInt(quizIdStr);
+
+            Map<String, Object> quizDetails = quizDAO.getQuizById(quizId);
+            if (quizDetails == null) {
+                System.out.println("MessageServlet: Quiz not found: " + quizId);
+                response.sendRedirect("homepage.jsp?error=quiz_not_found");
+                return;
+            }
+
+            String quizTitle = (String) quizDetails.get("title");
+            Map<String, Object> bestScore = quizDAO.getUsersHighestScore(userId, quizId);
+            double userScore = bestScore != null ? (double) bestScore.get("percentage_score") : 0.0;
+
+            System.out.println("MessageServlet: Sending challenge for quiz '" + quizTitle + "' with score " + userScore);
+            messageDAO.sendChallenge(userId, receiverId, quizId, quizTitle, userScore);
+            System.out.println("MessageServlet: Challenge sent successfully");
+            response.sendRedirect("homepage.jsp?success=challenge_sent");
+        } catch (NumberFormatException e) {
+            System.out.println("MessageServlet: Invalid challenge data: receiverId=" + receiverIdStr + ", quizId=" + quizIdStr);
+            response.sendRedirect("homepage.jsp?error=invalid_challenge_data");
+        }
+    }
+
+    private void handleMarkAsRead(HttpServletRequest request, HttpServletResponse response, int userId) throws SQLException, IOException {
+        messageDAO.markMessagesAsRead(userId);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"status\":\"success\"}");
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doPost(request, response);
     }
 } 

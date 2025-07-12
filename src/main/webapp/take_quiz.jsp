@@ -24,7 +24,6 @@ private String toJson(List<Map<String, Object>> questions) {
 }
 %>
 <%
-    // --- User Session ---
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
     if (username == null || userId == null) {
@@ -32,7 +31,6 @@ private String toJson(List<Map<String, Object>> questions) {
         return;
     }
 
-    // --- Data Fetching ---
     Map<String, Object> quiz = null;
     List<Map<String, Object>> questions = new ArrayList<>();
     String error = null;
@@ -56,7 +54,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 } else {
                     isOnePage = quiz.get("is_one_page") != null && (Boolean) quiz.get("is_one_page");
                     System.out.println("Quiz isOnePage: " + isOnePage);
-                    // Debug: Print each question's ID and type
                     for (Map<String, Object> q : questions) {
                         System.out.println("JSP DEBUG: Question ID: " + q.get("id") + ", Type: " + q.get("question_type"));
                     }
@@ -191,11 +188,10 @@ private String toJson(List<Map<String, Object>> questions) {
 
     <% if (quiz != null && !isOnePage) { %>
     <script>
-        // Multi-page quiz functionality
         const questions = JSON.parse('<%= toJson(questions) %>');
         let currentIdx = 0;
         let userAnswers = {};
-        let answeredQuestions = {}; // Track which questions have been answered
+        let answeredQuestions = {};
 
         function checkAnswer() {
             if (questions.length === 0) return null;
@@ -218,7 +214,6 @@ private String toJson(List<Map<String, Object>> questions) {
                         isCorrect = selectedAnswer.is_correct;
                     }
                 }
-                // Get correct answer text
                 const correctAnswer = q.answers.find(a => a.is_correct);
                 if (correctAnswer) {
                     correctAnswerText = correctAnswer.answer_text;
@@ -236,7 +231,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 const correctAnswers = q.answers.filter(a => a.is_correct);
                 correctAnswerText = correctAnswers.map(a => a.answer_text).join(', ');
                 
-                // Check if all correct answers are selected and no incorrect ones
                 const selectedIds = selectedAnswers.map(a => a.id);
                 const correctIds = correctAnswers.map(a => a.id);
                 isCorrect = selectedIds.length === correctIds.length && 
@@ -254,7 +248,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 const correctAnswers = q.answers.filter(a => a.is_correct).map(a => a.answer_text.trim());
                 correctAnswerText = correctAnswers.join(', ');
                 
-                // Check if answers match (case insensitive)
                 if (userAnswers.length === correctAnswers.length) {
                     const userSorted = userAnswers.map(a => a.toLowerCase()).sort();
                     const correctSorted = correctAnswers.map(a => a.toLowerCase()).sort();
@@ -284,12 +277,10 @@ private String toJson(List<Map<String, Object>> questions) {
                 const inp = questionBlock ? questionBlock.querySelector('input[name="q_' + questionId + '_text"]') : null;
                 if (inp && inp.value.trim()) {
                     userAnswerText = inp.value.trim();
-                    // For text responses, we'll need to normalize and compare
                     const correctAnswers = q.answers.filter(a => a.is_correct).map(a => a.answer_text.trim());
                     
                     if (correctAnswers.length > 0) {
                         correctAnswerText = correctAnswers[0];
-                        // Simple normalization for comparison
                         const normalizedUser = userAnswerText.toLowerCase().replace(/[^a-z0-9]/g, '');
                         const normalizedCorrect = correctAnswerText.toLowerCase().replace(/[^a-z0-9]/g, '');
                         isCorrect = normalizedUser === normalizedCorrect;
@@ -308,13 +299,16 @@ private String toJson(List<Map<String, Object>> questions) {
             const questionBlock = document.getElementById('questionBlock');
             if (!questionBlock) return;
 
-            // Remove any existing feedback
             const existingFeedback = questionBlock.querySelector('.immediate-feedback');
             if (existingFeedback) {
                 existingFeedback.remove();
             }
 
             if (result && result.userAnswerText) {
+                // Select all answer fields for the current question
+                const allInputs = questionBlock.querySelectorAll('.answers-list input, .fib-inputs input');
+                const allFilled = Array.from(allInputs).every(inp => inp.value && inp.value.trim() !== '');
+                if (!allFilled) return; // Do not show feedback if not all fields are filled
                 const feedbackDiv = document.createElement('div');
                 feedbackDiv.className = 'immediate-feedback';
                 
@@ -339,8 +333,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 }
 
                 questionBlock.appendChild(feedbackDiv);
-                
-                // Disable all input fields for this question after feedback is shown
                 disableQuestionInputs();
             }
         }
@@ -349,7 +341,6 @@ private String toJson(List<Map<String, Object>> questions) {
             const questionBlock = document.getElementById('questionBlock');
             if (!questionBlock) return;
 
-            // Disable all input fields in the current question
             const inputs = questionBlock.querySelectorAll('input');
             inputs.forEach(function(input) {
                 input.disabled = true;
@@ -357,14 +348,12 @@ private String toJson(List<Map<String, Object>> questions) {
                 input.style.cursor = 'not-allowed';
             });
 
-            // Disable labels to prevent clicking
             const labels = questionBlock.querySelectorAll('label');
             labels.forEach(function(label) {
                 label.style.cursor = 'not-allowed';
                 label.style.opacity = '0.6';
             });
 
-            // Disable answer rows
             const answerRows = questionBlock.querySelectorAll('.answer-row');
             answerRows.forEach(function(row) {
                 row.style.cursor = 'not-allowed';
@@ -376,7 +365,6 @@ private String toJson(List<Map<String, Object>> questions) {
             const questionBlock = document.getElementById('questionBlock');
             if (!questionBlock) return;
 
-            // Re-enable all input fields in the current question
             const inputs = questionBlock.querySelectorAll('input');
             inputs.forEach(function(input) {
                 input.disabled = false;
@@ -384,14 +372,12 @@ private String toJson(List<Map<String, Object>> questions) {
                 input.style.cursor = 'auto';
             });
 
-            // Re-enable labels
             const labels = questionBlock.querySelectorAll('label');
             labels.forEach(function(label) {
                 label.style.cursor = 'pointer';
                 label.style.opacity = '1';
             });
 
-            // Re-enable answer rows
             const answerRows = questionBlock.querySelectorAll('.answer-row');
             answerRows.forEach(function(row) {
                 row.style.cursor = 'pointer';
@@ -451,23 +437,23 @@ private String toJson(List<Map<String, Object>> questions) {
                 }
             } else if (qType === 'multi_choice_multi_answer') {
                 if (userAnswers['q_' + questionId]) {
-                    userAnswers['q_' + questionId].forEach(function(val) {
-                        const cb = document.querySelector('input[name="q_' + questionId + '_a_' + val + '"]');
-                        if (cb) cb.checked = true;
+                    q.answers.forEach(function(a) {
+                        const cb = document.querySelector('input[name="q_' + questionId + '_a_' + a.id + '"]');
+                        if (cb) cb.checked = userAnswers['q_' + questionId].includes(a.id);
                     });
                 }
             } else if (qType === 'multi_answer') {
                 if (userAnswers['q_' + questionId]) {
                     q.answers.forEach(function(a, idx) {
                         const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
-                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
+                        if (inp) inp.value = (userAnswers['q_' + questionId][idx] !== undefined ? userAnswers['q_' + questionId][idx] : '');
                     });
                 }
             } else if (qType === 'fill_in_blank') {
                 if (userAnswers['q_' + questionId]) {
                     q.answers.forEach(function(a, idx) {
                         const inp = document.querySelector('input[name="q_' + questionId + '_blank_' + idx + '"]');
-                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
+                        if (inp) inp.value = (userAnswers['q_' + questionId][idx] !== undefined ? userAnswers['q_' + questionId][idx] : '');
                     });
                 }
             } else {
@@ -498,7 +484,6 @@ private String toJson(List<Map<String, Object>> questions) {
             
             let html = '';
             if (qType === 'fill_in_blank') {
-                // Render fill-in-the-blank with separate inputs below
                 let text = q.question_text;
                 let parts = text.split('_____');
                 let blankCount = parts.length - 1;
@@ -554,7 +539,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 questionBlock.innerHTML = html;
             }
 
-            // Add event listeners to save answer on change/input and show immediate feedback
             if (questionBlock) {
                 const inputs = questionBlock.querySelectorAll('input');
                 inputs.forEach(function(input) {
@@ -575,7 +559,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 });
             }
             
-            // Update navigation buttons
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
             const submitBtn = document.getElementById('submitBtn');
@@ -586,23 +569,36 @@ private String toJson(List<Map<String, Object>> questions) {
             
             restoreCurrentAnswer();
             
-            // Check if this question has already been answered and show feedback
             const result = checkAnswer();
             if (result && result.userAnswerText) {
                 showImmediateFeedback(result);
             } else {
-                // Re-enable inputs for unanswered questions
                 enableQuestionInputs();
             }
         }
 
-        // Initialize multi-page quiz
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Multi-page quiz initialized');
             console.log('Questions:', questions);
             console.log('Questions length:', questions.length);
             
-            // Set up navigation buttons
+            // Immediate correction on click outside answer fields
+            document.addEventListener('click', function(event) {
+                const questionBlock = document.getElementById('questionBlock');
+                if (!questionBlock) return;
+                const answersList = questionBlock.querySelector('.answers-list');
+                if (!answersList) return;
+                if (!answersList.contains(event.target)) {
+                    // Select all answer fields for the current question
+                    const allInputs = questionBlock.querySelectorAll('.answers-list input, .fib-inputs input');
+                    const allFilled = Array.from(allInputs).every(inp => inp.value && inp.value.trim() !== '');
+                    if (allFilled) {
+                        const result = checkAnswer();
+                        showImmediateFeedback(result);
+                    }
+                }
+            });
+            
             const nextBtn = document.getElementById('nextBtn');
             const prevBtn = document.getElementById('prevBtn');
             
@@ -612,7 +608,6 @@ private String toJson(List<Map<String, Object>> questions) {
             if (nextBtn) {
                 nextBtn.onclick = function() {
                     saveCurrentAnswer();
-                    // Show feedback for current question before moving
                     const result = checkAnswer();
                     showImmediateFeedback(result);
                     
@@ -628,7 +623,6 @@ private String toJson(List<Map<String, Object>> questions) {
             if (prevBtn) {
                 prevBtn.onclick = function() {
                     saveCurrentAnswer();
-                    // Show feedback for current question before moving
                     const result = checkAnswer();
                     showImmediateFeedback(result);
                     
@@ -641,29 +635,24 @@ private String toJson(List<Map<String, Object>> questions) {
                 };
             }
             
-            // Render the first question
             console.log('Rendering first question...');
             renderQuestion(0);
         });
 
-        // Handle form submission for multi-page quiz
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('quizForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    e.preventDefault(); // Prevent default submission
+                    e.preventDefault();
                     
-                    // Save the current answer before form submission
                     saveCurrentAnswer();
                     
                     console.log('Form submission - userAnswers:', userAnswers);
                     
-                    // Remove any previously injected hidden fields
                     document.querySelectorAll('.multi-page-hidden').forEach(function(el) {
                         el.remove();
                     });
                     
-                    // Inject hidden fields for all questions
                     questions.forEach(function(q) {
                         const qType = q.question_type;
                         const questionId = q.id;
@@ -725,7 +714,6 @@ private String toJson(List<Map<String, Object>> questions) {
                         }
                     });
                     
-                    // Now submit the form
                     console.log('Submitting form with hidden fields...');
                     form.submit();
                 });
@@ -734,7 +722,6 @@ private String toJson(List<Map<String, Object>> questions) {
     </script>
     <% } else { %>
     <script>
-    // Single-page quiz validation
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('quizForm');
         if (form) {
@@ -762,7 +749,6 @@ private String toJson(List<Map<String, Object>> questions) {
     <% } %>
 
     <script>
-    // Timer functionality
     let startTime = Date.now();
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('quizForm');

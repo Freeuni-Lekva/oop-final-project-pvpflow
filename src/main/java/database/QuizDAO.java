@@ -11,10 +11,7 @@ import java.util.*;
 
 
 public class QuizDAO {
-    
-    /**
-     * Creates a new quiz with all required properties
-     */
+
     public static int createQuiz(Connection conn, int creatorId, String title, String description,
                                 boolean isRandomized, boolean isOnePage, boolean immediateCorrection, 
                                 boolean practiceMode) throws SQLException {
@@ -59,9 +56,6 @@ public class QuizDAO {
         }
     }
 
-    /**
-     * Adds a question to a quiz with all required properties
-     */
     public static int addQuestion(Connection conn, int quizId, String questionType, String questionText,
                                  String imageUrl, int questionOrder, boolean isOrdered) throws SQLException {
         System.out.println("QuizDAO: Adding question to quiz " + quizId);
@@ -104,9 +98,7 @@ public class QuizDAO {
         }
     }
 
-    /**
-     * Adds an answer to a question
-     */
+
     public static void addAnswer(Connection conn, int questionId, String answerText, boolean isCorrect, Integer answerOrder) throws SQLException {
         System.out.println("QuizDAO: Adding answer to question " + questionId);
         System.out.println("QuizDAO: Answer text: " + answerText);
@@ -138,9 +130,7 @@ public class QuizDAO {
         }
     }
 
-    /**
-     * Updates the question count for a quiz
-     */
+
     public static void updateQuizQuestionCount(Connection conn, int quizId, int questionCount) throws SQLException {
         System.out.println("QuizDAO: Updating question count for quiz " + quizId + " to " + questionCount);
         
@@ -205,9 +195,7 @@ public class QuizDAO {
         return history;
     }
 
-    /**
-     * Retrieves a complete quiz, including its questions and answers.
-     */
+
     public Map<String, Object> getQuizById(int quizId) throws SQLException {
         Map<String, Object> quiz = null;
         String quizSql = "SELECT * FROM quizzes WHERE id = ?";
@@ -223,7 +211,6 @@ public class QuizDAO {
                     quiz.put("title", quizRs.getString("title"));
                     quiz.put("description", quizRs.getString("description"));
                     quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
-                    // Add other quiz properties if needed
                     
                     List<Map<String, Object>> questions = getQuestionsForQuiz(conn, quizId);
                     quiz.put("questions", questions);
@@ -233,13 +220,9 @@ public class QuizDAO {
         return quiz;
     }
 
-    /**
-     * Retrieves all questions for a given quiz, including their answers.
-     */
     private List<Map<String, Object>> getQuestionsForQuiz(Connection conn, int quizId) throws SQLException {
         List<Map<String, Object>> questions = new ArrayList<>();
         
-        // Check if the quiz should be randomized
         PreparedStatement checkRandomStmt = conn.prepareStatement("SELECT is_randomized FROM quizzes WHERE id = ?");
         checkRandomStmt.setInt(1, quizId);
         ResultSet rsRandom = checkRandomStmt.executeQuery();
@@ -270,9 +253,6 @@ public class QuizDAO {
         return questions;
     }
 
-    /**
-     * Retrieves all answers for a given question.
-     */
     private List<Map<String, Object>> getAnswersForQuestion(Connection conn, int questionId) throws SQLException {
         List<Map<String, Object>> answers = new ArrayList<>();
         String answersSql = "SELECT * FROM answers WHERE question_id = ? ORDER BY answer_order";
@@ -292,9 +272,6 @@ public class QuizDAO {
         return answers;
     }
 
-    /**
-     * Saves a quiz submission and returns the generated submission ID.
-     */
     public int saveSubmission(Connection conn, int quizId, int userId, int score, int totalPossibleScore, double percentage, boolean isPractice, int timeTaken) throws SQLException {
         String sql = "INSERT INTO quiz_submissions (quiz_id, user_id, completed_at, score, total_possible_score, percentage_score, is_practice_mode, total_time_seconds) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -314,9 +291,6 @@ public class QuizDAO {
         throw new SQLException("Failed to save quiz submission");
     }
 
-    /**
-     * Saves a user's answer to a specific question in a submission.
-     */
     public void saveSubmissionAnswer(Connection conn, int submissionId, int questionId, String answerText, boolean isCorrect) throws SQLException {
         String sql = "INSERT INTO submission_answers (submission_id, question_id, answer_text, is_correct) VALUES (?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -491,9 +465,6 @@ public class QuizDAO {
         return highScore;
     }
 
-    /**
-     * Gets all quizzes for debugging purposes
-     */
     public static List<Map<String, Object>> getAllQuizzes() throws SQLException {
         List<Map<String, Object>> quizzes = new ArrayList<>();
         String sql = "SELECT q.id, q.title, q.description, q.question_count, q.created_at, u.username as creator_name " +
@@ -519,9 +490,6 @@ public class QuizDAO {
         return quizzes;
     }
 
-    /**
-     * Gets quiz count by creator ID
-     */
     public static int getQuizCountByCreator(int creatorId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
         
@@ -538,9 +506,6 @@ public class QuizDAO {
         return 0;
     }
 
-    /**
-     * Gets all quizzes with attempt count for each
-     */
     public static List<Map<String, Object>> getAllQuizzesWithStats() throws SQLException {
         List<Map<String, Object>> quizzes = getAllQuizzes();
         String attemptSql = "SELECT COUNT(*) FROM quiz_submissions WHERE quiz_id = ? AND completed_at IS NOT NULL";
@@ -555,7 +520,6 @@ public class QuizDAO {
                         quiz.put("attempts", 0);
                     }
                 }
-                // Rename creator_name to creator for consistency with JSP
                 quiz.put("creator", quiz.get("creator_name"));
             }
         }

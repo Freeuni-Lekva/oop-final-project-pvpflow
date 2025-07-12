@@ -1,24 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.AdminDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Check if user is admin
     AdminDAO adminDAO = new AdminDAO();
     if (!adminDAO.isAdmin(userId)) {
         response.sendRedirect("homepage.jsp");
         return;
     }
 
-    // Get quizzes
     List<Map<String, Object>> quizzes = adminDAO.getAllQuizzes();
 %>
 <!DOCTYPE html>
@@ -58,7 +54,6 @@
             </div>
         <% } %>
 
-        <!-- Quiz Statistics -->
         <div class="admin-stats-section">
             <h2 class="admin-stats-title">Quiz Statistics</h2>
             <div class="admin-stats-cards">
@@ -98,7 +93,7 @@
             </div>
         </div>
 
-        <!-- Quizzes Table -->
+
         <div class="quizzes-table">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
@@ -130,7 +125,7 @@
                                         <form action="AdminServlet" method="post" style="display: inline;">
                                             <input type="hidden" name="action" value="clearQuizHistory">
                                             <input type="hidden" name="quizId" value="<%= quiz.get("id") %>">
-                                            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clear all history for quiz \"<%= quiz.get("title") %>\"? This action cannot be undone.')">
+                                            <button type="submit" class="btn btn-warning" onclick='return confirm("Are you sure you want to clear all history for quiz <%= quiz.get("title") %>? This action cannot be undone.")'>
                                                 Clear History
                                             </button>
                                         </form>
@@ -139,7 +134,7 @@
                                     <form action="AdminServlet" method="post" style="display: inline;">
                                         <input type="hidden" name="action" value="deleteQuiz">
                                         <input type="hidden" name="quizId" value="<%= quiz.get("id") %>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete quiz \"<%= quiz.get("title") %>\"? This action cannot be undone.')">
+                                        <button type="submit" class="btn btn-danger" onclick='return confirm("Are you sure you want to delete quiz <%= quiz.get("title") %>? This action cannot be undone.")'>
                                             Delete Quiz
                                         </button>
                                     </form>

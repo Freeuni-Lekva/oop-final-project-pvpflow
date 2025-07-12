@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 @WebServlet("/GradeQuizServlet")
 public class GradeQuizServlet extends HttpServlet {
-    // Add GradingResult as a static inner class
     private static class GradingResult {
         boolean isCorrect;
         String userAnswerText;
@@ -28,7 +27,6 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
-    // Add this normalization helper at the top of the class (after class declaration)
     private String normalize(String s) {
         return s == null ? "" : s.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
     }
@@ -39,7 +37,6 @@ public class GradeQuizServlet extends HttpServlet {
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
 
-        // Debug: Log all received parameters
         System.out.println("=== GradeQuizServlet: Received Parameters ===");
         request.getParameterMap().forEach((k, v) -> System.out.println(k + " = " + Arrays.toString(v)));
         System.out.println("===========================================");
@@ -54,7 +51,6 @@ public class GradeQuizServlet extends HttpServlet {
         try {
             timeTaken = Integer.parseInt(request.getParameter("timeTaken"));
         } catch (Exception e) {
-            // fallback to 0 if missing or invalid
         }
 
         try {
@@ -89,7 +85,6 @@ public class GradeQuizServlet extends HttpServlet {
                         .collect(Collectors.joining(", "));
                 boolean isCorrect = false;
 
-                // New: Use a holder object to get both isCorrect and userAnswerText
                 GradingResult result = null;
                 switch (questionType) {
                     case "multiple_choice":
@@ -117,7 +112,6 @@ public class GradeQuizServlet extends HttpServlet {
                     isCorrect = result.isCorrect;
                     userAnswerText = result.userAnswerText;
                 }
-                // Debug: Log user answer for this question
                 System.out.println("Question ID: " + questionId + ", Type: " + questionType + ", User Answer: '" + userAnswerText + "', Correct: '" + correctAnswerText + "', isCorrect: " + isCorrect);
                 if (isCorrect) {
                     score++;
@@ -134,7 +128,6 @@ public class GradeQuizServlet extends HttpServlet {
             int totalPossibleScore = questions.size();
             double percentage = (totalPossibleScore > 0) ? ((double) score / totalPossibleScore) * 100 : 0;
 
-            // Save submission to database
             try (Connection conn = DBUtil.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
@@ -146,20 +139,39 @@ public class GradeQuizServlet extends HttpServlet {
                                                    (boolean) reviewItem.get("isCorrect"));
                     }
                     
-                    // Check and award achievements after quiz completion
-                    AchievementDAO achievementDAO = new AchievementDAO();
-                    List<Map<String, Object>> newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
-                    
-                    // Create system messages for newly earned achievements
-                    for (Map<String, Object> achievement : newlyEarnedAchievements) {
-                        achievementDAO.createAchievementMessage(conn, userId, (String) achievement.get("name"));
-                    }
-                    
                     conn.commit();
                     
-                    // Add newly earned achievements to session for display
+                    // Handle achievements outside the transaction to avoid rollback on achievement errors
+                    List<Map<String, Object>> newlyEarnedAchievements = new ArrayList<>();
+                    try {
+                        AchievementDAO achievementDAO = new AchievementDAO();
+                        newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
+                    } catch (Exception e) {
+                        // Log achievement error but don't fail the quiz grading
+                        System.err.println("Achievement check failed: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
+                    // Handle achievement messages in a separate transaction
                     if (!newlyEarnedAchievements.isEmpty()) {
+                        try (Connection achievementConn = DBUtil.getConnection()) {
+                            AchievementDAO achievementDAO = new AchievementDAO();
+                            for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                                achievementDAO.createAchievementMessage(achievementConn, userId, (String) achievement.get("name"));
+                            }
+                        } catch (Exception e) {
+                            // Log achievement message error but don't fail the quiz grading
+                            System.err.println("Achievement message creation failed: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                        
                         session.setAttribute("newlyEarnedAchievements", newlyEarnedAchievements);
+                        Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
+                        if (unseenAchievements == null) unseenAchievements = new HashSet<>();
+                        for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                            unseenAchievements.add((String) achievement.get("name"));
+                        }
+                        session.setAttribute("unseenAchievements", unseenAchievements);
                     }
                     
                 } catch (SQLException e) {
@@ -189,7 +201,6 @@ public class GradeQuizServlet extends HttpServlet {
         }
     }
 
-    // New helper methods to return both isCorrect and userAnswerText
     private GradingResult gradeMultipleChoice(HttpServletRequest request, int questionId, List<Map<String, Object>> answers) {
         String userAnswerIdStr = request.getParameter("q_" + questionId);
         String userAnswerText = "";
@@ -205,7 +216,6 @@ public class GradeQuizServlet extends HttpServlet {
                     }
                 }
             } catch (NumberFormatException e) {
-                // Invalid answer ID
             }
         }
         return new GradingResult(isCorrect, userAnswerText);

@@ -1,17 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.DBUtil" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // --- Data Fetching ---
     List<Map<String, Object>> allAnnouncements = new ArrayList<>();
     try (java.sql.Connection conn = DBUtil.getConnection()) {
         String sql = "SELECT a.title, a.content, a.created_at, u.username as creator_name " +

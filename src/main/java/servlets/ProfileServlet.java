@@ -35,7 +35,6 @@ public class ProfileServlet extends HttpServlet {
         String targetUserIdStr = request.getParameter("id");
         Integer targetUserId = null;
         
-        // If no ID provided, show current user's profile
         if (targetUserIdStr == null || targetUserIdStr.isEmpty()) {
             targetUserId = currentUserId;
         } else {
@@ -60,7 +59,6 @@ public class ProfileServlet extends HttpServlet {
                 return;
             }
             
-            // Only show friends and achievements for current user's own profile
             if (targetUserId.equals(currentUserId)) {
                 friends = friendDAO.getFriends(targetUserId);
                 achievements = achievementDAO.getAchievementsByUserId(targetUserId);

@@ -31,7 +31,6 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("userId", user.get("id"));
                 session.setAttribute("user", user.get("username"));
                 session.setAttribute("email", user.get("email"));
-                // Update last_login timestamp
                 userDAO.updateLastLogin((Integer) user.get("id"));
                 response.sendRedirect("homepage.jsp");
             } else {

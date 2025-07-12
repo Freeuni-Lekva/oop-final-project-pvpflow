@@ -14,12 +14,13 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 @WebServlet("/CreateQuizServlet")
 public class CreateQuizServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Forward the request to the JSP page to display the form
         request.getRequestDispatcher("create_quiz.jsp").forward(request, response);
     }
 
@@ -27,7 +28,6 @@ public class CreateQuizServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         
-        // Test database connection first
         DBUtil.testDatabaseConnection();
         
         HttpSession session = request.getSession(false);
@@ -43,12 +43,10 @@ public class CreateQuizServlet extends HttpServlet {
             return;
         }
 
-        // Get quiz basic information
         String title = request.getParameter("title");
         String description = request.getParameter("description");
         String questionCountStr = request.getParameter("questionCount");
         
-        // Validate required fields
         if (title == null || title.trim().isEmpty()) {
             System.out.println("Error: Title is required");
             response.sendRedirect("create_quiz.jsp?error=Title+is+required");
@@ -73,7 +71,6 @@ public class CreateQuizServlet extends HttpServlet {
             return;
         }
         
-        // Get quiz properties (new required properties)
         boolean isRandomized = "on".equals(request.getParameter("isRandomized"));
         boolean isOnePage = "on".equals(request.getParameter("isOnePage"));
         boolean immediateCorrection = "on".equals(request.getParameter("immediateCorrection"));
@@ -93,12 +90,10 @@ public class CreateQuizServlet extends HttpServlet {
             conn = DBUtil.getConnection();
             conn.setAutoCommit(false);
             
-            // Create quiz using QuizDAO
             int quizId = QuizDAO.createQuiz(conn, userId, title, description, 
                                           isRandomized, isOnePage, immediateCorrection, practiceMode);
             System.out.println("Quiz created with ID: " + quizId);
             
-            // Process questions and answers
             int actualQuestionCount = 0;
             for (int i = 0; i < questionCount; i++) {
                 String qType = request.getParameter("questionType_" + i);
@@ -119,7 +114,6 @@ public class CreateQuizServlet extends HttpServlet {
                 System.out.println("Image URL: " + imageUrl);
                 System.out.println("Is Ordered: " + isOrdered);
                 
-                // Validate image URL if provided
                 if (imageUrl != null && !imageUrl.trim().isEmpty()) {
                     try {
                         new java.net.URL(imageUrl);
@@ -130,23 +124,19 @@ public class CreateQuizServlet extends HttpServlet {
                     }
                 }
                 
-                // Add question using QuizDAO
                 int questionId = QuizDAO.addQuestion(conn, quizId, qType, qText, imageUrl, i + 1, isOrdered);
                 System.out.println("Question added with ID: " + questionId);
                 
-                // Process answers based on question type
                 processAnswers(conn, questionId, qType, i, request);
                 actualQuestionCount++;
             }
             
-            // Update the quiz with the actual number of questions added
             QuizDAO.updateQuizQuestionCount(conn, quizId, actualQuestionCount);
             
             conn.commit();
             System.out.println("=== QUIZ CREATION COMPLETED SUCCESSFULLY ===");
             System.out.println("Quiz ID: " + quizId + ", Questions added: " + actualQuestionCount);
             
-            // Verify the quiz was created properly by querying it back
             try {
                 String verifySql = "SELECT q.id, q.title, q.description, q.question_count, u.username as creator_name " +
                                  "FROM quizzes q " +
@@ -172,12 +162,10 @@ public class CreateQuizServlet extends HttpServlet {
                 System.err.println("Error during quiz verification: " + e.getMessage());
             }
             
-            // Check and award achievements after quiz creation
             try {
                 AchievementDAO achievementDAO = new AchievementDAO();
                 List<Map<String, Object>> newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
                 
-                // Create system messages for newly earned achievements
                 for (Map<String, Object> achievement : newlyEarnedAchievements) {
                     achievementDAO.createAchievementMessage(conn, userId, (String) achievement.get("name"));
                 }
@@ -187,10 +175,15 @@ public class CreateQuizServlet extends HttpServlet {
                     for (Map<String, Object> achievement : newlyEarnedAchievements) {
                         System.out.println("Awarded: " + achievement.get("name"));
                     }
+                    Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
+                    if (unseenAchievements == null) unseenAchievements = new HashSet<>();
+                    for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                        unseenAchievements.add((String) achievement.get("name"));
+                    }
+                    session.setAttribute("unseenAchievements", unseenAchievements);
                 }
             } catch (Exception e) {
                 System.err.println("Error checking achievements: " + e.getMessage());
-                // Don't fail the quiz creation if achievement checking fails
             }
             
             response.sendRedirect("homepage.jsp?success=Quiz+created+successfully");
@@ -236,7 +229,6 @@ public class CreateQuizServlet extends HttpServlet {
                 processMultiAnswer(conn, questionId, questionIndex, request);
                 break;
             default:
-                // question_response, fill_in_blank, picture_response
                 processStandardAnswers(conn, questionId, questionIndex, request);
                 break;
         }
@@ -275,7 +267,6 @@ public class CreateQuizServlet extends HttpServlet {
             String ans = request.getParameter("answer_" + questionIndex + "_" + a);
             if (ans == null || ans.trim().isEmpty()) break;
             
-            // For multi-answer, all answers are correct answers
             System.out.println("Answer " + a + ": " + ans + " (Correct: true)");
             QuizDAO.addAnswer(conn, questionId, ans, true, a + 1);
         }
@@ -287,7 +278,6 @@ public class CreateQuizServlet extends HttpServlet {
             String ans = request.getParameter("answer_" + questionIndex + "_" + a);
             if (ans == null || ans.trim().isEmpty()) break;
             
-            // For standard questions, all answers are correct answers
             System.out.println("Answer " + a + ": " + ans + " (Correct: true)");
             QuizDAO.addAnswer(conn, questionId, ans, true, null);
         }

@@ -28,7 +28,6 @@ public class TakeQuizServlet extends HttpServlet {
             return;
         }
         try (Connection conn = DBUtil.getConnection()) {
-            // Load quiz
             PreparedStatement quizStmt = conn.prepareStatement("SELECT * FROM quizzes WHERE id = ?");
             quizStmt.setInt(1, quizId);
             ResultSet quizRs = quizStmt.executeQuery();
@@ -42,7 +41,6 @@ public class TakeQuizServlet extends HttpServlet {
             quiz.put("description", quizRs.getString("description"));
             quiz.put("question_count", quizRs.getInt("question_count"));
             quiz.put("is_one_page", quizRs.getBoolean("is_one_page"));
-            // Load questions
             PreparedStatement qStmt = conn.prepareStatement("SELECT * FROM questions WHERE quiz_id = ? ORDER BY question_order ASC");
             qStmt.setInt(1, quizId);
             ResultSet qRs = qStmt.executeQuery();
@@ -58,7 +56,6 @@ public class TakeQuizServlet extends HttpServlet {
                 q.put("is_ordered", qRs.getBoolean("is_ordered"));
                 q.put("is_admin_graded", qRs.getBoolean("is_admin_graded"));
                 q.put("time_limit_seconds", qRs.getObject("time_limit_seconds"));
-                // Load answers
                 PreparedStatement aStmt = conn.prepareStatement("SELECT * FROM answers WHERE question_id = ?");
                 aStmt.setInt(1, questionId);
                 ResultSet aRs = aStmt.executeQuery();

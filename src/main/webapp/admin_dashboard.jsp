@@ -1,24 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.AdminDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Check if user is admin
     AdminDAO adminDAO = new AdminDAO();
     if (!adminDAO.isAdmin(userId)) {
         response.sendRedirect("homepage.jsp");
         return;
     }
 
-    // Get site statistics
     Map<String, Object> stats = adminDAO.getSiteStatistics();
 %>
 <!DOCTYPE html>
@@ -34,18 +30,15 @@
     <div class="header">
         <div class="header-content">
             <a href="homepage.jsp" class="logo">QuizApp</a>
-            <!-- Navigation buttons and user-info removed for admin_dashboard.jsp only -->
         </div>
     </div>
 
     <div class="main-content">
-        <!-- Welcome Section -->
         <div class="welcome-section">
             <h1 class="welcome-title">Admin Dashboard</h1>
             <p class="welcome-subtitle">Manage your QuizApp website</p>
         </div>
 
-        <!-- Site Statistics -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number"><%= stats.get("total_users") != null ? stats.get("total_users") : 0 %></div>
@@ -69,7 +62,6 @@
             </div>
         </div>
 
-        <!-- Admin Functions -->
         <div class="admin-functions">
             <a href="AdminServlet?action=users" class="function-card">
                 <span class="function-icon">👤</span>

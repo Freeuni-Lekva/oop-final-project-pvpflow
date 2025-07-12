@@ -188,15 +188,8 @@ CREATE TABLE IF NOT EXISTS user_stats (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Insert some sample achievements
+-- Insert only the required achievements
 INSERT INTO achievements (name, description, points_required, quizzes_taken_required, quizzes_created_required, perfect_scores_required) VALUES
-('First Quiz', 'Take your first quiz', 0, 1, 0, 0),
-('Quiz Creator', 'Create your first quiz', 0, 0, 1, 0),
-('Perfect Score', 'Get a perfect score on any quiz', 0, 0, 0, 1),
-('Quiz Master', 'Take 10 quizzes', 0, 10, 0, 0),
-('Quiz Designer', 'Create 5 quizzes', 0, 0, 5, 0),
-('Speed Demon', 'Complete a quiz in under 2 minutes', 0, 0, 0, 0),
-('Consistent Performer', 'Get 3 perfect scores', 0, 0, 0, 3),
 ('Amateur Author', 'Create 1 quiz', 0, 0, 1, 0),
 ('Prolific Author', 'Create 5 quizzes', 0, 0, 5, 0),
 ('Prodigious Author', 'Create 10 quizzes', 0, 0, 10, 0),
