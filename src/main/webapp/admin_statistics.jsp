@@ -138,7 +138,8 @@
                 </span>
             </div>
         </div>
-
+        
+        <%--
         <div class="insights-grid">
             <div class="insight-card">
                 <div class="insight-title">User Growth</div>
@@ -151,7 +152,7 @@
                     <% } %>
                 </div>
             </div>
-
+            
             <div class="insight-card">
                 <div class="insight-title">Content Activity</div>
                 <div class="insight-content">
@@ -185,6 +186,7 @@
                 </div>
             </div>
         </div>
+        --%>
     </div>
 </body>
 </html> 
