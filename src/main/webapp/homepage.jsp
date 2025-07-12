@@ -33,6 +33,7 @@
     MessageDAO messageDAO = new MessageDAO();
     List<Map<String, Object>> conversations = new ArrayList<>();
     int unreadMessageCount = 0;
+    List<Map<String, Object>> receivedMessages = new ArrayList<>();
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
 
@@ -173,8 +174,16 @@
         pendingRequests = friendDAO.getPendingRequests(userId);
         potentialFriends = friendDAO.findPotentialFriends(userId);
 
-        conversations = messageDAO.getConversations(userId);
+        conversations = messageDAO.getRecentConversations(userId);
         unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
+        
+        try {
+            receivedMessages = messageDAO.getReceivedMessages(userId);
+            System.out.println("Homepage: Retrieved " + receivedMessages.size() + " messages for user " + userId);
+        } catch (Exception e) {
+            System.out.println("Homepage: Error retrieving messages: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         String perfectScoreSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
         try (PreparedStatement ps = conn.prepareStatement(perfectScoreSql)) {
@@ -607,43 +616,50 @@
 <div class="popup" id="messagesPopup">
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('messagesPopup')">&times;</button>
-        <h3>Recent Messages</h3>
+        <h3>Received Messages (<%= receivedMessages.size() %>)</h3>
         <div style="margin-top: 1rem; max-height: 300px; overflow-y: auto;">
-            <% if (!conversations.isEmpty()) { %>
-                <% for (Map<String, Object> convo : conversations) { %>
-                    <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #00eaff; margin-bottom: 0.3rem;"><%= convo.get("friend_username") %></div>
-                        <div style="font-size: 0.9rem; color: #a5b4fc;">
-                        <% 
-                            String lastMessage = (String) convo.get("last_message");
-                            if (lastMessage != null && lastMessage.contains("Take the quiz here: quiz_summary.jsp?id=")) {
-                                int idx = lastMessage.indexOf("quiz_summary.jsp?id=");
-                                String before = lastMessage.substring(0, idx);
-                                String quizPart = lastMessage.substring(idx);
-                                int idStart = quizPart.indexOf("=") + 1;
-                                StringBuilder idStr = new StringBuilder();
-                                for (int i = idStart; i < quizPart.length(); i++) {
-                                    char c = quizPart.charAt(i);
-                                    if (Character.isDigit(c)) idStr.append(c);
-                                    else break;
-                                }
-                        %>
-                            <span><%= before %></span>
-                            <a href="take_quiz.jsp?id=<%= idStr.toString() %>" style="color:#3b82f6; text-decoration:underline;">Take the quiz here</a>
-                        <%  
-                            } else { 
-                        %>
-                            <%= lastMessage %>
-                        <%  } %>
+            <% if (!receivedMessages.isEmpty()) { %>
+                <% for (Map<String, Object> message : receivedMessages) { %>
+                    <div style="margin-bottom: 1rem; padding: 0.8rem; background: #2a2a4a; border-radius: 8px; border-left: 4px solid <%= message.get("message_type").equals("challenge") ? "#fbbf24" : "#00eaff" %>;">
+                        <div style="font-weight: 600; color: <%= message.get("message_type").equals("challenge") ? "#fbbf24" : "#00eaff" %>; margin-bottom: 0.3rem;">
+                            From: <%= message.get("sender_username") %> 
+                            <span style="font-size: 0.8rem; color: #a5b4fc;">(<%= message.get("message_type") %>)</span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #e0e7ff; margin-bottom: 0.5rem;">
+                            <% 
+                                String content = (String) message.get("content");
+                                if (message.get("message_type").equals("challenge") && content != null && content.contains("take_quiz.jsp?id=")) {
+                                    int linkStart = content.indexOf("take_quiz.jsp?id=");
+                                    String beforeLink = content.substring(0, linkStart);
+                                    String linkPart = content.substring(linkStart);
+                                    int idStart = linkPart.indexOf("=") + 1;
+                                    StringBuilder quizId = new StringBuilder();
+                                    for (int i = idStart; i < linkPart.length(); i++) {
+                                        char c = linkPart.charAt(i);
+                                        if (Character.isDigit(c)) quizId.append(c);
+                                        else break;
+                                    }
+                            %>
+                                <%= beforeLink %>
+                                <a href="take_quiz.jsp?id=<%= quizId.toString() %>" style="color: #3b82f6; text-decoration: underline; font-weight: 600;">Take the quiz here</a>
+                            <% } else { %>
+                                <%= content %>
+                            <% } %>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #a5b4fc;">
+                            Received: <%= message.get("created_at") %>
+                            <% if (!(Boolean) message.get("is_read")) { %>
+                                <span style="color: #ef4444; margin-left: 0.5rem;">● New</span>
+                            <% } %>
                         </div>
                     </div>
                 <% } %>
             <% } else { %>
-                <p>No messages yet. Send a note to a friend!</p>
+                <p>No messages received yet.</p>
             <% } %>
         </div>
-        <h3 style="margin-top: 2rem;">Send Message</h3>
         
+        <h3 style="margin-top: 2rem;">Send Message</h3>
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message Type:</label>
             <div style="display: flex; gap: 1rem;">

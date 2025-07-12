@@ -15,8 +15,8 @@
 <body>
 <div class="container">
     <div class="left">
-        <h1>Smash sets in<br>your sweats.</h1>
-        <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=400&q=80" alt="Books and Headphones" />
+        <h1>Account Details</h1>
+        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=400&q=80" alt="Quiz and Learning" />
         <div style="position: absolute; bottom: 2rem; left: 2rem; font-size: 2rem; font-weight: bold; color: #fff;">QuizApp</div>
     </div>
     <div class="right">

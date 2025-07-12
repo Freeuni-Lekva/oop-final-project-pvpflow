@@ -305,6 +305,10 @@ private String toJson(List<Map<String, Object>> questions) {
             }
 
             if (result && result.userAnswerText) {
+                // Select all answer fields for the current question
+                const allInputs = questionBlock.querySelectorAll('.answers-list input, .fib-inputs input');
+                const allFilled = Array.from(allInputs).every(inp => inp.value && inp.value.trim() !== '');
+                if (!allFilled) return; // Do not show feedback if not all fields are filled
                 const feedbackDiv = document.createElement('div');
                 feedbackDiv.className = 'immediate-feedback';
                 
@@ -329,7 +333,6 @@ private String toJson(List<Map<String, Object>> questions) {
                 }
 
                 questionBlock.appendChild(feedbackDiv);
-                
                 disableQuestionInputs();
             }
         }
@@ -434,23 +437,23 @@ private String toJson(List<Map<String, Object>> questions) {
                 }
             } else if (qType === 'multi_choice_multi_answer') {
                 if (userAnswers['q_' + questionId]) {
-                    userAnswers['q_' + questionId].forEach(function(val) {
-                        const cb = document.querySelector('input[name="q_' + questionId + '_a_' + val + '"]');
-                        if (cb) cb.checked = true;
+                    q.answers.forEach(function(a) {
+                        const cb = document.querySelector('input[name="q_' + questionId + '_a_' + a.id + '"]');
+                        if (cb) cb.checked = userAnswers['q_' + questionId].includes(a.id);
                     });
                 }
             } else if (qType === 'multi_answer') {
                 if (userAnswers['q_' + questionId]) {
                     q.answers.forEach(function(a, idx) {
                         const inp = document.querySelector('input[name="q_' + questionId + '_a_' + idx + '"]');
-                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
+                        if (inp) inp.value = (userAnswers['q_' + questionId][idx] !== undefined ? userAnswers['q_' + questionId][idx] : '');
                     });
                 }
             } else if (qType === 'fill_in_blank') {
                 if (userAnswers['q_' + questionId]) {
                     q.answers.forEach(function(a, idx) {
                         const inp = document.querySelector('input[name="q_' + questionId + '_blank_' + idx + '"]');
-                        if (inp) inp.value = userAnswers['q_' + questionId][idx] || '';
+                        if (inp) inp.value = (userAnswers['q_' + questionId][idx] !== undefined ? userAnswers['q_' + questionId][idx] : '');
                     });
                 }
             } else {
@@ -578,6 +581,23 @@ private String toJson(List<Map<String, Object>> questions) {
             console.log('Multi-page quiz initialized');
             console.log('Questions:', questions);
             console.log('Questions length:', questions.length);
+            
+            // Immediate correction on click outside answer fields
+            document.addEventListener('click', function(event) {
+                const questionBlock = document.getElementById('questionBlock');
+                if (!questionBlock) return;
+                const answersList = questionBlock.querySelector('.answers-list');
+                if (!answersList) return;
+                if (!answersList.contains(event.target)) {
+                    // Select all answer fields for the current question
+                    const allInputs = questionBlock.querySelectorAll('.answers-list input, .fib-inputs input');
+                    const allFilled = Array.from(allInputs).every(inp => inp.value && inp.value.trim() !== '');
+                    if (allFilled) {
+                        const result = checkAnswer();
+                        showImmediateFeedback(result);
+                    }
+                }
+            });
             
             const nextBtn = document.getElementById('nextBtn');
             const prevBtn = document.getElementById('prevBtn');
