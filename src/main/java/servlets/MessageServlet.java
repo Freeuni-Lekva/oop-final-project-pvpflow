@@ -19,51 +19,90 @@ public class MessageServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
-        Integer senderId = (session != null) ? (Integer) session.getAttribute("userId") : null;
-        if (senderId == null) {
+        if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect("login.jsp");
             return;
         }
-
+        Integer userId = (Integer) session.getAttribute("userId");
         String action = request.getParameter("action");
-        if ("sendMessage".equals(action)) {
-            try {
-                int receiverId = Integer.parseInt(request.getParameter("receiverId"));
-                String messageText = request.getParameter("messageText");
-
-                if (messageText != null && !messageText.trim().isEmpty()) {
-                    messageDAO.sendMessage(senderId, receiverId, messageText);
-                }
-            } catch (SQLException | NumberFormatException e) {
-                e.printStackTrace();
-            }
-        } else if ("sendChallenge".equals(action)) {
-            try {
-                int receiverId = Integer.parseInt(request.getParameter("receiverId"));
-                int quizId = Integer.parseInt(request.getParameter("quizId"));
-                
-                QuizDAO quizDAO = new QuizDAO();
-                Map<String, Object> quizDetails = quizDAO.getQuizDetails(quizId);
-                Map<String, Object> bestScore = quizDAO.getUsersHighestScore(senderId, quizId);
-                
-                double challengerScore = 0.0;
-                if (bestScore != null) {
-                    challengerScore = ((Number) bestScore.get("score")).doubleValue();
-                }
-                
-                String quizTitle = (String) quizDetails.get("title");
-                messageDAO.sendChallengeMessage(senderId, receiverId, quizId, quizTitle, challengerScore);
-            } catch (SQLException | NumberFormatException e) {
-                e.printStackTrace();
-            }
-        } else if ("markAsRead".equals(action)) {
-            try {
-                messageDAO.markMessagesAsRead(senderId);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        if (action == null) {
+            response.sendRedirect("homepage.jsp");
+            return;
         }
-        response.sendRedirect("homepage.jsp");
+        try {
+            switch (action) {
+                case "sendMessage": {
+                    String receiverIdStr = request.getParameter("receiverId");
+                    String message = request.getParameter("message");
+                    int receiverId;
+                    try {
+                        receiverId = Integer.parseInt(receiverIdStr);
+                    } catch (NumberFormatException e) {
+                        response.sendRedirect("homepage.jsp");
+                        return;
+                    }
+                    if (message == null || message.trim().isEmpty()) {
+                        response.sendRedirect("homepage.jsp");
+                        return;
+                    }
+                    try {
+                        MessageDAO messageDAO = new MessageDAO();
+                        messageDAO.sendMessage(userId, receiverId, message);
+                        response.sendRedirect("homepage.jsp");
+                    } catch (Exception e) {
+                        response.sendRedirect("homepage.jsp");
+                    }
+                    break;
+                }
+                case "sendChallenge": {
+                    String receiverIdStr = request.getParameter("receiverId");
+                    String quizIdStr = request.getParameter("quizId");
+                    int receiverId, quizId;
+                    try {
+                        receiverId = Integer.parseInt(receiverIdStr);
+                        quizId = Integer.parseInt(quizIdStr);
+                    } catch (NumberFormatException e) {
+                        response.sendRedirect("homepage.jsp");
+                        return;
+                    }
+                    String quizTitle = request.getParameter("quizTitle");
+                    if (quizTitle == null || quizTitle.trim().isEmpty()) {
+                        response.sendRedirect("homepage.jsp");
+                        return;
+                    }
+                    try {
+                        MessageDAO messageDAO = new MessageDAO();
+                        QuizDAO quizDAO = new QuizDAO();
+                        Map<String, Object> quizDetails = quizDAO.getQuizDetails(quizId);
+                        if (quizDetails != null) {
+                            Map<String, Object> bestScore = quizDAO.getUsersHighestScore(userId, quizId);
+                            int userScore = bestScore != null ? (int) bestScore.get("score") : 0;
+                            String challengeMessage = "I challenge you to beat my score of " + userScore + " on the quiz: " + quizTitle;
+                            messageDAO.sendMessage(userId, receiverId, challengeMessage);
+                        }
+                        response.sendRedirect("homepage.jsp");
+                    } catch (Exception e) {
+                        response.sendRedirect("homepage.jsp");
+                    }
+                    break;
+                }
+                case "markAsRead": {
+                    try {
+                        MessageDAO messageDAO = new MessageDAO();
+                        messageDAO.markMessagesAsRead(userId);
+                        response.sendRedirect("homepage.jsp");
+                    } catch (Exception e) {
+                        response.sendRedirect("homepage.jsp");
+                    }
+                    break;
+                }
+                default:
+                    response.sendRedirect("homepage.jsp");
+            }
+        } catch (Exception e) {
+            response.sendRedirect("homepage.jsp?error=An+error+occurred");
+        }
     }
 } 

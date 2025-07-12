@@ -139,16 +139,32 @@ public class GradeQuizServlet extends HttpServlet {
                                                    (boolean) reviewItem.get("isCorrect"));
                     }
                     
-                    AchievementDAO achievementDAO = new AchievementDAO();
-                    List<Map<String, Object>> newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
-                    
-                    for (Map<String, Object> achievement : newlyEarnedAchievements) {
-                        achievementDAO.createAchievementMessage(conn, userId, (String) achievement.get("name"));
-                    }
-                    
                     conn.commit();
                     
+                    // Handle achievements outside the transaction to avoid rollback on achievement errors
+                    List<Map<String, Object>> newlyEarnedAchievements = new ArrayList<>();
+                    try {
+                        AchievementDAO achievementDAO = new AchievementDAO();
+                        newlyEarnedAchievements = achievementDAO.checkAndAwardAchievements(userId);
+                    } catch (Exception e) {
+                        // Log achievement error but don't fail the quiz grading
+                        System.err.println("Achievement check failed: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
+                    // Handle achievement messages in a separate transaction
                     if (!newlyEarnedAchievements.isEmpty()) {
+                        try (Connection achievementConn = DBUtil.getConnection()) {
+                            AchievementDAO achievementDAO = new AchievementDAO();
+                            for (Map<String, Object> achievement : newlyEarnedAchievements) {
+                                achievementDAO.createAchievementMessage(achievementConn, userId, (String) achievement.get("name"));
+                            }
+                        } catch (Exception e) {
+                            // Log achievement message error but don't fail the quiz grading
+                            System.err.println("Achievement message creation failed: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                        
                         session.setAttribute("newlyEarnedAchievements", newlyEarnedAchievements);
                         Set<String> unseenAchievements = (Set<String>) session.getAttribute("unseenAchievements");
                         if (unseenAchievements == null) unseenAchievements = new HashSet<>();
