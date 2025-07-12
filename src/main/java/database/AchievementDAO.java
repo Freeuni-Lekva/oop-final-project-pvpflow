@@ -103,15 +103,22 @@ public class AchievementDAO {
         boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
         boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
 
-        return switch (name) {
-            case "Amateur Author" -> quizzesCreated >= 1;
-            case "Prolific Author" -> quizzesCreated >= 5;
-            case "Prodigious Author" -> quizzesCreated >= 10;
-            case "Quiz Machine" -> quizzesTaken >= 10;
-            case "I am the Greatest" -> hasHighestScore;
-            case "Practice Makes Perfect" -> hasTakenPracticeQuiz;
-            default -> false;
-        };
+        switch (name) {
+            case "Amateur Author":
+                return quizzesCreated >= 1;
+            case "Prolific Author":
+                return quizzesCreated >= 5;
+            case "Prodigious Author":
+                return quizzesCreated >= 10;
+            case "Quiz Machine":
+                return quizzesTaken >= 10;
+            case "I am the Greatest":
+                return hasHighestScore;
+            case "Practice Makes Perfect":
+                return hasTakenPracticeQuiz;
+            default:
+                return false;
+        }
     }
 
 
