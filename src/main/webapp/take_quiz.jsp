@@ -122,48 +122,52 @@ private String toJson(List<Map<String, Object>> questions) {
                                     <% } %>
                                 </div>
                                 <div class="required-field">* Fill in all blanks</div>
+                                <div class="question-type">Type: <%= qType.replace("_", " ").toUpperCase() %></div>
+                                <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
+                                    <img src="<%= q.get("image_url") %>" alt="Question Image" class="question-image" />
+                                <% } %>
                             <% } else { %>
                                 <div class="question-title">Q<%= (i+1) %>: <%= q.get("question_text") %></div>
-                            <% } %>
-                            <div class="question-type">Type: <%= qType.replace("_", " ").toUpperCase() %></div>
-                            <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
-                                <img src="<%= q.get("image_url") %>" alt="Question Image" class="question-image" />
-                            <% } %>
-                            <div class="answers-list">
-                                <% if ("multiple_choice".equals(qType)) { %>
-                                    <% for (int a = 0; a < answers.size(); a++) { %>
-                                        <div class="answer-row">
-                                            <input type="radio" name="q_<%=questionId%>" value="<%=answers.get(a).get("id")%>" id="q_<%=questionId%>_a_<%=a%>" required />
-                                            <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
-                                        </div>
-                                    <% } %>
-                                    <div class="required-field">* Please select one answer</div>
-                                <% } else if ("multi_choice_multi_answer".equals(qType)) { %>
-                                    <% for (int a = 0; a < answers.size(); a++) { %>
-                                        <div class="answer-row">
-                                            <input type="checkbox" name="q_<%=questionId%>_a_<%=answers.get(a).get("id")%>" value="true" id="q_<%=questionId%>_a_<%=a%>" />
-                                            <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
-                                        </div>
-                                    <% } %>
-                                    <div class="required-field">* Select all correct answers</div>
-                                <% } else if ("multi_answer".equals(qType)) { %>
-                                    <% for (int a = 0; a < answers.size(); a++) { %>
-                                        <div class="answer-row">
-                                            <input type="text" name="q_<%=questionId%>_a_<%=a%>" placeholder="Your answer" required />
-                                        </div>
-                                    <% } %>
-                                    <div class="required-field">* All fields are required</div>
-                                <% } else if ("question_response".equals(qType)) { %>
-                                    <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
-                                    <div class="required-field">* This field is required</div>
-                                <% } else if ("picture_response".equals(qType)) { %>
-                                    <input type="text" name="q_<%=questionId%>_text" placeholder="Describe what you see in the image" required />
-                                    <div class="required-field">* This field is required</div>
-                                <% } else { %>
-                                    <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
-                                    <div class="required-field">* This field is required</div>
+                                <div class="question-type">Type: <%= qType.replace("_", " ").toUpperCase() %></div>
+                                <% if (q.get("image_url") != null && !((String)q.get("image_url")).isEmpty()) { %>
+                                    <img src="<%= q.get("image_url") %>" alt="Question Image" class="question-image" />
                                 <% } %>
-                            </div>
+                                <div class="answers-list">
+                                    <% if ("multiple_choice".equals(qType)) { %>
+                                        <% for (int a = 0; a < answers.size(); a++) { %>
+                                            <div class="answer-row">
+                                                <input type="radio" name="q_<%=questionId%>" value="<%=answers.get(a).get("id")%>" id="q_<%=questionId%>_a_<%=a%>" required />
+                                                <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
+                                            </div>
+                                        <% } %>
+                                        <div class="required-field">* Please select one answer</div>
+                                    <% } else if ("multi_choice_multi_answer".equals(qType)) { %>
+                                        <% for (int a = 0; a < answers.size(); a++) { %>
+                                            <div class="answer-row">
+                                                <input type="checkbox" name="q_<%=questionId%>_a_<%=answers.get(a).get("id")%>" value="true" id="q_<%=questionId%>_a_<%=a%>" />
+                                                <label for="q_<%=questionId%>_a_<%=a%>"><%= answers.get(a).get("answer_text") %></label>
+                                            </div>
+                                        <% } %>
+                                        <div class="required-field">* Select all correct answers</div>
+                                    <% } else if ("multi_answer".equals(qType)) { %>
+                                        <% for (int a = 0; a < answers.size(); a++) { %>
+                                            <div class="answer-row">
+                                                <input type="text" name="q_<%=questionId%>_a_<%=a%>" placeholder="Your answer" required />
+                                            </div>
+                                        <% } %>
+                                        <div class="required-field">* All fields are required</div>
+                                    <% } else if ("question_response".equals(qType)) { %>
+                                        <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
+                                        <div class="required-field">* This field is required</div>
+                                    <% } else if ("picture_response".equals(qType)) { %>
+                                        <input type="text" name="q_<%=questionId%>_text" placeholder="Describe what you see in the image" required />
+                                        <div class="required-field">* This field is required</div>
+                                    <% } else { %>
+                                        <input type="text" name="q_<%=questionId%>_text" placeholder="Your answer" required />
+                                        <div class="required-field">* This field is required</div>
+                                    <% } %>
+                                </div>
+                            <% } %>
                         </div>
                         <% } %>
                         <button class="submit-btn" type="submit">Submit Answers</button>

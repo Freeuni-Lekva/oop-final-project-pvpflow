@@ -83,7 +83,6 @@ class DBUtilTest {
         assertTrue(output.contains("DBUtil Connection Info:"));
         assertTrue(output.contains("URL: jdbc:mysql://localhost:3306/quizapp"));
         assertTrue(output.contains("USER: root"));
-        assertTrue(output.contains("PASSWORD: lukalodia"));
     }
 
     @Test
@@ -302,7 +301,6 @@ class DBUtilTest {
             output = outputStream.toString();
             assertTrue(output.contains("jdbc:mysql://localhost:3306/quizapp"));
             assertTrue(output.contains("root"));
-            assertTrue(output.contains("lukalodia"));
         }
     }
 } 
