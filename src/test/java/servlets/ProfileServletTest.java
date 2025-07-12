@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,13 +42,32 @@ class ProfileServletTest {
     private RequestDispatcher dispatcher;
 
     private ProfileServlet servlet;
+    private MockedConstruction<UserDAO> userDAOMock;
+    private MockedConstruction<FriendDAO> friendDAOMock;
+    private MockedConstruction<AchievementDAO> achievementDAOMock;
+    private MockedStatic<QuizDAO> quizDAOMock;
 
     private static final int CURRENT_USER_ID = 1;
     private static final int TARGET_USER_ID = 2;
 
     @BeforeEach
     void setUp() {
+        // Set up mocks for all DAOs before creating the servlet
+        userDAOMock = mockConstruction(UserDAO.class);
+        friendDAOMock = mockConstruction(FriendDAO.class);
+        achievementDAOMock = mockConstruction(AchievementDAO.class);
+        quizDAOMock = mockStatic(QuizDAO.class);
+        
+        // Create the servlet after mocks are set up
         servlet = new ProfileServlet();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (userDAOMock != null) userDAOMock.close();
+        if (friendDAOMock != null) friendDAOMock.close();
+        if (achievementDAOMock != null) achievementDAOMock.close();
+        if (quizDAOMock != null) quizDAOMock.close();
     }
 
     // ========== Authentication Tests ==========
@@ -87,25 +107,22 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        try (
-            MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class, (mock, context) -> when(mock.getUserById(CURRENT_USER_ID)).thenReturn(userData));
-            MockedConstruction<FriendDAO> friendDAOMock = mockConstruction(FriendDAO.class, (mock, context) -> when(mock.getFriends(CURRENT_USER_ID)).thenReturn(friends));
-            MockedConstruction<AchievementDAO> achievementDAOMock = mockConstruction(AchievementDAO.class, (mock, context) -> when(mock.getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements));
-            MockedStatic<QuizDAO> quizDAOMock = mockStatic(QuizDAO.class)
-        ) {
-            quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(CURRENT_USER_ID)).thenReturn(createdQuizzes);
-            quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(CURRENT_USER_ID)).thenReturn(quizHistory);
+        // Configure the mocks that were set up in setUp()
+        when(userDAOMock.constructed().get(0).getUserById(CURRENT_USER_ID)).thenReturn(userData);
+        when(friendDAOMock.constructed().get(0).getFriends(CURRENT_USER_ID)).thenReturn(friends);
+        when(achievementDAOMock.constructed().get(0).getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements);
+        quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(CURRENT_USER_ID)).thenReturn(createdQuizzes);
+        quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(CURRENT_USER_ID)).thenReturn(quizHistory);
 
-            servlet.doGet(request, response);
+        servlet.doGet(request, response);
 
-            verify(request).setAttribute(eq("friends"), any());
-            verify(request).setAttribute(eq("user"), any());
-            verify(request).setAttribute(eq("createdQuizzes"), any());
-            verify(request).setAttribute(eq("quizHistory"), any());
-            verify(request).setAttribute(eq("achievements"), any());
-            verify(request).setAttribute(eq("isOwnProfile"), eq(true));
-            verify(dispatcher).forward(request, response);
-        }
+        verify(request).setAttribute(eq("friends"), any());
+        verify(request).setAttribute(eq("user"), any());
+        verify(request).setAttribute(eq("createdQuizzes"), any());
+        verify(request).setAttribute(eq("quizHistory"), any());
+        verify(request).setAttribute(eq("achievements"), any());
+        verify(request).setAttribute(eq("isOwnProfile"), eq(true));
+        verify(dispatcher).forward(request, response);
     }
 
     @Test
@@ -120,25 +137,22 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        try (
-            MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class, (mock, context) -> when(mock.getUserById(CURRENT_USER_ID)).thenReturn(userData));
-            MockedConstruction<FriendDAO> friendDAOMock = mockConstruction(FriendDAO.class, (mock, context) -> when(mock.getFriends(CURRENT_USER_ID)).thenReturn(friends));
-            MockedConstruction<AchievementDAO> achievementDAOMock = mockConstruction(AchievementDAO.class, (mock, context) -> when(mock.getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements));
-            MockedStatic<QuizDAO> quizDAOMock = mockStatic(QuizDAO.class)
-        ) {
-            quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(CURRENT_USER_ID)).thenReturn(createdQuizzes);
-            quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(CURRENT_USER_ID)).thenReturn(quizHistory);
+        // Configure the mocks that were set up in setUp()
+        when(userDAOMock.constructed().get(0).getUserById(CURRENT_USER_ID)).thenReturn(userData);
+        when(friendDAOMock.constructed().get(0).getFriends(CURRENT_USER_ID)).thenReturn(friends);
+        when(achievementDAOMock.constructed().get(0).getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements);
+        quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(CURRENT_USER_ID)).thenReturn(createdQuizzes);
+        quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(CURRENT_USER_ID)).thenReturn(quizHistory);
 
-            servlet.doGet(request, response);
+        servlet.doGet(request, response);
 
-            verify(request).setAttribute(eq("friends"), any());
-            verify(request).setAttribute(eq("user"), any());
-            verify(request).setAttribute(eq("createdQuizzes"), any());
-            verify(request).setAttribute(eq("quizHistory"), any());
-            verify(request).setAttribute(eq("achievements"), any());
-            verify(request).setAttribute(eq("isOwnProfile"), eq(true));
-            verify(dispatcher).forward(request, response);
-        }
+        verify(request).setAttribute(eq("friends"), any());
+        verify(request).setAttribute(eq("user"), any());
+        verify(request).setAttribute(eq("createdQuizzes"), any());
+        verify(request).setAttribute(eq("quizHistory"), any());
+        verify(request).setAttribute(eq("achievements"), any());
+        verify(request).setAttribute(eq("isOwnProfile"), eq(true));
+        verify(dispatcher).forward(request, response);
     }
 
     @Test
@@ -151,23 +165,20 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        try (
-            MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class, (mock, context) -> when(mock.getUserById(TARGET_USER_ID)).thenReturn(userData));
-            MockedStatic<QuizDAO> quizDAOMock = mockStatic(QuizDAO.class)
-        ) {
-            quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(TARGET_USER_ID)).thenReturn(createdQuizzes);
-            quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(TARGET_USER_ID)).thenReturn(quizHistory);
+        // Configure the mocks that were set up in setUp()
+        when(userDAOMock.constructed().get(0).getUserById(TARGET_USER_ID)).thenReturn(userData);
+        quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(TARGET_USER_ID)).thenReturn(createdQuizzes);
+        quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(TARGET_USER_ID)).thenReturn(quizHistory);
 
-            servlet.doGet(request, response);
+        servlet.doGet(request, response);
 
-            verify(request).setAttribute(eq("friends"), any());
-            verify(request).setAttribute(eq("user"), any());
-            verify(request).setAttribute(eq("createdQuizzes"), any());
-            verify(request).setAttribute(eq("quizHistory"), any());
-            verify(request).setAttribute(eq("achievements"), any());
-            verify(request).setAttribute(eq("isOwnProfile"), eq(false));
-            verify(dispatcher).forward(request, response);
-        }
+        verify(request).setAttribute(eq("friends"), any());
+        verify(request).setAttribute(eq("user"), any());
+        verify(request).setAttribute(eq("createdQuizzes"), any());
+        verify(request).setAttribute(eq("quizHistory"), any());
+        verify(request).setAttribute(eq("achievements"), any());
+        verify(request).setAttribute(eq("isOwnProfile"), eq(false));
+        verify(dispatcher).forward(request, response);
     }
 
     // ========== Invalid Input Tests ==========
@@ -181,6 +192,19 @@ class ProfileServletTest {
 
         verify(response).sendRedirect("homepage.jsp");
         verifyNoMoreInteractions(response);
+    }
+
+    // ========== Database Error Tests ==========
+
+    @Test
+    void testDoGet_SQLException_ThrowsServletException() throws Exception {
+        setupAuthenticatedUser();
+        when(request.getParameter("id")).thenReturn(String.valueOf(TARGET_USER_ID));
+
+        // Configure UserDAO to throw SQLException
+        when(userDAOMock.constructed().get(0).getUserById(TARGET_USER_ID)).thenThrow(new SQLException("Database error"));
+        
+        assertThrows(ServletException.class, () -> servlet.doGet(request, response));
     }
 
     // ========== Helper Methods ==========
