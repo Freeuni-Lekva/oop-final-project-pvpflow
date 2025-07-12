@@ -54,12 +54,10 @@ class MessageServletTest {
         when(session.getAttribute("userId")).thenReturn(USER_ID);
         
         servlet = new MessageServlet();
-        
-        // Create mocks
+
         mockMessageDAO = mock(MessageDAO.class);
         mockQuizDAO = mock(QuizDAO.class);
-        
-        // Use reflection to inject mocks
+
         java.lang.reflect.Field messageDAOField = MessageServlet.class.getDeclaredField("messageDAO");
         messageDAOField.setAccessible(true);
         messageDAOField.set(servlet, mockMessageDAO);

@@ -8,9 +8,6 @@ import java.util.Map;
 
 public class MessageDAO {
 
-    /**
-     * Sends a general message (note) from sender to recipient.
-     */
     public void sendMessage(int senderId, int recipientId, String content) throws SQLException {
         System.out.println("MessageDAO: Sending message from " + senderId + " to " + recipientId + ": " + content);
         String sql = "INSERT INTO messages (sender_id, recipient_id, message_type, content) VALUES (?, ?, 'general', ?)";
@@ -24,9 +21,6 @@ public class MessageDAO {
         }
     }
 
-    /**
-     * Sends a challenge message with quiz information.
-     */
     public void sendChallenge(int senderId, int recipientId, int quizId, String quizTitle, double senderScore) throws SQLException {
         System.out.println("MessageDAO: Sending challenge from " + senderId + " to " + recipientId + " for quiz " + quizId);
         String content = String.format("I challenge you to beat my score of %.1f%% on the quiz: %s. Take the quiz here: take_quiz.jsp?id=%d", 
@@ -42,9 +36,6 @@ public class MessageDAO {
         }
     }
 
-    /**
-     * Gets all messages received by a user, ordered by most recent first.
-     */
     public List<Map<String, Object>> getReceivedMessages(int userId) throws SQLException {
         System.out.println("MessageDAO: Getting received messages for user " + userId);
         List<Map<String, Object>> messages = new ArrayList<>();
@@ -75,9 +66,6 @@ public class MessageDAO {
         return messages;
     }
 
-    /**
-     * Gets all messages sent by a user, ordered by most recent first.
-     */
     public List<Map<String, Object>> getSentMessages(int userId) throws SQLException {
         List<Map<String, Object>> messages = new ArrayList<>();
         String sql = "SELECT m.id, m.recipient_id, u.username as recipient_username, m.message_type, m.content, m.created_at " +
@@ -105,9 +93,6 @@ public class MessageDAO {
         return messages;
     }
 
-    /**
-     * Gets the count of unread messages for a user.
-     */
     public int getUnreadMessageCount(int userId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = FALSE";
         try (Connection conn = DBUtil.getConnection();
@@ -122,9 +107,7 @@ public class MessageDAO {
         return 0;
     }
 
-    /**
-     * Marks all messages sent to a user as read.
-     */
+
     public void markMessagesAsRead(int userId) throws SQLException {
         String sql = "UPDATE messages SET is_read = TRUE WHERE recipient_id = ? AND is_read = FALSE";
         try (Connection conn = DBUtil.getConnection();
@@ -134,9 +117,7 @@ public class MessageDAO {
         }
     }
 
-    /**
-     * Gets recent conversations for a user (last message from each conversation).
-     */
+
     public List<Map<String, Object>> getRecentConversations(int userId) throws SQLException {
         List<Map<String, Object>> conversations = new ArrayList<>();
         String sql = "WITH LatestMessages AS (" +
