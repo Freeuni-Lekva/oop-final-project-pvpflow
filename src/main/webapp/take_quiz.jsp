@@ -110,20 +110,16 @@ private String toJson(List<Map<String, Object>> questions) {
                         <div class="question-block">
                             <% if ("fill_in_blank".equals(qType)) { %>
                                 <div class="fib-question-text">
-                                    <%= q.get("question_text") %>
-                                </div>
-                                <div class="fib-inputs">
-                                <% 
-                                    String text = (String) q.get("question_text");
-                                    String[] parts = text.split("_____");
-                                    int blankCount = parts.length - 1;
-                                    for (int b = 0; b < blankCount; b++) {
-                                %>
-                                    <div class="fib-input-group">
-                                        <label>Blank <%= (b+1) %>:</label>
-                                        <input type="text" name="q_<%=questionId%>_blank_<%=b%>" class="fib-blank" required placeholder="Enter your answer" />
-                                    </div>
-                                <% } %>
+                                    <% 
+                                        String text = (String) q.get("question_text");
+                                        String[] parts = text.split("_____");
+                                        for (int b = 0; b < parts.length; b++) {
+                                    %>
+                                        <%= parts[b] %>
+                                        <% if (b < parts.length - 1) { %>
+                                            <input type="text" name="q_<%=questionId%>_blank_<%=b%>" class="fib-blank" required placeholder="Enter your answer" />
+                                        <% } %>
+                                    <% } %>
                                 </div>
                                 <div class="required-field">* Fill in all blanks</div>
                             <% } else { %>
@@ -692,7 +688,9 @@ private String toJson(List<Map<String, Object>> questions) {
                             });
                         } else if (qType === 'fill_in_blank') {
                             let arr = userAnswers['q_' + questionId] || [];
-                            q.answers.forEach(function(a, idx) {
+                            // FIX: Use blank count from question_text, not answers.length
+                            let blankCount = (q.question_text.split("_____").length - 1);
+                            for (let idx = 0; idx < blankCount; idx++) {
                                 let val = arr[idx] || '';
                                 let input = document.createElement('input');
                                 input.type = 'hidden';
@@ -701,7 +699,7 @@ private String toJson(List<Map<String, Object>> questions) {
                                 input.value = val;
                                 form.appendChild(input);
                                 console.log('Added hidden field: q_' + questionId + '_blank_' + idx + ' = ' + val);
-                            });
+                            }
                         } else {
                             let val = userAnswers['q_' + questionId + '_text'] || '';
                             let input = document.createElement('input');
