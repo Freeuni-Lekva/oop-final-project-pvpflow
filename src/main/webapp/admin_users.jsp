@@ -1,24 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.AdminDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Check if user is admin
     AdminDAO adminDAO = new AdminDAO();
     if (!adminDAO.isAdmin(userId)) {
         response.sendRedirect("homepage.jsp");
         return;
     }
 
-    // Get users
     List<Map<String, Object>> users = adminDAO.getAllUsers();
 %>
 <!DOCTYPE html>
@@ -58,7 +54,6 @@
             </div>
         <% } %>
 
-        <!-- User Statistics -->
         <div class="stats-summary">
             <div class="stat-card">
                 <div class="stat-number"><%= users.size() %></div>
@@ -92,7 +87,6 @@
             </div>
         </div>
 
-        <!-- Users Table -->
         <div class="users-table">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
