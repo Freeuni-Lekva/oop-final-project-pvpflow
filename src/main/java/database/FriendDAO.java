@@ -88,7 +88,7 @@ public class FriendDAO {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, friendshipId);
-            int rowsAffected = stmt.executeUpdate();
+            stmt.executeUpdate();
         }
     }
 

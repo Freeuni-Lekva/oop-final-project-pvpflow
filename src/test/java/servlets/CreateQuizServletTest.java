@@ -64,10 +64,8 @@ class CreateQuizServletTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // No static mocking here; only regular mock setup if needed
     }
 
-    // ========== doGet Tests ==========
 
     @Test
     void testDoGet_ForwardsToCreateQuizJsp() throws Exception {
@@ -76,7 +74,6 @@ class CreateQuizServletTest {
         verify(dispatcher).forward(request, response);
     }
 
-    // ========== Authentication Tests ==========
 
     @Test
     void testDoPost_NoSession_RedirectsToLogin() throws Exception {
@@ -97,7 +94,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Validation Tests ==========
 
     @Test
     void testDoPost_EmptyTitle_RedirectsWithError() throws Exception {
@@ -217,7 +213,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Successful Quiz Creation Tests ==========
 
     @Test
     void testDoPost_SuccessfulQuizCreation_WithAllProperties() throws Exception {
@@ -292,7 +287,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Question Processing Tests ==========
 
     @Test
     void testDoPost_SkipQuestionWithMissingData() throws Exception {
@@ -434,7 +428,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Achievement Tests ==========
 
     @Test
     void testDoPost_WithNewAchievements() throws Exception {
@@ -517,7 +510,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Database Error Tests ==========
 
     @Test
     void testDoPost_DatabaseException_RollbackAndRedirect() throws Exception {
@@ -599,7 +591,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Verification Tests ==========
 
     @Test
     void testDoPost_VerificationSuccess() throws Exception {
@@ -667,7 +658,6 @@ class CreateQuizServletTest {
         }
     }
 
-    // ========== Helper Methods ==========
 
     private void setupAuthenticatedUser() throws Exception {
         when(request.getSession(false)).thenReturn(session);
@@ -705,7 +695,6 @@ class CreateQuizServletTest {
         when(request.getParameter("isOrdered_" + index)).thenReturn(null);
         when(request.getParameter("isCorrect_" + index)).thenReturn("2");
 
-        // Setup answers
         for (int a = 0; a < 4; a++) {
             when(request.getParameter("answer_" + index + "_" + a)).thenReturn("Answer " + a);
         }
@@ -720,7 +709,6 @@ class CreateQuizServletTest {
         when(request.getParameter("imageUrl_" + index)).thenReturn(null);
         when(request.getParameter("isOrdered_" + index)).thenReturn(null);
 
-        // Setup answers with some correct
         for (int a = 0; a < 4; a++) {
             when(request.getParameter("answer_" + index + "_" + a)).thenReturn("Answer " + a);
             when(request.getParameter("isCorrect_" + index + "_" + a)).thenReturn(a < 2 ? "on" : null);
@@ -736,7 +724,6 @@ class CreateQuizServletTest {
         when(request.getParameter("imageUrl_" + index)).thenReturn(null);
         when(request.getParameter("isOrdered_" + index)).thenReturn(null);
 
-        // Setup answers
         for (int a = 0; a < 3; a++) {
             when(request.getParameter("answer_" + index + "_" + a)).thenReturn("Answer " + a);
         }
@@ -751,7 +738,6 @@ class CreateQuizServletTest {
         when(request.getParameter("imageUrl_" + index)).thenReturn(null);
         when(request.getParameter("isOrdered_" + index)).thenReturn(null);
 
-        // Setup answers
         for (int a = 0; a < 2; a++) {
             when(request.getParameter("answer_" + index + "_" + a)).thenReturn("Answer " + a);
         }

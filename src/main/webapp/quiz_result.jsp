@@ -9,15 +9,12 @@
     String quizTitle = (String) result.get("quizTitle");
     Boolean isPractice = (Boolean) result.get("isPractice");
     
-    // Get newly earned achievements from session
+
     List<Map<String, Object>> newlyEarnedAchievements = (List<Map<String, Object>>) session.getAttribute("newlyEarnedAchievements");
     if (newlyEarnedAchievements == null) {
         newlyEarnedAchievements = new ArrayList<>();
     }
-    // Clear the session attribute after retrieving it
     session.removeAttribute("newlyEarnedAchievements");
-
-    // Debug: Print all userAnswers objects
     System.out.println("=== quiz_result.jsp: userAnswers ===");
     for (int i = 0; i < userAnswers.size(); i++) {
         System.out.println("userAnswers[" + i + "]: " + userAnswers.get(i));
@@ -67,7 +64,6 @@
                 </div>
             </div>
 
-            <!-- Newly Earned Achievements Section -->
             <% if (!newlyEarnedAchievements.isEmpty()) { %>
                 <div class="achievements-section">
                     <h3 class="achievements-title">🏆 New Achievements Unlocked!</h3>

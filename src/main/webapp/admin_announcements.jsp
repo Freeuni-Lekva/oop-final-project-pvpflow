@@ -1,24 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.AdminDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Check if user is admin
     AdminDAO adminDAO = new AdminDAO();
     if (!adminDAO.isAdmin(userId)) {
         response.sendRedirect("homepage.jsp");
         return;
     }
 
-    // Data is provided by the AdminServlet
     List<Map<String, Object>> announcements = (List<Map<String, Object>>) request.getAttribute("announcements");
     if (announcements == null) {
         announcements = new ArrayList<>();
@@ -62,7 +58,6 @@
             </div>
         <% } %>
 
-        <!-- Create New Announcement -->
         <div class="create-announcement">
             <h2 style="margin-bottom: 1.5rem; color: #e0e7ff;">Create New Announcement</h2>
             <form action="AdminServlet" method="post">
@@ -82,7 +77,6 @@
             </form>
         </div>
 
-        <!-- Existing Announcements -->
         <h2 style="margin-bottom: 1.5rem; color: #e0e7ff;">Active Announcements</h2>
         
         <% if (announcements.isEmpty()) { %>

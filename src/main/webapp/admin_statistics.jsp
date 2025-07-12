@@ -1,24 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.AdminDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // Check if user is admin
     AdminDAO adminDAO = new AdminDAO();
     if (!adminDAO.isAdmin(userId)) {
         response.sendRedirect("homepage.jsp");
         return;
     }
 
-    // Get site statistics
     Map<String, Object> stats = adminDAO.getSiteStatistics();
 %>
 <!DOCTYPE html>
@@ -46,7 +42,6 @@
     <div class="main-content">
         <h1 class="page-title">Site Statistics</h1>
 
-        <!-- Key Metrics -->
         <div class="stats-grid">
             <div class="stat-card">
                 <span class="stat-icon">👥</span>
@@ -98,7 +93,6 @@
             </div>
         </div>
 
-        <!-- Detailed Analytics -->
         <div class="analytics-section">
             <h2 class="section-title">Platform Analytics</h2>
             
@@ -145,7 +139,6 @@
             </div>
         </div>
 
-        <!-- Insights -->
         <div class="insights-grid">
             <div class="insight-card">
                 <div class="insight-title">User Growth</div>

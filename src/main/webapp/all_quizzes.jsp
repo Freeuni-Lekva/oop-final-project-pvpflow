@@ -1,14 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.QuizDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
-    // Fetch all quizzes
     QuizDAO quizDAO = new QuizDAO();
     List<Map<String, Object>> quizzes = quizDAO.getAllQuizzesWithStats(); // You may need to implement this method
 %>

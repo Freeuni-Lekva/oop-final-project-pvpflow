@@ -9,39 +9,33 @@
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.QuizDAO" %>
 <%@ page import="java.sql.*, java.util.*, database.DBUtil, database.FriendDAO, database.MessageDAO, database.AdminDAO, database.QuizDAO" %>
 <%
-    // Get user information from session
     String username = (String) session.getAttribute("user");
     Integer userId = (Integer) session.getAttribute("userId");
     String email = (String) session.getAttribute("email");
 
-    // Redirect to login if not logged in
     if (username == null || userId == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
-    // --- Data Fetching ---
     List<Map<String, Object>> announcements = new ArrayList<>();
     List<Map<String, Object>> recentlyCreatedQuizzes = new ArrayList<>();
     List<Map<String, Object>> userRecentQuizActivities = new ArrayList<>();
     List<Map<String, Object>> userRecentCreatingActivities = new ArrayList<>();
     List<Map<String, Object>> popularQuizzes = new ArrayList<>();
     int quizzesTakenCount = 0;
-    
-    // DAO for fetching friend-related data
+
     FriendDAO friendDAO = new FriendDAO();
     List<Map<String, Object>> friends = new ArrayList<>();
     List<Map<String, Object>> pendingRequests = new ArrayList<>();
     List<Map<String, Object>> potentialFriends = new ArrayList<>();
 
-    // DAO for fetching message data
     MessageDAO messageDAO = new MessageDAO();
     List<Map<String, Object>> conversations = new ArrayList<>();
     int unreadMessageCount = 0;
 
     List<Map<String, Object>> quizzes = new ArrayList<>();
-    
-    // --- Achievements Variables ---
+
     final int QUIZ_MASTER_GOAL = 50;
     boolean hasPerfectScore = false;
     double quizMasterProgress = 0.0;
@@ -53,13 +47,11 @@
     
     Connection conn = null;
     try {
-        // Test database connection first
         DBUtil.testDatabaseConnection();
         
         conn = DBUtil.getConnection();
         System.out.println("Homepage: Database connection established successfully");
 
-        // Fetch active announcements
         String announcementsSql = "SELECT title, content FROM announcements WHERE is_active = TRUE ORDER BY created_at DESC";
         try (PreparedStatement ps = conn.prepareStatement(announcementsSql);
              ResultSet rs = ps.executeQuery()) {
@@ -71,7 +63,6 @@
             }
         }
 
-        // Fetch user's quizzes taken count
         String quizzesTakenSql = "SELECT COUNT(DISTINCT quiz_id) FROM quiz_submissions WHERE user_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(quizzesTakenSql)) {
             ps.setInt(1, userId);
@@ -83,7 +74,6 @@
             }
         }
 
-        // Fetch popular quizzes (most taken)
         String popularQuizzesSql = "SELECT q.id, q.title, q.description, COUNT(qs.id) as attempt_count " +
                                   "FROM quizzes q " +
                                   "LEFT JOIN quiz_submissions qs ON q.id = qs.quiz_id " +
@@ -104,7 +94,7 @@
         }
         System.out.println("Homepage: Total popular quizzes found: " + popularQuizzes.size());
 
-        // Fetch recently created quizzes (from all users)
+
         String recentQuizzesSql = "SELECT q.id, q.title, q.description, u.username as creator_name, q.created_at " +
                                  "FROM quizzes q " +
                                  "JOIN users u ON q.creator_id = u.id " +
@@ -125,7 +115,7 @@
         }
         System.out.println("Homepage: Total recent quizzes found: " + recentlyCreatedQuizzes.size());
 
-        // Fetch user's recent quiz taking activities
+
         String userQuizActivitiesSql = "SELECT qs.id, q.title, qs.score, qs.total_possible_score, qs.percentage_score, qs.completed_at " +
                                       "FROM quiz_submissions qs " +
                                       "JOIN quizzes q ON qs.quiz_id = q.id " +
@@ -146,7 +136,6 @@
             }
         }
 
-        // Fetch user's recent quiz creating activities
         String userCreatingActivitiesSql = "SELECT id, title, description, created_at " +
                                           "FROM quizzes " +
                                           "WHERE creator_id = ? " +
@@ -168,7 +157,6 @@
         }
         System.out.println("Homepage: Total user created quizzes found: " + userRecentCreatingActivities.size());
 
-        // Fetch all quizzes for the quizzes list
         String allQuizzesSql = "SELECT id, title, description FROM quizzes ORDER BY created_at DESC";
         try (PreparedStatement ps = conn.prepareStatement(allQuizzesSql);
              ResultSet rs = ps.executeQuery()) {
@@ -181,16 +169,13 @@
             }
         }
 
-        // Fetch friend data
         friends = friendDAO.getFriends(userId);
         pendingRequests = friendDAO.getPendingRequests(userId);
         potentialFriends = friendDAO.findPotentialFriends(userId);
 
-        // Fetch message data
         conversations = messageDAO.getConversations(userId);
         unreadMessageCount = messageDAO.getUnreadMessageCount(userId);
-        
-        // --- Achievements Data Calculation ---
+
         String perfectScoreSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND percentage_score = 100";
         try (PreparedStatement ps = conn.prepareStatement(perfectScoreSql)) {
             ps.setInt(1, userId);
@@ -200,8 +185,7 @@
                 }
             }
         }
-        
-        // Count of created quizzes
+
         String createdCountSql = "SELECT COUNT(*) FROM quizzes WHERE creator_id = ?";
         System.out.println("Homepage: Executing created count query for user " + userId);
         try (PreparedStatement ps = conn.prepareStatement(createdCountSql)) {
@@ -214,7 +198,7 @@
             }
         }
 
-        // Check for highest score
+
         String highestScoreSql = "SELECT COUNT(*) FROM quiz_submissions s1 " +
                                 "WHERE s1.user_id = ? AND s1.score = (" +
                                 "SELECT MAX(s2.score) FROM quiz_submissions s2 " +
@@ -227,8 +211,7 @@
                 }
             }
         }
-        
-        // Check for practice mode quiz
+
         String practiceQuizSql = "SELECT COUNT(*) FROM quiz_submissions WHERE user_id = ? AND is_practice_mode = TRUE";
         try (PreparedStatement ps = conn.prepareStatement(practiceQuizSql)) {
             ps.setInt(1, userId);
@@ -243,7 +226,7 @@
         perfectScoreProgress = hasPerfectScore ? 100.0 : 0.0;
         creatorProgress = !userRecentCreatingActivities.isEmpty() ? 100.0 : 0.0;
 
-        // Debug: Show all quizzes in database
+
         try {
             List<Map<String, Object>> allQuizzesDebug = QuizDAO.getAllQuizzes();
             System.out.println("Homepage: === ALL QUIZZES IN DATABASE ===");
@@ -296,8 +279,7 @@
                         <div class="notification-badge"><%= unreadMessageCount > 99 ? "99+" : unreadMessageCount %></div>
                     <% } %>
                 </div>
-                <%-- Admin Dashboard link should be outside the nav-btn-container --%>
-                <% 
+                <%
                     AdminDAO adminDAO = new AdminDAO();
                     if (adminDAO.isAdmin(userId)) {
                 %>
@@ -314,14 +296,14 @@
         </div>
     </div>
     <div class="main-content">
-        <!-- Success Message Display -->
+
         <% if (request.getParameter("success") != null) { %>
             <div class="success-message" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
                 <%= request.getParameter("success").replace("+", " ") %>
             </div>
         <% } %>
         
-        <!-- Error Message Display -->
+
         <% if (request.getParameter("error") != null) { %>
             <div class="error-message" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
                 <%= request.getParameter("error").replace("+", " ") %>
@@ -352,7 +334,6 @@
             </div>
         </div>
 
-        <!-- Announcements Section -->
         <% if (!announcements.isEmpty()) { %>
             <div class="topic-row">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -384,7 +365,6 @@
             </div>
         <% } %>
 
-        <!-- Popular Quizzes Section -->
         <div class="topic-row">
             <h2>Popular Quizzes</h2>
             <div class="card-row">
@@ -406,7 +386,6 @@
             </div>
         </div>
 
-        <!-- Recently Created Quizzes Section -->
         <div class="topic-row">
             <h2>Recently Created Quizzes</h2>
             <div class="card-row">
@@ -428,7 +407,6 @@
             </div>
         </div>
 
-        <!-- User's Recent Quiz Taking Activities -->
         <div class="topic-row">
             <h2>Your Recent Quiz Activities</h2>
             <% if (!userRecentQuizActivities.isEmpty()) { %>
@@ -447,7 +425,6 @@
             <% } %>
         </div>
 
-        <!-- User's Recent Quiz Creating Activities -->
         <% if (!userRecentCreatingActivities.isEmpty()) { %>
             <div class="topic-row">
                 <h2>Your Recent Quiz Creations</h2>
@@ -464,24 +441,21 @@
         <% } %>
     </div>
 
-<!-- Achievements Popup -->
 <div class="popup" id="achievementsPopup">
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('achievementsPopup')">&times;</button>
         <h3>Achievements</h3>
         <%
-            // Author achievements
             double amateurAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 1 * 100);
             double prolificAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 5 * 100);
             double prodigiousAuthorProgress = Math.min(100.0, (double) quizzesCreatedCount / 10 * 100);
-            // Quiz taker achievements
+
             double quizMachineProgress = Math.min(100.0, (double) quizzesTakenCount / 10 * 100);
-            // Special achievements
+
             double iAmTheGreatestProgress = hasHighestScore ? 100.0 : 0.0;
             double practiceMakesPerfectProgress = hasTakenPracticeQuiz ? 100.0 : 0.0;
         %>
         <div style="margin-top: 1.5rem;">
-            <!-- Amateur Author -->
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon author">✍️</div>
@@ -494,7 +468,7 @@
                     <div class="progress-bar" data-progress="<%= amateurAuthorProgress %>"></div>
                 </div>
             </div>
-            <!-- Prolific Author -->
+
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon author">📚</div>
@@ -507,7 +481,7 @@
                     <div class="progress-bar" data-progress="<%= prolificAuthorProgress %>"></div>
                 </div>
             </div>
-            <!-- Prodigious Author -->
+
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon author">👑</div>
@@ -520,7 +494,6 @@
                     <div class="progress-bar" data-progress="<%= prodigiousAuthorProgress %>"></div>
                 </div>
             </div>
-            <!-- Quiz Machine -->
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon machine">🤖</div>
@@ -533,7 +506,7 @@
                     <div class="progress-bar" data-progress="<%= quizMachineProgress %>"></div>
                 </div>
             </div>
-            <!-- I am the Greatest -->
+
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon greatest">🏆</div>
@@ -546,7 +519,7 @@
                     <div class="progress-bar" data-progress="<%= iAmTheGreatestProgress %>"></div>
                 </div>
             </div>
-            <!-- Practice Makes Perfect -->
+
             <div class="achievement-item">
                 <div class="achievement-header">
                     <div class="achievement-icon practice">💪</div>
@@ -563,7 +536,6 @@
     </div>
 </div>
 
-<!-- Requests Popup -->
 <div class="popup" id="requestsPopup">
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('requestsPopup')">&times;</button>
@@ -592,7 +564,6 @@
     </div>
 </div>
 
-<!-- Friends Popup -->
 <div class="popup" id="friendsPopup">
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('friendsPopup')">&times;</button>
@@ -633,7 +604,6 @@
     </div>
 </div>
 
-<!-- Messages Popup -->
 <div class="popup" id="messagesPopup">
     <div class="popup-content">
         <button class="close-btn" onclick="closePopup('messagesPopup')">&times;</button>
@@ -674,7 +644,6 @@
         </div>
         <h3 style="margin-top: 2rem;">Send Message</h3>
         
-        <!-- Message Type Selection -->
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Message Type:</label>
             <div style="display: flex; gap: 1rem;">
@@ -689,7 +658,6 @@
             </div>
         </div>
 
-        <!-- Note Form -->
         <form id="noteForm" action="MessageServlet" method="post" style="margin-top: 1rem;">
             <input type="hidden" name="action" value="sendMessage">
             <div style="margin-bottom: 1rem;">
@@ -707,7 +675,6 @@
             <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%;">Send Note</button>
         </form>
 
-        <!-- Challenge Form -->
         <form id="challengeForm" action="MessageServlet" method="post" style="margin-top: 1rem; display: none;">
             <input type="hidden" name="action" value="sendChallenge">
             <div style="margin-bottom: 1rem;">
@@ -742,7 +709,6 @@
             });
         }
         if (popupId === 'messagesPopup') {
-            // Mark messages as read when popup is opened
             fetch('MessageServlet', {
                 method: 'POST',
                 headers: {
@@ -750,7 +716,6 @@
                 },
                 body: 'action=markAsRead'
             }).then(() => {
-                // Hide the notification badge
                 const badge = document.querySelector('.nav-btn-container:has(button[onclick*="messagesPopup"]) .notification-badge');
                 if (badge) {
                     badge.style.display = 'none';
@@ -763,7 +728,6 @@
         document.getElementById(popupId).style.display = 'none';
     }
 
-    // Close popup when clicking outside of it
     window.onclick = function(event) {
         var popups = document.getElementsByClassName('popup');
         for (var i = 0; i < popups.length; i++) {
@@ -773,7 +737,6 @@
         }
     }
 
-    // Announcements Carousel
     let currentSlide = 0;
     let carouselInterval;
     let isPaused = false;
@@ -782,39 +745,32 @@
     const totalSlides = slideGroups.length;
 
     function showSlide(slideIndex) {
-        // Add slide-out effect to current slide
         if (slideGroups[currentSlide]) {
             slideGroups[currentSlide].classList.add('slide-out');
         }
-        
-        // Remove active class from current indicator
+
         if (indicators[currentSlide]) {
             indicators[currentSlide].classList.remove('active');
         }
-        
-        // Wait for slide-out animation, then show new slide
+
         setTimeout(() => {
-            // Hide all slides
             slideGroups.forEach(group => {
                 group.style.display = 'none';
                 group.classList.remove('active', 'slide-out');
             });
-            
-            // Show new slide
+
             if (slideGroups[slideIndex]) {
                 slideGroups[slideIndex].style.display = 'block';
-                // Trigger reflow
                 slideGroups[slideIndex].offsetHeight;
                 slideGroups[slideIndex].classList.add('active');
             }
-            
-            // Update indicator
+
             if (indicators[slideIndex]) {
                 indicators[slideIndex].classList.add('active');
             }
             
             currentSlide = slideIndex;
-        }, 400); // Half of the transition duration
+        }, 400);
     }
 
     function nextSlide() {
@@ -848,33 +804,26 @@
         isPaused = false;
     }
 
-    // Initialize carousel if there are announcements
     if (totalSlides > 1) {
-        // Set initial active state
         if (slideGroups[0]) {
             slideGroups[0].style.display = 'block';
             slideGroups[0].classList.add('active');
         }
         
         startCarousel();
-        
-        // Add hover events to announcements
+
         const announcements = document.querySelectorAll('.announcement');
         announcements.forEach(announcement => {
             announcement.addEventListener('mouseenter', pauseCarousel);
             announcement.addEventListener('mouseleave', resumeCarousel);
         });
     } else if (totalSlides === 1) {
-        // If there's only one slide, just show it
         if (slideGroups[0]) {
             slideGroups[0].style.display = 'block';
             slideGroups[0].classList.add('active');
-            // Hide indicators if there is only one slide
             document.getElementById('carouselIndicators').style.display = 'none';
         }
     }
-
-    // Function to toggle between note and challenge forms
     function toggleMessageForm() {
         const messageType = document.querySelector('input[name="messageType"]:checked').value;
         const noteForm = document.getElementById('noteForm');

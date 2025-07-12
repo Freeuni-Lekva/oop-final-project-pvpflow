@@ -43,7 +43,6 @@ class FriendRequestServletTest {
         daoField.set(servlet, friendDAO);
     }
 
-    // ========== Authentication Tests ==========
 
     @Test
     void testDoPost_NoSession_RedirectsToLogin() throws Exception {
@@ -60,7 +59,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("login.jsp");
     }
 
-    // ========== Action Parameter Validation ==========
 
     @Test
     void testDoPost_NullAction_RedirectsWithError() throws Exception {
@@ -70,7 +68,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?error=Invalid+action");
     }
 
-    // ========== Send Friend Request ==========
 
     @Test
     void testDoPost_SendFriendRequest_Success() throws Exception {
@@ -82,7 +79,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?success=Friend+request+sent+successfully");
     }
 
-    // ========== Remove Friend ==========
 
     @Test
     void testDoPost_RemoveFriend_Success() throws Exception {
@@ -94,7 +90,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?success=Friend+removed+successfully");
     }
 
-    // ========== Accept Friend Request ==========
 
     @Test
     void testDoPost_AcceptFriendRequest_Success() throws Exception {
@@ -129,7 +124,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?error=You+don't+have+permission+to+process+this+request.");
     }
 
-    // ========== Reject Friend Request ==========
 
     @Test
     void testDoPost_RejectFriendRequest_Success() throws Exception {
@@ -164,7 +158,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?error=You+don't+have+permission+to+process+this+request.");
     }
 
-    // ========== Unknown Action ==========
 
     @Test
     void testDoPost_UnknownAction_RedirectsWithError() throws Exception {
@@ -174,7 +167,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?error=Unknown+action");
     }
 
-    // ========== Error Handling ==========
 
     @Test
     void testDoPost_SQLException_Handled() throws Exception {
@@ -227,7 +219,6 @@ class FriendRequestServletTest {
         verify(response).sendRedirect("homepage.jsp?error=An+unexpected+error+occurred.+Please+try+again.");
     }
 
-    // ========== Helper ==========
     private void setupAuthenticatedUser() {
         when(request.getSession(false)).thenReturn(session);
         when(session.getAttribute("userId")).thenReturn(USER_ID);

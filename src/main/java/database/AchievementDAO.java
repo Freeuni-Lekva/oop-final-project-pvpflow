@@ -100,7 +100,6 @@ public class AchievementDAO {
         String name = (String) achievement.get("name");
         int quizzesTaken = (int) userStats.get("quizzes_taken");
         int quizzesCreated = (int) userStats.get("quizzes_created");
-        int perfectScores = (int) userStats.get("perfect_scores");
         boolean hasHighestScore = (boolean) userStats.get("has_highest_score");
         boolean hasTakenPracticeQuiz = (boolean) userStats.get("has_taken_practice_quiz");
 

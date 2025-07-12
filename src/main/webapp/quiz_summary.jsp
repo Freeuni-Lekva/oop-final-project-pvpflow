@@ -1,7 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*, database.QuizDAO, database.DBUtil" %>
 <%
-    // --- User and Quiz ID ---
     Integer userId = (Integer) session.getAttribute("userId");
     if (userId == null) {
         response.sendRedirect("login.jsp");
@@ -10,7 +9,6 @@
     String quizIdStr = request.getParameter("id");
     int quizId = Integer.parseInt(quizIdStr);
 
-    // --- Data Objects ---
     QuizDAO quizDAO = new QuizDAO();
     Map<String, Object> quizDetails = new HashMap<>();
     List<Map<String, Object>> userPerformance = new ArrayList<>();
@@ -20,16 +18,13 @@
     Map<String, Object> yourBestScore = null;
     List<Map<String, Object>> topPerformersToday = new ArrayList<>();
     
-    // --- Sort Parameter ---
     String sortBy = request.getParameter("sort");
     if (sortBy == null || !Arrays.asList("date", "score", "time").contains(sortBy)) {
         sortBy = "date"; // Default sort
     }
     
-    // --- Data Fetching ---
     quizDetails = quizDAO.getQuizDetails(quizId);
     if (quizDetails == null) {
-        // Handle case where quiz doesn't exist
         response.sendRedirect("homepage.jsp");
         return;
     }
@@ -68,9 +63,6 @@
                     <a href="take_quiz.jsp?id=<%= quizId %>" class="action-btn start-btn">Take Quiz</a>
                     <% if ((boolean) quizDetails.get("practice_mode_enabled")) { %>
                         <a href="take_quiz.jsp?id=<%= quizId %>&practice=true" class="action-btn practice-btn">Practice Mode</a>
-                    <% } %>
-                    <% if (userId.equals(quizDetails.get("creator_id"))) { %>
-                        <a href="edit_quiz.jsp?id=<%= quizId %>" class="action-btn edit-btn">Edit Quiz</a>
                     <% } %>
                 </div>
 
