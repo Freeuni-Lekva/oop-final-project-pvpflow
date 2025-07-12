@@ -63,7 +63,6 @@ class TakeQuizServletTest {
         servlet = new TakeQuizServlet();
     }
 
-    // ========== Parameter Validation Tests ==========
 
     @Test
     void testDoGet_NullQuizId_RedirectsToHomepage() throws Exception {
@@ -105,7 +104,6 @@ class TakeQuizServletTest {
         verifyNoInteractions(dispatcher);
     }
 
-    // ========== Database Connection Tests ==========
 
     @Test
     void testDoGet_DatabaseConnectionException_RedirectsToHomepage() throws Exception {
@@ -121,7 +119,6 @@ class TakeQuizServletTest {
         }
     }
 
-    // ========== Quiz Not Found Tests ==========
 
     @Test
     void testDoGet_QuizNotFound_RedirectsToHomepage() throws Exception {
@@ -141,7 +138,6 @@ class TakeQuizServletTest {
         }
     }
 
-    // ========== Successful Quiz Loading Tests ==========
 
     @Test
     void testDoGet_SuccessfulQuizLoad_WithQuestionsAndAnswers() throws Exception {
@@ -218,7 +214,6 @@ class TakeQuizServletTest {
         }
     }
 
-    // ========== Error Handling Tests ==========
 
     @Test
     void testDoGet_QuizQueryException_RedirectsToHomepage() throws Exception {
@@ -294,7 +289,6 @@ class TakeQuizServletTest {
         }
     }
 
-    // ========== Edge Cases ==========
 
     @Test
     void testDoGet_LargeQuizId_ProcessedNormally() throws Exception {
@@ -345,7 +339,6 @@ class TakeQuizServletTest {
         }
     }
 
-    // ========== Helper Methods ==========
 
     private void setupSuccessfulDatabaseOperations() throws SQLException {
         when(connection.prepareStatement(anyString())).thenReturn(quizStmt, questionStmt, answerStmt);

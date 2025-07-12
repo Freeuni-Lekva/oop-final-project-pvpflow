@@ -37,11 +37,9 @@ class SignupServletTest {
         servlet = new SignupServlet();
     }
 
-    // ========== Successful Registration Tests ==========
 
     @Test
     void testDoPost_SuccessfulRegistration() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(USERNAME);
         when(request.getParameter("email")).thenReturn(EMAIL);
         when(request.getParameter("password")).thenReturn(PASSWORD);
@@ -49,10 +47,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(USERNAME, EMAIL, PASSWORD)).thenReturn(true))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(USERNAME, EMAIL, PASSWORD);
             verify(response).sendRedirect("login.jsp");
@@ -61,7 +57,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_SuccessfulRegistrationWithWhitespace() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn("  " + USERNAME + "  ");
         when(request.getParameter("email")).thenReturn("  " + EMAIL + "  ");
         when(request.getParameter("password")).thenReturn("  " + PASSWORD + "  ");
@@ -69,21 +64,17 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser("  " + USERNAME + "  ", "  " + EMAIL + "  ", "  " + PASSWORD + "  ")).thenReturn(true))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser("  " + USERNAME + "  ", "  " + EMAIL + "  ", "  " + PASSWORD + "  ");
             verify(response).sendRedirect("login.jsp");
         }
     }
 
-    // ========== Registration Failure Tests ==========
 
     @Test
     void testDoPost_RegistrationFailure_ReturnsFalse() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(USERNAME);
         when(request.getParameter("email")).thenReturn(EMAIL);
         when(request.getParameter("password")).thenReturn(PASSWORD);
@@ -91,10 +82,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(USERNAME, EMAIL, PASSWORD)).thenReturn(false))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(USERNAME, EMAIL, PASSWORD);
             verify(response).sendRedirect("signup.jsp");
@@ -103,7 +92,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_RegistrationFailure_EmptyParameters() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn("");
         when(request.getParameter("email")).thenReturn("");
         when(request.getParameter("password")).thenReturn("");
@@ -111,10 +99,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser("", "", "")).thenReturn(false))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser("", "", "");
             verify(response).sendRedirect("signup.jsp");
@@ -123,7 +109,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_RegistrationFailure_NullParameters() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(null);
         when(request.getParameter("email")).thenReturn(null);
         when(request.getParameter("password")).thenReturn(null);
@@ -131,21 +116,17 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(null, null, null)).thenReturn(false))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(null, null, null);
             verify(response).sendRedirect("signup.jsp");
         }
     }
 
-    // ========== Error Handling Tests ==========
 
     @Test
     void testDoPost_SQLException_Handled() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(USERNAME);
         when(request.getParameter("email")).thenReturn(EMAIL);
         when(request.getParameter("password")).thenReturn(PASSWORD);
@@ -153,10 +134,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(USERNAME, EMAIL, PASSWORD)).thenThrow(new SQLException("Database error")))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(USERNAME, EMAIL, PASSWORD);
             verify(response).sendRedirect("signup.jsp");
@@ -165,7 +144,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_RuntimeException_Handled() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(USERNAME);
         when(request.getParameter("email")).thenReturn(EMAIL);
         when(request.getParameter("password")).thenReturn(PASSWORD);
@@ -173,10 +151,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(USERNAME, EMAIL, PASSWORD)).thenThrow(new RuntimeException("Unexpected error")))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(USERNAME, EMAIL, PASSWORD);
             verify(response).sendRedirect("signup.jsp");
@@ -185,7 +161,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_IllegalArgumentException_Handled() throws Exception {
-        // Setup
         when(request.getParameter("username")).thenReturn(USERNAME);
         when(request.getParameter("email")).thenReturn(EMAIL);
         when(request.getParameter("password")).thenReturn(PASSWORD);
@@ -193,21 +168,17 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(USERNAME, EMAIL, PASSWORD)).thenThrow(new IllegalArgumentException("Invalid input")))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(USERNAME, EMAIL, PASSWORD);
             verify(response).sendRedirect("signup.jsp");
         }
     }
 
-    // ========== Edge Cases ==========
 
     @Test
     void testDoPost_SpecialCharactersInParameters() throws Exception {
-        // Setup
         String specialUsername = "user@123#test";
         String specialEmail = "test+user@domain.co.uk";
         String specialPassword = "pass@word#123!";
@@ -219,10 +190,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(specialUsername, specialEmail, specialPassword)).thenReturn(true))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(specialUsername, specialEmail, specialPassword);
             verify(response).sendRedirect("login.jsp");
@@ -231,7 +200,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_LongParameters() throws Exception {
-        // Setup
         String longUsername = "a".repeat(100);
         String longEmail = "a".repeat(50) + "@example.com";
         String longPassword = "a".repeat(200);
@@ -243,10 +211,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(longUsername, longEmail, longPassword)).thenReturn(true))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(longUsername, longEmail, longPassword);
             verify(response).sendRedirect("login.jsp");
@@ -255,7 +221,6 @@ class SignupServletTest {
 
     @Test
     void testDoPost_UnicodeCharacters() throws Exception {
-        // Setup
         String unicodeUsername = "用户123";
         String unicodeEmail = "用户@example.com";
         String unicodePassword = "密码123";
@@ -267,10 +232,8 @@ class SignupServletTest {
         try (MockedConstruction<UserDAO> userDAOMock = mockConstruction(UserDAO.class,
                 (mock, context) -> when(mock.registerUser(unicodeUsername, unicodeEmail, unicodePassword)).thenReturn(true))) {
 
-            // Execute
             servlet.doPost(request, response);
 
-            // Verify
             UserDAO constructedDAO = userDAOMock.constructed().get(0);
             verify(constructedDAO).registerUser(unicodeUsername, unicodeEmail, unicodePassword);
             verify(response).sendRedirect("login.jsp");

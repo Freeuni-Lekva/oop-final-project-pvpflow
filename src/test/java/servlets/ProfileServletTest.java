@@ -52,13 +52,11 @@ class ProfileServletTest {
 
     @BeforeEach
     void setUp() {
-        // Set up mocks for all DAOs before creating the servlet
         userDAOMock = mockConstruction(UserDAO.class);
         friendDAOMock = mockConstruction(FriendDAO.class);
         achievementDAOMock = mockConstruction(AchievementDAO.class);
         quizDAOMock = mockStatic(QuizDAO.class);
         
-        // Create the servlet after mocks are set up
         servlet = new ProfileServlet();
     }
 
@@ -70,7 +68,6 @@ class ProfileServletTest {
         if (quizDAOMock != null) quizDAOMock.close();
     }
 
-    // ========== Authentication Tests ==========
 
     @Test
     void testDoGet_NoSession_RedirectsToLogin() throws Exception {
@@ -93,7 +90,6 @@ class ProfileServletTest {
         verifyNoMoreInteractions(response);
     }
 
-    // ========== Parameter Handling Tests ==========
 
     @Test
     void testDoGet_NoTargetId_UsesCurrentUserId() throws Exception {
@@ -107,7 +103,6 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        // Configure the mocks that were set up in setUp()
         when(userDAOMock.constructed().get(0).getUserById(CURRENT_USER_ID)).thenReturn(userData);
         when(friendDAOMock.constructed().get(0).getFriends(CURRENT_USER_ID)).thenReturn(friends);
         when(achievementDAOMock.constructed().get(0).getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements);
@@ -137,7 +132,6 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        // Configure the mocks that were set up in setUp()
         when(userDAOMock.constructed().get(0).getUserById(CURRENT_USER_ID)).thenReturn(userData);
         when(friendDAOMock.constructed().get(0).getFriends(CURRENT_USER_ID)).thenReturn(friends);
         when(achievementDAOMock.constructed().get(0).getAchievementsByUserId(CURRENT_USER_ID)).thenReturn(achievements);
@@ -165,7 +159,6 @@ class ProfileServletTest {
         List<Map<String, Object>> createdQuizzes = Arrays.asList(new HashMap<>());
         List<Map<String, Object>> quizHistory = Arrays.asList(new HashMap<>());
 
-        // Configure the mocks that were set up in setUp()
         when(userDAOMock.constructed().get(0).getUserById(TARGET_USER_ID)).thenReturn(userData);
         quizDAOMock.when(() -> QuizDAO.getQuizzesByCreatorId(TARGET_USER_ID)).thenReturn(createdQuizzes);
         quizDAOMock.when(() -> QuizDAO.getQuizHistoryByUserId(TARGET_USER_ID)).thenReturn(quizHistory);
@@ -181,7 +174,6 @@ class ProfileServletTest {
         verify(dispatcher).forward(request, response);
     }
 
-    // ========== Invalid Input Tests ==========
 
     @Test
     void testDoGet_InvalidTargetId_RedirectsToHomepage() throws Exception {
@@ -194,20 +186,17 @@ class ProfileServletTest {
         verifyNoMoreInteractions(response);
     }
 
-    // ========== Database Error Tests ==========
 
     @Test
     void testDoGet_SQLException_ThrowsServletException() throws Exception {
         setupAuthenticatedUser();
         when(request.getParameter("id")).thenReturn(String.valueOf(TARGET_USER_ID));
 
-        // Configure UserDAO to throw SQLException
         when(userDAOMock.constructed().get(0).getUserById(TARGET_USER_ID)).thenThrow(new SQLException("Database error"));
         
         assertThrows(ServletException.class, () -> servlet.doGet(request, response));
     }
 
-    // ========== Helper Methods ==========
 
     private void setupAuthenticatedUser() {
         when(request.getSession(false)).thenReturn(session);

@@ -54,12 +54,9 @@ class GradeQuizServletTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Default: any parameter returns null unless overridden
         when(request.getParameter(anyString())).thenReturn(null);
-        // Inject mocks if needed
     }
 
-    // ========== Authentication Tests ==========
 
     @Test
     void testDoPost_NoUserId_RedirectsToLogin() throws Exception {
@@ -69,7 +66,6 @@ class GradeQuizServletTest {
         verify(response).sendRedirect("login.jsp");
     }
 
-    // ========== Parameter Validation ==========
 
     @Test
     void testDoPost_InvalidQuizId_SendsBadRequest() throws Exception {
@@ -105,7 +101,6 @@ class GradeQuizServletTest {
         }
     }
 
-    // ========== Grading and Submission ==========
 
     @Test
     void testDoPost_GradesQuizAndSavesSubmission() throws Exception {
@@ -153,7 +148,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answers for multi-choice multi-answer
         when(request.getParameter("q_300_a_1")).thenReturn("on");
         when(request.getParameter("q_300_a_2")).thenReturn("on");
 
@@ -184,7 +178,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answers for multi-answer (ordered)
         when(request.getParameter("q_300_a_0")).thenReturn("Answer A");
         when(request.getParameter("q_300_a_1")).thenReturn("Answer B");
 
@@ -215,7 +208,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answers for multi-answer (unordered)
         when(request.getParameter("q_300_a_0")).thenReturn("Answer B");
         when(request.getParameter("q_300_a_1")).thenReturn("Answer A");
 
@@ -246,7 +238,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer for question response
         when(request.getParameter("q_300_text")).thenReturn("4");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -276,7 +267,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer for fill in blank
         when(request.getParameter("q_300_text")).thenReturn("answer");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -306,7 +296,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer for picture response
         when(request.getParameter("q_300_text")).thenReturn("cat");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -336,7 +325,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer for unknown question type
         when(request.getParameter("q_300_text")).thenReturn("42");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -366,7 +354,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("true");
         when(request.getParameter("timeTaken")).thenReturn("30");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -396,7 +383,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn(null);
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -426,7 +412,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("invalid");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -456,7 +441,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -492,7 +476,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -530,7 +513,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -561,7 +543,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -589,7 +570,6 @@ class GradeQuizServletTest {
         when(request.getParameter("practice")).thenReturn("false");
         when(request.getParameter("timeTaken")).thenReturn("45");
 
-        // Setup user answer
         when(request.getParameter("q_300")).thenReturn("1");
 
         Map<String, Object> quiz = createMockQuiz();
@@ -610,7 +590,6 @@ class GradeQuizServletTest {
         }
     }
 
-    // ========== Helper Methods ==========
 
     private void setupAuthenticatedUser() throws Exception {
         when(request.getSession()).thenReturn(session);

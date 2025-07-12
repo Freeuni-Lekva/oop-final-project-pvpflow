@@ -57,7 +57,6 @@ class AchievementServletTest {
     @Mock
     private ResultSet resultSet;
 
-    // PrintWriter is created in setUp() method
 
     @InjectMocks
     private AchievementServlet servlet;
@@ -72,7 +71,6 @@ class AchievementServletTest {
         when(response.getWriter()).thenReturn(realPrintWriter);
     }
 
-    // ========== doGet Tests ==========
 
     @Test
     void testDoGet_NoSession_RedirectsToLogin() throws Exception {
@@ -97,7 +95,6 @@ class AchievementServletTest {
         verify(dispatcher).forward(request, response);
     }
 
-    // ========== doPost Tests ==========
 
     @Test
     void testDoPost_NoSession_RedirectsToLogin() throws Exception {
@@ -227,7 +224,6 @@ class AchievementServletTest {
         verify(response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Action parameter is required");
     }
 
-    // ========== Database Error Tests ==========
 
     @Test
     void testDoPost_GetUserAchievements_DatabaseException() throws Exception {
@@ -309,7 +305,6 @@ class AchievementServletTest {
         }
     }
 
-    // ========== Session Management Tests ==========
 
     @Test
     void testDoPost_CheckAndAwardAchievements_UpdatesSessionAttributes() throws Exception {
@@ -355,7 +350,6 @@ class AchievementServletTest {
         }
     }
 
-    // ========== Helper Methods ==========
 
     private void setupAuthenticatedUser() throws Exception {
         when(request.getSession(false)).thenReturn(session);

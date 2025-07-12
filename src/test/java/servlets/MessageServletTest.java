@@ -59,10 +59,8 @@ class MessageServletTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // No specific setup needed for this servlet
     }
 
-    // ========== Authentication Tests ==========
 
     @Test
     void testDoPost_NoSession_RedirectsToLogin() throws Exception {
@@ -79,7 +77,6 @@ class MessageServletTest {
         verify(response).sendRedirect("login.jsp");
     }
 
-    // ========== Send Message Tests ==========
 
     @Test
     void testDoPost_SendMessage_Success() throws Exception {
@@ -165,7 +162,6 @@ class MessageServletTest {
         }
     }
 
-    // ========== Send Challenge Tests ==========
 
     @Test
     void testDoPost_SendChallenge_Success() throws Exception {
@@ -304,7 +300,6 @@ class MessageServletTest {
         }
     }
 
-    // ========== Mark As Read Tests ==========
 
     @Test
     void testDoPost_MarkAsRead_Success() throws Exception {
@@ -338,7 +333,6 @@ class MessageServletTest {
         }
     }
 
-    // ========== Invalid Action Tests ==========
 
     @Test
     void testDoPost_InvalidAction_StillRedirects() throws Exception {
@@ -360,7 +354,6 @@ class MessageServletTest {
         verify(response).sendRedirect("homepage.jsp");
     }
 
-    // ========== Edge Cases ==========
 
     @Test
     void testDoPost_SendMessage_WithSpecialCharacters() throws Exception {
@@ -460,7 +453,6 @@ class MessageServletTest {
         }
     }
 
-    // ========== Additional Coverage Tests ==========
 
     @Test
     void testDoPost_NullAction_RedirectsToHomepage() throws Exception {
@@ -678,8 +670,6 @@ class MessageServletTest {
         setupAuthenticatedUser();
         when(request.getParameter("action")).thenReturn("sendMessage");
         
-        // Mock receiverId to throw an exception when accessed inside the switch statement
-        // This will cause the outer catch block to be triggered
         when(request.getParameter("receiverId")).thenThrow(new RuntimeException("Outer exception"));
         
         servlet.doPost(request, response);
@@ -687,7 +677,6 @@ class MessageServletTest {
         verify(response).sendRedirect("homepage.jsp?error=An+error+occurred");
     }
 
-    // ========== Helper Methods ==========
 
     private void setupAuthenticatedUser() throws Exception {
         when(request.getSession(false)).thenReturn(session);

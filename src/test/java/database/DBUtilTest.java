@@ -27,7 +27,6 @@ class DBUtilTest {
 
     @BeforeEach
     void setUp() {
-        // Capture System.out and System.err for testing print statements
         outputStream = new ByteArrayOutputStream();
         originalOut = System.out;
         originalErr = System.err;
@@ -279,13 +278,11 @@ class DBUtilTest {
 
     @Test
     void testGetConnection_WithRealDriverClass() throws Exception {
-        // This test verifies that the driver class name is correct
         try (MockedStatic<DriverManager> driverManagerMock = mockStatic(DriverManager.class)) {
             Connection mockConnection = mock(Connection.class);
             driverManagerMock.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
                     .thenReturn(mockConnection);
             driverManagerMock.when(DriverManager::getLogWriter).thenReturn(null);
-            // This should not throw an exception
             assertDoesNotThrow(() -> {
                 DBUtil.getConnection();
             });
@@ -294,9 +291,8 @@ class DBUtilTest {
 
     @Test
     void testConnectionParameters() throws Exception {
-        // Test that the connection parameters are correctly formatted
         String output = outputStream.toString();
-        assertTrue(output.isEmpty()); // Initially empty
+        assertTrue(output.isEmpty());
         try (MockedStatic<DriverManager> driverManagerMock = mockStatic(DriverManager.class)) {
             Connection mockConnection = mock(Connection.class);
             driverManagerMock.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))

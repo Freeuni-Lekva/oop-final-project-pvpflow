@@ -40,10 +40,7 @@ class AdminDAOTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // No specific setup needed
     }
-
-    // ========== isAdmin Tests ==========
 
     @Test
     void testIsAdmin_UserIsAdmin_ReturnsTrue() throws Exception {
@@ -104,8 +101,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== getAllUsers Tests ==========
-
     @Test
     void testGetAllUsers_Success_ReturnsUserList() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -114,7 +109,6 @@ class AdminDAOTest {
             when(preparedStatement.executeQuery()).thenReturn(resultSet);
             when(resultSet.next()).thenReturn(true, true, false);
             
-            // First user
             when(resultSet.getInt("id")).thenReturn(1, 2);
             when(resultSet.getString("username")).thenReturn("user1", "user2");
             when(resultSet.getString("email")).thenReturn("user1@test.com", "user2@test.com");
@@ -162,7 +156,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== getAllQuizzes Tests ==========
 
     @Test
     void testGetAllQuizzes_Success_ReturnsQuizList() throws Exception {
@@ -215,9 +208,6 @@ class AdminDAOTest {
             assertTrue(result.isEmpty());
         }
     }
-
-    // ========== deleteUser Tests ==========
-
     @Test
     void testDeleteUser_Success_ReturnsTrue() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -257,8 +247,6 @@ class AdminDAOTest {
             assertFalse(result);
         }
     }
-
-    // ========== deleteQuiz Tests ==========
 
     @Test
     void testDeleteQuiz_Success_ReturnsTrue() throws Exception {
@@ -300,8 +288,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== clearQuizHistory Tests ==========
-
     @Test
     void testClearQuizHistory_Success_ReturnsTrue() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -342,8 +328,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== promoteToAdmin Tests ==========
-
     @Test
     void testPromoteToAdmin_Success_ReturnsTrue() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -383,8 +367,6 @@ class AdminDAOTest {
             assertFalse(result);
         }
     }
-
-    // ========== createAnnouncement Tests ==========
 
     @Test
     void testCreateAnnouncement_Success_ReturnsTrue() throws Exception {
@@ -427,8 +409,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== deleteAnnouncement Tests ==========
-
     @Test
     void testDeleteAnnouncement_Success_ReturnsTrue() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -468,8 +448,6 @@ class AdminDAOTest {
         }
     }
 
-    // ========== toggleAnnouncementStatus Tests ==========
-
     @Test
     void testToggleAnnouncementStatus_Success_ReturnsTrue() throws Exception {
         try (MockedStatic<DBUtil> dbUtilMock = mockStatic(DBUtil.class)) {
@@ -508,8 +486,6 @@ class AdminDAOTest {
             assertFalse(result);
         }
     }
-
-    // ========== getAnnouncements Tests ==========
 
     @Test
     void testGetAnnouncements_ActiveOnly_ReturnsActiveAnnouncements() throws Exception {
@@ -589,8 +565,6 @@ class AdminDAOTest {
             assertTrue(result.isEmpty());
         }
     }
-
-    // ========== getSiteStatistics Tests ==========
 
     @Test
     void testGetSiteStatistics_Success_ReturnsAllStatistics() throws Exception {

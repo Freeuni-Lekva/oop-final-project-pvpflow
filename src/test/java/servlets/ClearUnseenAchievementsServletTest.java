@@ -44,8 +44,6 @@ class ClearUnseenAchievementsServletTest {
         when(request.getSession()).thenReturn(session);
     }
 
-    // ========== Basic Functionality Tests ==========
-
     @Test
     void testDoPost_RemovesUnseenAchievementsFromSession() throws Exception {
         servlet.doPost(request, response);
@@ -67,8 +65,6 @@ class ClearUnseenAchievementsServletTest {
         verify(printWriter).write("{\"status\":\"ok\"}");
     }
 
-    // ========== Session Handling Tests ==========
-
     @Test
     void testDoPost_WithExistingUnseenAchievements() throws Exception {
         servlet.doPost(request, response);
@@ -85,8 +81,6 @@ class ClearUnseenAchievementsServletTest {
         verify(printWriter).write("{\"status\":\"ok\"}");
     }
 
-    // ========== Error Handling Tests ==========
-
     @Test
     void testDoPost_SessionRemoveAttributeThrowsException() throws Exception {
         doThrow(new RuntimeException("Session error")).when(session).removeAttribute("unseenAchievements");
@@ -95,7 +89,6 @@ class ClearUnseenAchievementsServletTest {
             servlet.doPost(request, response);
         });
 
-        // The servlet should throw the exception and not reach the response writing
         verify(printWriter, never()).write(anyString());
     }
 
@@ -123,14 +116,10 @@ class ClearUnseenAchievementsServletTest {
         verify(response).setContentType("application/json");
     }
 
-    // ========== Complete Flow Tests ==========
-
     @Test
     void testDoPost_CompleteSuccessfulFlow() throws Exception {
-        // Execute
         servlet.doPost(request, response);
 
-        // Verify complete flow
         verify(request).getSession();
         verify(session).removeAttribute("unseenAchievements");
         verify(response).setContentType("application/json");
@@ -142,7 +131,6 @@ class ClearUnseenAchievementsServletTest {
     void testDoPost_VerifyNoOtherSessionOperations() throws Exception {
         servlet.doPost(request, response);
 
-        // Verify only the expected session operation
         verify(session).removeAttribute("unseenAchievements");
         verifyNoMoreInteractions(session);
     }
@@ -151,13 +139,10 @@ class ClearUnseenAchievementsServletTest {
     void testDoPost_VerifyNoOtherResponseOperations() throws Exception {
         servlet.doPost(request, response);
 
-        // Verify only the expected response operations
         verify(response).setContentType("application/json");
         verify(response).getWriter();
         verifyNoMoreInteractions(response);
     }
-
-    // ========== Edge Cases ==========
 
     @Test
     void testDoPost_WithEmptyUnseenAchievements() throws Exception {
@@ -175,13 +160,10 @@ class ClearUnseenAchievementsServletTest {
         verify(printWriter).write("{\"status\":\"ok\"}");
     }
 
-    // ========== Method Coverage Tests ==========
-
     @Test
     void testDoPost_CallsAllExpectedMethods() throws Exception {
         servlet.doPost(request, response);
 
-        // Verify all method calls in the correct order
         verify(request).getSession();
         verify(session).removeAttribute("unseenAchievements");
         verify(response).setContentType("application/json");
@@ -193,26 +175,20 @@ class ClearUnseenAchievementsServletTest {
     void testDoPost_VerifyExactJsonFormat() throws Exception {
         servlet.doPost(request, response);
 
-        // Verify the exact JSON format (no extra spaces, correct quotes)
         verify(printWriter).write("{\"status\":\"ok\"}");
     }
-
-    // ========== Integration Style Tests ==========
 
     @Test
     void testDoPost_SimulatesRealUsage() throws Exception {
         servlet.doPost(request, response);
 
-        // Verify the session is cleaned up
         verify(session).removeAttribute("unseenAchievements");
         
-        // Verify the response indicates success
         verify(printWriter).write("{\"status\":\"ok\"}");
     }
 
     @Test
     void testDoPost_HandlesNullSessionGracefully() throws Exception {
-        // This shouldn't happen in normal operation, but test for robustness
         when(request.getSession()).thenReturn(null);
 
         assertThrows(NullPointerException.class, () -> {

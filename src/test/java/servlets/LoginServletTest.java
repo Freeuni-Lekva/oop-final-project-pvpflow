@@ -45,7 +45,6 @@ class LoginServletTest {
 
     @Test
     void testDoPost_SuccessfulLogin() throws Exception {
-        // Arrange
         String username = "testuser";
         String password = "testpass";
         Map<String, Object> userData = new HashMap<>();
@@ -61,10 +60,8 @@ class LoginServletTest {
             when(mock.authenticateUser(username, password)).thenReturn(userData);
             doNothing().when(mock).updateLastLogin(1);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("homepage.jsp");
             verify(session).setAttribute("userId", 1);
             verify(session).setAttribute("user", username);
@@ -74,7 +71,6 @@ class LoginServletTest {
 
     @Test
     void testDoPost_AuthenticationFailure_ReturnsNull() throws Exception {
-        // Arrange
         String username = "testuser";
         String password = "wrongpass";
 
@@ -84,10 +80,8 @@ class LoginServletTest {
         try (MockedConstruction<UserDAO> mockedUserDAO = mockConstruction(UserDAO.class, (mock, context) -> {
             when(mock.authenticateUser(username, password)).thenReturn(null);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("login.jsp");
             verify(session, never()).setAttribute(anyString(), any());
         }
@@ -95,17 +89,14 @@ class LoginServletTest {
 
     @Test
     void testDoPost_AuthenticationFailure_EmptyCredentials() throws Exception {
-        // Arrange
         when(request.getParameter("usernameOrEmail")).thenReturn("");
         when(request.getParameter("password")).thenReturn("");
 
         try (MockedConstruction<UserDAO> mockedUserDAO = mockConstruction(UserDAO.class, (mock, context) -> {
             when(mock.authenticateUser("", "")).thenReturn(null);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("login.jsp");
             verify(session, never()).setAttribute(anyString(), any());
         }
@@ -113,17 +104,14 @@ class LoginServletTest {
 
     @Test
     void testDoPost_AuthenticationFailure_NullCredentials() throws Exception {
-        // Arrange
         when(request.getParameter("usernameOrEmail")).thenReturn(null);
         when(request.getParameter("password")).thenReturn(null);
 
         try (MockedConstruction<UserDAO> mockedUserDAO = mockConstruction(UserDAO.class, (mock, context) -> {
             when(mock.authenticateUser(null, null)).thenReturn(null);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("login.jsp");
             verify(session, never()).setAttribute(anyString(), any());
         }
@@ -131,7 +119,6 @@ class LoginServletTest {
 
     @Test
     void testDoPost_SQLException_Handled() throws Exception {
-        // Arrange
         String username = "testuser";
         String password = "testpass";
 
@@ -141,10 +128,8 @@ class LoginServletTest {
         try (MockedConstruction<UserDAO> mockedUserDAO = mockConstruction(UserDAO.class, (mock, context) -> {
             when(mock.authenticateUser(username, password)).thenThrow(new SQLException("Database error"));
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("login.jsp");
             verify(session, never()).setAttribute(anyString(), any());
         }
@@ -152,7 +137,6 @@ class LoginServletTest {
 
     @Test
     void testDoPost_SQLExceptionDuringUpdateLastLogin_Handled() throws Exception {
-        // Arrange
         String username = "testuser";
         String password = "testpass";
         Map<String, Object> userData = new HashMap<>();
@@ -168,10 +152,8 @@ class LoginServletTest {
             when(mock.authenticateUser(username, password)).thenReturn(userData);
             doThrow(new SQLException("Update error")).when(mock).updateLastLogin(1);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("login.jsp");
             verify(session).setAttribute("userId", 1);
             verify(session).setAttribute("user", username);
@@ -181,7 +163,6 @@ class LoginServletTest {
 
     @Test
     void testDoPost_EmailLogin_Successful() throws Exception {
-        // Arrange
         String email = "test@example.com";
         String password = "testpass";
         Map<String, Object> userData = new HashMap<>();
@@ -197,10 +178,8 @@ class LoginServletTest {
             when(mock.authenticateUser(email, password)).thenReturn(userData);
             doNothing().when(mock).updateLastLogin(1);
         })) {
-            // Act
             loginServlet.doPost(request, response);
 
-            // Assert
             verify(response).sendRedirect("homepage.jsp");
             verify(session).setAttribute("userId", 1);
             verify(session).setAttribute("user", "testuser");
