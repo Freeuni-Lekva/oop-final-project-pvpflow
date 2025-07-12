@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DBUtilTest {
 
+
     private ByteArrayOutputStream outputStream;
     private PrintStream originalOut;
     private PrintStream originalErr;
@@ -303,4 +304,6 @@ class DBUtilTest {
             assertTrue(output.contains("root"));
         }
     }
+
+    //user password test
 } 
